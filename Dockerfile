@@ -48,9 +48,7 @@ RUN apt update && apt upgrade -y \
 
 RUN apt update && apt install curl python3.10 python3.10-venv git-core tensorrt=8.5.3.1-1+cuda11.8 -y
 
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
-
-RUN curl https://bootstrap.pypa.io/get-pip.py | python3
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.10
 
 COPY . /app
 

@@ -1,5 +1,6 @@
 /models
 /outputs
 /venv
-*/__pycache__*
 /dist
+*/__pycache__*
+*/node_modules*
