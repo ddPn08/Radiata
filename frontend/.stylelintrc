@@ -1,0 +1,16 @@
+extends:
+  - stylelint-config-standard
+  - stylelint-config-idiomatic-order
+  - stylelint-config-prettier
+rules:
+  alpha-value-notation: number
+  color-function-notation: legacy
+  function-no-unknown: null
+  function-name-case: null
+  function-whitespace-after: null
+  font-family-no-missing-generic-family-keyword: null
+  value-keyword-case: null
+overrides:
+  - files:
+      - 'src/**/*.{ts,tsx}'
+    customSyntax: '@stylelint/postcss-css-in-js'

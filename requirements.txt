@@ -1,0 +1,19 @@
+# API Server
+fastapi==0.89.1
+uvicorn==0.20.0
+
+# TensorRT Diffusion
+numpy==1.21.6
+colored
+cuda-python
+diffusers==0.7.2
+ftfy
+matplotlib
+nvtx
+onnx==1.12.0
+--extra-index-url https://pypi.ngc.nvidia.com
+onnx-graphsurgeon==0.3.25
+onnxruntime==1.13.1
+polygraphy==0.43.1
+scipy
+transformers==4.24.0

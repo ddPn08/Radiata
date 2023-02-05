@@ -1,0 +1,8 @@
+[tool.isort]
+skip_glob = ["lib/**/*"]
+
+[tool.black]
+exclude = ["lib"]
+
+[tool.autoflake]
+exclude = ["lib"]
