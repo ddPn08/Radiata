@@ -7,14 +7,16 @@ import diffusers
 import numpy as np
 import tensorrt as trt
 import torch
+import gc
 from cuda import cudart
 from PIL import Image
 from polygraphy import cuda
-from transformers import CLIPTokenizer
+from transformers import CLIPTokenizer, CLIPTextModel
 
 from lib.trt.utilities import TRT_LOGGER, Engine
 from modules import shared
 
+from lib.diffusers.lpw import LongPromptWeightingPipeline
 from .clip import create_clip_engine
 from .models import CLIP, VAE, UNet
 
@@ -84,6 +86,10 @@ class TensorRTDiffusionRunner:
     ):
         self.stream = cuda.Stream()
         self.tokenizer = CLIPTokenizer.from_pretrained(tokenizer_id)
+        self.lpw = LongPromptWeightingPipeline(
+            tokenizer=self.tokenizer,
+            text_encoder=CLIPTextModel.from_pretrained(tokenizer_id).to(self.device),
+        )
 
         for engine in self.engines.values():
             engine.activate()
@@ -94,7 +100,10 @@ class TensorRTDiffusionRunner:
             del engine
         self.stream.free()
         del self.stream
+        del self.tokenizer
+        del self.lpw.text_encoder
         torch.cuda.empty_cache()
+        gc.collect()
 
     def runEngine(self, model_name, feed_dict):
         engine = self.engines[model_name]
@@ -162,64 +171,74 @@ class TensorRTDiffusionRunner:
                 TRT_LOGGER
             ):
                 cudart.cudaEventRecord(events["clip-start"], 0)
-                # Tokenize input
-                text_input_ids = (
-                    self.tokenizer(
-                        prompt,
-                        padding="max_length",
-                        max_length=self.tokenizer.model_max_length,
-                        return_tensors="pt",
-                    )
-                    .input_ids.type(torch.int32)
-                    .to(self.device)
+                # # Tokenize input
+                # text_input_ids = (
+                #     self.tokenizer(
+                #         prompt,
+                #         padding="max_length",
+                #         max_length=self.tokenizer.model_max_length,
+                #         return_tensors="pt",
+                #     )
+                #     .input_ids.type(torch.int32)
+                #     .to(self.device)
+                # )
+
+                # # CLIP text encoder
+                # text_input_ids_inp = cuda.DeviceView(
+                #     ptr=text_input_ids.data_ptr(),
+                #     shape=text_input_ids.shape,
+                #     dtype=np.int32,
+                # )
+                # text_embeddings = self.runEngine(
+                #     "clip", {"input_ids": text_input_ids_inp}
+                # )["text_embeddings"]
+
+                # # Duplicate text embeddings for each generation per prompt
+                # bs_embed, seq_len, _ = text_embeddings.shape
+                # text_embeddings = text_embeddings.repeat(1, batch_size, 1)
+                # text_embeddings = text_embeddings.view(
+                #     bs_embed * batch_size, seq_len, -1
+                # )
+
+                # max_length = text_input_ids.shape[-1]
+                # uncond_input_ids = (
+                #     self.tokenizer(
+                #         negative_prompt,
+                #         padding="max_length",
+                #         max_length=max_length,
+                #         truncation=True,
+                #         return_tensors="pt",
+                #     )
+                #     .input_ids.type(torch.int32)
+                #     .to(self.device)
+                # )
+                # uncond_input_ids_inp = cuda.DeviceView(
+                #     ptr=uncond_input_ids.data_ptr(),
+                #     shape=uncond_input_ids.shape,
+                #     dtype=np.int32,
+                # )
+                # uncond_embeddings = self.runEngine(
+                #     "clip", {"input_ids": uncond_input_ids_inp}
+                # )["text_embeddings"]
+
+                # # Duplicate unconditional embeddings for each generation per prompt
+                # seq_len = uncond_embeddings.shape[1]
+                # uncond_embeddings = uncond_embeddings.repeat(1, batch_size, 1)
+                # uncond_embeddings = uncond_embeddings.view(batch_size, seq_len, -1)
+
+                # # Concatenate the unconditional and text embeddings into a single batch to avoid doing two forward passes for classifier free guidance
+                # text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
+
+                # if self.fp16:
+                #     text_embeddings = text_embeddings.to(dtype=torch.float16)
+
+                text_embeddings = self.lpw(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    guidance_scale=scale,
+                    num_images_per_prompt=1,
+                    max_embeddings_multiples=1,
                 )
-
-                # CLIP text encoder
-                text_input_ids_inp = cuda.DeviceView(
-                    ptr=text_input_ids.data_ptr(),
-                    shape=text_input_ids.shape,
-                    dtype=np.int32,
-                )
-                text_embeddings = self.runEngine(
-                    "clip", {"input_ids": text_input_ids_inp}
-                )["text_embeddings"]
-
-                # Duplicate text embeddings for each generation per prompt
-                bs_embed, seq_len, _ = text_embeddings.shape
-                text_embeddings = text_embeddings.repeat(1, batch_size, 1)
-                text_embeddings = text_embeddings.view(
-                    bs_embed * batch_size, seq_len, -1
-                )
-
-                max_length = text_input_ids.shape[-1]
-                uncond_input_ids = (
-                    self.tokenizer(
-                        negative_prompt,
-                        padding="max_length",
-                        max_length=max_length,
-                        truncation=True,
-                        return_tensors="pt",
-                    )
-                    .input_ids.type(torch.int32)
-                    .to(self.device)
-                )
-                uncond_input_ids_inp = cuda.DeviceView(
-                    ptr=uncond_input_ids.data_ptr(),
-                    shape=uncond_input_ids.shape,
-                    dtype=np.int32,
-                )
-                uncond_embeddings = self.runEngine(
-                    "clip", {"input_ids": uncond_input_ids_inp}
-                )["text_embeddings"]
-
-                # Duplicate unconditional embeddings for each generation per prompt
-                seq_len = uncond_embeddings.shape[1]
-                uncond_embeddings = uncond_embeddings.repeat(1, batch_size, 1)
-                uncond_embeddings = uncond_embeddings.view(batch_size, seq_len, -1)
-
-                # Concatenate the unconditional and text embeddings into a single batch to avoid doing two forward passes for classifier free guidance
-                text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
-
                 if self.fp16:
                     text_embeddings = text_embeddings.to(dtype=torch.float16)
 

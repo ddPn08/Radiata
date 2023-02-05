@@ -69,6 +69,8 @@ export const Engine = () => {
             <div
               class={css`
                 display: flex;
+                flex-direction: column;
+                align-items: center;
                 justify-content: center;
                 padding: 0.25rem;
                 border-radius: 0.5rem;
