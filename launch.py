@@ -2,6 +2,7 @@ import importlib.util
 import os
 import subprocess
 import sys
+import sys
 
 python = sys.executable
 git = os.environ.get("GIT", "git")
@@ -78,7 +79,7 @@ def torch_version():
         return None
 
 
-def prepare_environment():
+def prepare_environment(args):
     torch_command = os.environ.get(
         "TORCH_COMMAND",
         "pip install torch==1.12.0+cu116 --extra-index-url https://download.pytorch.org/whl/cu116",
@@ -89,12 +90,12 @@ def prepare_environment():
     )
     requirements_file = os.environ.get("REQS_FILE", "requirements.txt")
 
-    sys.argv, skip_install = extract_arg(sys.argv, "--skip-install")
+    args, skip_install = extract_arg(args, "--skip-install")
     if skip_install:
         return
 
-    sys.argv, reinstall_torch = extract_arg(sys.argv, "--reinstall-torch")
-    sys.argv, reinstall_tensorrt = extract_arg(sys.argv, "--reinstall-tensorrt")
+    args, reinstall_torch = extract_arg(args, "--reinstall-torch")
+    args, reinstall_tensorrt = extract_arg(args, "--reinstall-tensorrt")
 
     if reinstall_torch or not is_installed("torch"):
         run(
@@ -122,5 +123,19 @@ def prepare_environment():
 
 
 if __name__ == "__main__":
-    prepare_environment()
-    subprocess.run([python, "-m", "uvicorn", "modules.main:app", *sys.argv[1:]])
+    sys.argv = sys.argv[1:]
+    if "--" in sys.argv:
+        index = sys.argv.index("--")
+        uvicorn_args = sys.argv[:index]
+        main_args = sys.argv[index + 1 :]
+    else:
+        uvicorn_args = sys.argv
+
+    env = os.environ.copy()
+    if "COMMANDLINE_ARGS" in env:
+        main_args += f' {env["COMMANDLINE_ARGS"]}'
+    env["COMMANDLINE_ARGS"] = " ".join(main_args)
+
+    subprocess.run(
+        [python, "-m", "uvicorn", "modules.main:app", *uvicorn_args], env=env
+    )
