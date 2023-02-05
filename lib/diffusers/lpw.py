@@ -180,7 +180,6 @@ def get_prompts_with_weights(
             "Prompt was truncated. Try to shorten the prompt or increase max_embeddings_multiples"
         )
 
-    print(tokens, weights)
     return tokens, weights
 
 
