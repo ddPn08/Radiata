@@ -19,6 +19,8 @@ docker compose up
 
 ## Linux | Difficult
 ### requirements
+- node.js (recommended version is 18)
+- pnpm
 - Python 3.10
 - pip
 - CUDA
@@ -34,9 +36,15 @@ git clone https://github.com/ddPn08/Lsmith.git
 ```sh
 cd Lsmith
 ```
+5. Enter frontend directory and build frontend
+```sh
+cd frontend
+pnpm i
+pnpm build --out-dir ../dist
+```
 4. Run launch.sh with the path to libnvinfer_plugin.so in the LD_PRELOAD variable.
 ```sh
-ex. )
+ex.)
 LD_PRELOAD="/lib/src/TensorRT/build/out/libnvinfer_plugin.so.8" bash launch.sh --host 0.0.0.0
 ```
 
