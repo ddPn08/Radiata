@@ -41,10 +41,12 @@ export const Txt2Img = () => {
   } as Required<GenerateImageRequest>)
   const [images, setImages] = createSignal<[string, Record<string, string>][]>([])
   const [time, setTime] = createSignal<number | null>(null)
+  const [noModel, setNoModel] = createSignal(true)
 
   onMount(() => {
     autosize(promptRef()!)
     autosize(npromptRef()!)
+    api.getCurrentRunner().then((res) => setNoModel(!res.data))
   })
 
   return (
@@ -76,6 +78,7 @@ export const Txt2Img = () => {
             setImages(Object.entries(res.data.images) as any)
             setTime(res.data.performance)
           }}
+          disabled={noModel()}
         >
           Generate
         </Button>

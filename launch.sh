@@ -26,6 +26,12 @@ can_run_as_root=0
 delimiter="################################################################"
 
 printf "\n%s\n" "${delimiter}"
+printf "Build frontend"
+printf "\n%s\n" "${delimiter}"
+
+"${python_cmd}" build.py
+
+printf "\n%s\n" "${delimiter}"
 printf "Create and activate python venv"
 printf "\n%s\n" "${delimiter}"
 if [[ ! -d "${venv_dir}" ]]

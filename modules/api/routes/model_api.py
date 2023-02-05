@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 from modules import runner
@@ -17,12 +18,15 @@ def get_runners():
 
 
 class ModelCurrentResponseModel(BaseResponseModel):
-    data: str
+    data: Optional[str]
 
 
 @api.get("/model/currnet", response_model=ModelCurrentResponseModel)
 def get_current_runner():
-    return ModelCurrentResponseModel(status="success", data=runner.current.model_id)
+    return ModelCurrentResponseModel(
+        status="success",
+        data=runner.current.model_id if runner.current is not None else None,
+    )
 
 
 class SetRunnerRequest(BaseModel):
