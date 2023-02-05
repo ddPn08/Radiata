@@ -10,6 +10,10 @@ def build_frontend():
     out_dir = os.path.join(__dirname__, "dist")
     shutil.rmtree(out_dir)
     subprocess.run(
+        ["pnpm", "i"],
+        cwd=frontend_dir,
+    )
+    subprocess.run(
         ["pnpm", "build", "--out-dir", out_dir],
         cwd=frontend_dir,
     )
