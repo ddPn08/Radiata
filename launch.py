@@ -132,6 +132,8 @@ if __name__ == "__main__":
         uvicorn_args = sys.argv
         main_args = ""
 
+    prepare_environment(main_args)
+
     env = os.environ.copy()
     if "COMMANDLINE_ARGS" in env:
         main_args += f' {env["COMMANDLINE_ARGS"]}'
