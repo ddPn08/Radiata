@@ -4,12 +4,23 @@
 
 ---
 
+1. [Benchmark](#benchmark)
+2. [Installation](#installation)
+    - [Docker (All platform) | Easy](#docker-all-platform--easy)
+    - [Linux | Difficult](#linux--difficult)
+    - [Windows | Currently  unavailable](#linux--difficult)
+3. [Usage](#usage)
+    - [Building the TensorRT engine](#building-the-tensorrt-engine)
+    - [Generate images](#generate-images)
+
+---
+
 # Benchmark
 ![benchmark](./docs/images/readme-benchmark.png)
 
-# Usage
+# Installation
 
-## Docker | Easy
+## Docker (All platform) | Easy
 
 1. Clone repository
 2. Launch using Docker compose
@@ -48,10 +59,33 @@ ex.)
 LD_PRELOAD="/lib/src/TensorRT/build/out/libnvinfer_plugin.so.8" bash launch.sh --host 0.0.0.0
 ```
 
-## Windows | Unavailable now...
+## Windows | Currently unavailable...
 We are looking for a way to do that.
+Use [Docker](#docker-all-platform--easy) instead for now.
 
 <br />
+
+# Usage
+Once started, access `<ip address>:<port number>` (ex `http://localhost:8000`) to open the WebUI.
+
+First of all, we need to convert our existing diffusers model to the tensorrt engine.
+
+## Building the TensorRT engine
+1. Click on the "engine" tab
+![](./docs/images/readme-usage-screenshot-01.png)
+2. Enter Huggingface's Diffusers model ID in `Model ID` (ex: `CompVis/stable-diffusion-v1-4`)
+3. Enter your Huggingface access token in `HuggingFace Access Token` (required for some repositories).
+Access tokens can be obtained or created from [this page](https://huggingface.co/settings/tokens).
+4. Click the `Build` button to start building the engine.
+    - There may be some warnings during the engine build, but you can safely ignore them unless the build fails.
+    - The build can take tens of minutes. For reference it takes an average of 15 minutes on the RTX3060 12GB.
+
+## Generate images
+1. Select the model in the header dropdown.
+2. Click on the "txt2img" tab
+3. Click "Generate" button.
+
+![](./docs/images/readme-usage-screenshot-02.png)
 
 ---
 
