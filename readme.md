@@ -8,7 +8,7 @@
 2. [Installation](#installation)
     - [Docker (All platform) | Easy](#docker-all-platform--easy)
     - [Linux | Difficult](#linux--difficult)
-    - [Windows | Currently  unavailable](#linux--difficult)
+    - [Windows | Currently  unavailable](#windows--currently-unavailable)
 3. [Usage](#usage)
     - [Building the TensorRT engine](#building-the-tensorrt-engine)
     - [Generate images](#generate-images)
