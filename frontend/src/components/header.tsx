@@ -5,6 +5,7 @@ import { IconButton } from './ui/icon-button'
 import { Select } from './ui/select'
 
 import { api } from '~/api'
+import { events } from '~/events'
 import IconRefresh from '~icons/material-symbols/refresh'
 
 const Container = styled.div`
@@ -16,6 +17,7 @@ const Container = styled.div`
 export const Header = () => {
   const [current, setCurrent] = createSignal<string>('')
   const [models, setModels] = createSignal<string[]>([])
+  const [selecting, setSelecting] = createSignal(false)
 
   const reload = () => {
     api.getRunners().then((res) => {
@@ -47,9 +49,13 @@ export const Header = () => {
           <Select
             options={models().map((v) => ({ label: v, value: v }))}
             value={current()}
-            onChange={(item) => {
-              api.setRunner({ setRunnerRequest: { model_id: item.value } })
+            onChange={async (item) => {
+              if (selecting()) return
+              setSelecting(true)
               setCurrent(item.value)
+              await api.setRunner({ setRunnerRequest: { model_id: item.value } })
+              events.emit('model-select', item.value)
+              setSelecting(false)
             }}
           />
         </div>

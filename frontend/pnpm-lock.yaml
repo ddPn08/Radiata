@@ -19,6 +19,7 @@ specifiers:
   eslint-plugin-import: ^2.27.5
   eslint-plugin-solid: ^0.9.4
   eslint-plugin-unused-imports: ^2.0.0
+  eventemitter3: ^5.0.0
   postcss-syntax: ^0.36.2
   prettier: ^2.8.3
   solid-js: ^1.6.10
@@ -36,6 +37,7 @@ dependencies:
   clsx: 1.2.1
   color: 4.2.3
   decorock: 0.1.8_solid-js@1.6.10
+  eventemitter3: 5.0.0
   solid-js: 1.6.10
 
 devDependencies:
@@ -1956,6 +1958,10 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
     dev: true
+
+  /eventemitter3/5.0.0:
+    resolution: {integrity: sha512-riuVbElZZNXLeLEoprfNYoDSwTBRR44X3mnhdI1YcnENpWTCsTTVZ2zFuqQcpoyqPQIUXdiPEU0ECAq0KQRaHg==}
+    dev: false
 
   /execa/5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}

@@ -107,9 +107,9 @@ export const Engine = () => {
         <Setting>
           <div>Model ID</div>
           <Input
-            placeholder="CompVis/stable-diffusion-v1-4"
+            placeholder="huggingface model id (ex: CompVis/stable-diffusion-v1-4)"
             value={req.model_id || ''}
-            onInput={(e) => setReq('model_id', e.currentTarget.value)}
+            onChange={(e) => setReq('model_id', e.currentTarget.value)}
           />
         </Setting>
 
@@ -118,7 +118,7 @@ export const Engine = () => {
           <Input
             placeholder="hf_**********************************"
             value={req.hf_token || ''}
-            onInput={(e) => setReq('hf_token', e.currentTarget.value)}
+            onChange={(e) => setReq('hf_token', e.currentTarget.value)}
           />
         </Setting>
 

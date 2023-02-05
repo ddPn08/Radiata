@@ -13,6 +13,7 @@ import { Select } from '~/components/ui/select'
 import { WithSlider } from '~/components/ui/slider'
 import { VStack } from '~/components/ui/stack'
 import { Textarea } from '~/components/ui/textarea'
+import { events } from '~/events'
 
 const Container = styled.div`
   textarea {
@@ -47,6 +48,7 @@ export const Txt2Img = () => {
     autosize(promptRef()!)
     autosize(npromptRef()!)
     api.getCurrentRunner().then((res) => setNoModel(!res.data))
+    events.once('model-select', () => setNoModel(false))
   })
 
   return (

@@ -42,6 +42,7 @@
     "clsx": "^1.2.1",
     "color": "^4.2.3",
     "decorock": "^0.1.8",
+    "eventemitter3": "^5.0.0",
     "solid-js": "^1.6.10"
   }
 }
