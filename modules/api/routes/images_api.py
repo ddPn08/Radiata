@@ -1,5 +1,6 @@
 import io
 
+from typing import Optional
 from fastapi import Response
 from pydantic import BaseModel
 
@@ -7,7 +8,6 @@ from modules import images, runner
 from modules.api.models.base import BaseResponseModel
 
 from ..api_router import api
-
 
 class GenerateImageRequest(BaseModel):
     prompt: str
@@ -19,7 +19,7 @@ class GenerateImageRequest(BaseModel):
     scale: int = 7.5
     image_height: int = 512
     image_width: int = 512
-    seed: int | None = None
+    seed: Optional[int] = None
 
 
 class GenerateImageResponseData(BaseModel):

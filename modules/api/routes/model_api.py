@@ -1,3 +1,4 @@
+from typing import List
 from typing import Optional
 from pydantic import BaseModel
 
@@ -8,7 +9,7 @@ from ..api_router import api
 
 
 class ModelListResponseModel(BaseResponseModel):
-    data: list[str]
+    data: List[str] = []
 
 
 @api.get("/model/list", response_model=ModelListResponseModel)
