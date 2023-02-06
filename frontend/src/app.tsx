@@ -1,63 +1,43 @@
-import { css } from 'decorock'
-import { createSignal } from 'solid-js'
+import { Box, Flex } from '@mantine/core'
+import { Tab } from './types/tab'
+import Tabs from './components/tabs'
+import Txt2Img from './tabs/txt2img'
+import { useState } from 'react'
+import Engine from './tabs/engine'
+import { IconEngine, IconPhotoEdit } from '@tabler/icons-react'
 
-import { Header } from './components/header'
-import { Tabs, TabPanel } from './components/ui/tabs'
-import { ToastProvider } from './components/ui/toast'
-import { ThemeProvider } from './styles'
-import { Engine } from './tabs/engine'
-import { Txt2Img } from './tabs/txt2img'
+const TABS: Tab[] = [
+  {
+    id: 'txt2img',
+    label: 'Text to Image',
+    icon: <IconPhotoEdit />,
+    component: Txt2Img,
+  },
+  {
+    id: 'engine',
+    label: 'Engine',
+    icon: <IconEngine />,
+    component: Engine,
+  },
+]
 
-export const App = () => {
+const App = () => {
+  const [currentTab, setCurrentTab] = useState(TABS[0].id)
+  const [currentTabComponent, setCurrentTabComponent] = useState(TABS[0].component)
+
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <Index />
-      </ToastProvider>
-    </ThemeProvider>
-  )
-}
-
-const PAGES = {
-  txt2img: Txt2Img,
-  engine: Engine,
-}
-
-const Index = () => {
-  const [current, setCurrent] = createSignal('txt2img')
-
-  return (
-    <div
-      class={css`
-        display: grid;
-        height: 100vh;
-        grid-template-columns: 100%;
-        grid-template-rows: 75px 1fr;
-        overflow-y: auto;
-      `}
-    >
-      <Header />
+    <Flex h={'100vh'}>
       <Tabs
-        tab={current()}
-        onChange={setCurrent}
-        tabs={PAGES}
-        vertical
-        component={([label, Comp], isSelected) => {
-          return (
-            <TabPanel
-              class={css`
-                padding: 1rem;
-                overflow-y: auto;
-                transition: 0.2s;
-              `}
-              show={isSelected()}
-              unmount={label !== 'txt2img'}
-            >
-              <Comp />
-            </TabPanel>
-          )
+        tab={currentTab}
+        tabs={TABS}
+        onChange={([id, index]) => {
+          setCurrentTab(id)
+          setCurrentTabComponent(TABS[index].component)
         }}
       />
-    </div>
+      <Box w={'100%'}>{currentTabComponent && currentTabComponent}</Box>
+    </Flex>
   )
 }
+
+export default App
