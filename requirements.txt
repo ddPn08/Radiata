@@ -5,13 +5,12 @@ uvicorn==0.20.0
 tqdm
 
 # TensorRT Diffusion
-numpy==1.21.6
+numpy==1.23.1
 colored
 cuda-python
 diffusers==0.12.1
 ftfy
 matplotlib
-nvtx
 onnx==1.12.0
 --extra-index-url https://pypi.ngc.nvidia.com
 onnx-graphsurgeon==0.3.25
