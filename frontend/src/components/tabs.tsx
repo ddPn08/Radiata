@@ -1,5 +1,7 @@
-import { createStyles, MediaQuery, Navbar } from '@mantine/core'
+import { createStyles, Flex, MediaQuery, Navbar, Stack } from '@mantine/core'
 import { Tab } from '../types/tab'
+import GithubButton from './githubButton'
+import ThemeToggle from './themeToggle'
 
 interface Props {
   current?: string | number | undefined
@@ -90,6 +92,13 @@ const Tabs = ({ current, onChange, tabs }: Props) => {
       >
         <Navbar height={'100%'} w={'240px'} p="md">
           <Navbar.Section grow>{largeLinks}</Navbar.Section>
+
+          <Navbar.Section>
+            <Flex justify={'space-between'}>
+              <GithubButton />
+              <ThemeToggle />
+            </Flex>
+          </Navbar.Section>
         </Navbar>
       </MediaQuery>
 
@@ -102,6 +111,13 @@ const Tabs = ({ current, onChange, tabs }: Props) => {
       >
         <Navbar height={'100%'} w={'100px'} p="md">
           <Navbar.Section grow>{smallLinks}</Navbar.Section>
+
+          <Navbar.Section>
+            <Stack>
+              <GithubButton />
+              <ThemeToggle />
+            </Stack>
+          </Navbar.Section>
         </Navbar>
       </MediaQuery>
     </>

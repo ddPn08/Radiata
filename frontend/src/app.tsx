@@ -1,10 +1,12 @@
-import { Box, Flex } from '@mantine/core'
+import { MantineProvider, Box, Flex } from '@mantine/core'
 import { Tab } from './types/tab'
 import Tabs from './components/tabs'
 import Txt2Img from './tabs/txt2img'
 import { useEffect, useState } from 'react'
 import Engine from './tabs/engine'
 import { IconEngine, IconPhotoEdit } from '@tabler/icons-react'
+import { useAtomValue } from 'jotai'
+import { themeAtom } from './atoms/theme'
 
 const TABS: Tab[] = [
   {
@@ -25,6 +27,8 @@ const PAGES: Record<string, () => JSX.Element> = {
 }
 
 const App = () => {
+  const theme = useAtomValue(themeAtom)
+
   const [currentTab, setCurrentTab] = useState(TABS[0].id)
   const [currentTabComponent, setCurrentTabComponent] = useState(PAGES[currentTab])
 
@@ -33,16 +37,24 @@ const App = () => {
   }, [currentTab])
 
   return (
-    <Flex h={'100vh'}>
-      <Tabs
-        current={currentTab}
-        tabs={TABS}
-        onChange={(id) => {
-          setCurrentTab(id)
-        }}
-      />
-      <Box w={'100%'}>{currentTabComponent && currentTabComponent}</Box>
-    </Flex>
+    <MantineProvider
+      theme={{
+        colorScheme: theme,
+      }}
+      withGlobalStyles
+      withNormalizeCSS
+    >
+      <Flex h={'100vh'}>
+        <Tabs
+          current={currentTab}
+          tabs={TABS}
+          onChange={(id) => {
+            setCurrentTab(id)
+          }}
+        />
+        <Box w={'100%'}>{currentTabComponent && currentTabComponent}</Box>
+      </Flex>
+    </MantineProvider>
   )
 }
 
