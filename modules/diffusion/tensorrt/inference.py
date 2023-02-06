@@ -56,8 +56,6 @@ def get_scheduler(scheduler_id: str):
     return schedulers[scheduler_id]
 
 
-
-
 class TensorRTDiffusionRunner(BaseRunner):
     def __init__(
         self,
@@ -250,7 +248,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                         noise_pred_text - noise_pred_uncond
                     )
 
-                    if scheduler_id in ['deis', 'dpm2', 'heun', 'dpm++', 'dpm', 'pndm']:
+                    if scheduler_id in ["deis", "dpm2", "heun", "dpm++", "dpm", "pndm"]:
                         latents = scheduler.step(
                             model_output=noise_pred, timestep=timestep, sample=latents
                         ).prev_sample

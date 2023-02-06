@@ -30,7 +30,9 @@ def get_runners():
         recursive=True,
     )
     return [
-        os.path.relpath(os.path.dirname(x), shared.cmd_opts.model_dir)
+        os.path.relpath(os.path.dirname(x), shared.cmd_opts.model_dir).replace(
+            os.sep, "/"
+        )
         for x in model_dirs
     ]
 
