@@ -1,14 +1,13 @@
-import { Box, createStyles, MediaQuery, Navbar } from '@mantine/core'
-import { Component } from 'react'
+import { createStyles, MediaQuery, Navbar } from '@mantine/core'
 import { Tab } from '../types/tab'
 
 interface Props {
-  tab?: string | number | undefined
-  onChange?: (tab: [string, number]) => void
+  current?: string | number | undefined
+  onChange?: (tab: string) => void
   tabs: Tab[]
-  closed?: boolean
-  vertical?: boolean
-  component?: ([label, Comp]: [string, Component]) => JSX.Element
+  //   closed?: boolean
+  //   vertical?: boolean
+  //   component?: ([label, Comp]: [string, Component]) => JSX.Element
 }
 
 const useStyles = createStyles((theme, _params, getRef) => {
@@ -50,34 +49,34 @@ const useStyles = createStyles((theme, _params, getRef) => {
   }
 })
 
-const Tabs = ({ tab, onChange, tabs }: Props) => {
+const Tabs = ({ current, onChange, tabs }: Props) => {
   const { classes, cx } = useStyles()
 
-  const largeLinks = tabs.map((item, i) => (
-    <Box
-      className={cx(classes.link, { [classes.linkActive]: item.id === tab })}
+  const largeLinks = tabs.map((item) => (
+    <a
+      className={cx(classes.link, { [classes.linkActive]: item.id === current })}
       key={item.id}
       onClick={(event) => {
         event.preventDefault()
-        onChange && onChange([item.id, i])
+        onChange && onChange(item.id)
       }}
     >
-      {item.icon}
+      <item.icon />
       <span>{item.label}</span>
-    </Box>
+    </a>
   ))
 
-  const smallLinks = tabs.map((item, i) => (
-    <Box
-      className={cx(classes.link, { [classes.linkActive]: item.id === tab })}
+  const smallLinks = tabs.map((item) => (
+    <a
+      className={cx(classes.link, { [classes.linkActive]: item.id === current })}
       key={item.id}
       onClick={(event) => {
         event.preventDefault()
-        onChange && onChange([item.id, i])
+        onChange && onChange(item.id)
       }}
     >
-      <span>{item.icon}</span>
-    </Box>
+      <item.icon />
+    </a>
   ))
 
   return (
