@@ -2,11 +2,13 @@
 fastapi==0.89.1
 uvicorn==0.20.0
 
+tqdm
+
 # TensorRT Diffusion
 numpy==1.21.6
 colored
 cuda-python
-diffusers==0.7.2
+diffusers==0.12.1
 ftfy
 matplotlib
 nvtx

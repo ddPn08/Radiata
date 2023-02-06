@@ -2,6 +2,7 @@ import json
 import os
 import random
 import time
+from tqdm import tqdm
 
 import diffusers
 import numpy as np
@@ -17,6 +18,7 @@ from lib.trt.utilities import TRT_LOGGER, Engine
 from modules import shared
 
 from lib.diffusers.lpw import LongPromptWeightingPipeline
+from ..runner import BaseRunner
 from .clip import create_clip_engine
 from .models import CLIP, VAE, UNet
 
@@ -41,16 +43,22 @@ def to_image(images):
 def get_scheduler(scheduler_id: str):
     schedulers = {
         "ddim": diffusers.DDIMScheduler,
+        "deis": diffusers.DEISMultistepScheduler,
+        "dpm2": diffusers.KDPM2DiscreteScheduler,
+        "dpm2-a": diffusers.KDPM2AncestralDiscreteScheduler,
         "euler_a": diffusers.EulerAncestralDiscreteScheduler,
         "euler": diffusers.EulerDiscreteScheduler,
+        "heun": diffusers.DPMSolverMultistepScheduler,
+        "dpm++": diffusers.DPMSolverMultistepScheduler,
+        "dpm": diffusers.DPMSolverMultistepScheduler,
         "pndm": diffusers.PNDMScheduler,
     }
     return schedulers[scheduler_id]
 
 
-class TensorRTDiffusionRunner:
-    loading = True
 
+
+class TensorRTDiffusionRunner(BaseRunner):
     def __init__(
         self,
         model_id: str,
@@ -109,12 +117,6 @@ class TensorRTDiffusionRunner:
         engine = self.engines[model_name]
         return engine.infer(feed_dict, self.stream)
 
-    def wait_loading(self):
-        if not self.loading:
-            return
-        while self.loading:
-            time.sleep(0.5)
-
     def infer(
         self,
         prompt: str,
@@ -171,66 +173,6 @@ class TensorRTDiffusionRunner:
                 TRT_LOGGER
             ):
                 cudart.cudaEventRecord(events["clip-start"], 0)
-                # # Tokenize input
-                # text_input_ids = (
-                #     self.tokenizer(
-                #         prompt,
-                #         padding="max_length",
-                #         max_length=self.tokenizer.model_max_length,
-                #         return_tensors="pt",
-                #     )
-                #     .input_ids.type(torch.int32)
-                #     .to(self.device)
-                # )
-
-                # # CLIP text encoder
-                # text_input_ids_inp = cuda.DeviceView(
-                #     ptr=text_input_ids.data_ptr(),
-                #     shape=text_input_ids.shape,
-                #     dtype=np.int32,
-                # )
-                # text_embeddings = self.runEngine(
-                #     "clip", {"input_ids": text_input_ids_inp}
-                # )["text_embeddings"]
-
-                # # Duplicate text embeddings for each generation per prompt
-                # bs_embed, seq_len, _ = text_embeddings.shape
-                # text_embeddings = text_embeddings.repeat(1, batch_size, 1)
-                # text_embeddings = text_embeddings.view(
-                #     bs_embed * batch_size, seq_len, -1
-                # )
-
-                # max_length = text_input_ids.shape[-1]
-                # uncond_input_ids = (
-                #     self.tokenizer(
-                #         negative_prompt,
-                #         padding="max_length",
-                #         max_length=max_length,
-                #         truncation=True,
-                #         return_tensors="pt",
-                #     )
-                #     .input_ids.type(torch.int32)
-                #     .to(self.device)
-                # )
-                # uncond_input_ids_inp = cuda.DeviceView(
-                #     ptr=uncond_input_ids.data_ptr(),
-                #     shape=uncond_input_ids.shape,
-                #     dtype=np.int32,
-                # )
-                # uncond_embeddings = self.runEngine(
-                #     "clip", {"input_ids": uncond_input_ids_inp}
-                # )["text_embeddings"]
-
-                # # Duplicate unconditional embeddings for each generation per prompt
-                # seq_len = uncond_embeddings.shape[1]
-                # uncond_embeddings = uncond_embeddings.repeat(1, batch_size, 1)
-                # uncond_embeddings = uncond_embeddings.view(batch_size, seq_len, -1)
-
-                # # Concatenate the unconditional and text embeddings into a single batch to avoid doing two forward passes for classifier free guidance
-                # text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
-
-                # if self.fp16:
-                #     text_embeddings = text_embeddings.to(dtype=torch.float16)
 
                 text_embeddings = self.lpw(
                     prompt=prompt,
@@ -266,7 +208,7 @@ class TensorRTDiffusionRunner:
                 torch.cuda.synchronize()
 
                 cudart.cudaEventRecord(events["denoise-start"], 0)
-                for step_index, timestep in enumerate(scheduler.timesteps):
+                for step_index, timestep in enumerate(tqdm(scheduler.timesteps)):
                     # expand the latents if we are doing classifier free guidance
                     latent_model_input = torch.cat([latents] * 2)
                     latent_model_input = scheduler.scale_model_input(
@@ -308,7 +250,7 @@ class TensorRTDiffusionRunner:
                         noise_pred_text - noise_pred_uncond
                     )
 
-                    if scheduler_id in ["pndm"]:
+                    if scheduler_id in ['deis', 'dpm2', 'heun', 'dpm++', 'dpm', 'pndm']:
                         latents = scheduler.step(
                             model_output=noise_pred, timestep=timestep, sample=latents
                         ).prev_sample

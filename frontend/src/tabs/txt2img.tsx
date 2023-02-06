@@ -100,21 +100,25 @@ export const Txt2Img = () => {
           `}
           inline
         >
-          <div
-            class={css`
-              display: flex;
-              width: 100%;
-              align-items: center;
-              gap: 1rem;
-            `}
-          >
+          <Item>
             <div>Sampler</div>
             <Select
-              options={['ddim', 'euler', 'euler_a', 'pndm'].map((v) => ({ label: v, value: v }))}
+              options={[
+                'ddim',
+                'deis',
+                'dpm2',
+                'dpm2-a',
+                'euler_a',
+                'euler',
+                'heun',
+                'dpm++',
+                'dpm',
+                'pndm',
+              ].map((v) => ({ label: v, value: v }))}
               value={req.scheduler_id}
               onChange={(opt) => setReq('scheduler_id', opt.value)}
             />
-          </div>
+          </Item>
           <WithSlider
             label="steps"
             max={1000}

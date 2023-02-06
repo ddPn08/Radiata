@@ -1,3 +1,3 @@
-from .diffusion.inference import TensorRTDiffusionRunner
+from .diffusion.tensorrt.inference import TensorRTDiffusionRunner
 
 runner: TensorRTDiffusionRunner = None

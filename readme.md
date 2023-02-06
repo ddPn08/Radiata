@@ -42,6 +42,8 @@ docker compose up
 2. Clone Lsmith repository
 ```sh
 git clone https://github.com/ddPn08/Lsmith.git
+cd Lsmith
+git submodule update --init --recursive
 ```
 3. Enter the repository directory.
 ```sh

@@ -593,6 +593,5 @@ class LongPromptWeightingPipeline:
             negative_prompt,
             max_embeddings_multiples,
         )
-        dtype = text_embeddings.dtype
 
         return text_embeddings

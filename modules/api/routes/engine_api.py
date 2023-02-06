@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from modules import runner
 
-from ...diffusion.engine import EngineBuilder
+from ...diffusion.tensorrt.engine import EngineBuilder
 from ..api_router import api
 
 
