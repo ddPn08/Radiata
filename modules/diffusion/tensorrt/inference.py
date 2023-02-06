@@ -72,6 +72,8 @@ class TensorRTDiffusionRunner(BaseRunner):
             txt = f.read()
             self.meta = json.loads(txt)
 
+        self.scheduler = None
+        self.scheduler_id = None
         self.model_id = model_id
         self.device = "cuda"
         self.fp16 = self.meta["denoising_prec"] == "fp16"
@@ -131,10 +133,13 @@ class TensorRTDiffusionRunner(BaseRunner):
         self.wait_loading()
         batch_size = 1
 
-        Scheduler = get_scheduler(scheduler_id)
+        if self.scheduler_id != scheduler_id:
+            Scheduler = get_scheduler(scheduler_id)
+            self.scheduler = Scheduler.from_config(
+                {"num_train_timesteps": 1000, "beta_start": 0.00085, "beta_end": 0.012}
+            )
 
-        scheduler = Scheduler.from_config(self.model_id, subfolder="scheduler")
-        scheduler.set_timesteps(steps, device=self.device)
+        self.scheduler.set_timesteps(steps, device=self.device)
 
         # Spatial dimensions of latent tensor
         latent_height = image_height // 8
@@ -201,15 +206,15 @@ class TensorRTDiffusionRunner(BaseRunner):
                 )
 
                 # Scale the initial noise by the standard deviation required by the scheduler
-                latents = latents * scheduler.init_noise_sigma
+                latents = latents * self.scheduler.init_noise_sigma
 
                 torch.cuda.synchronize()
 
                 cudart.cudaEventRecord(events["denoise-start"], 0)
-                for step_index, timestep in enumerate(tqdm(scheduler.timesteps)):
+                for step_index, timestep in enumerate(tqdm(self.scheduler.timesteps)):
                     # expand the latents if we are doing classifier free guidance
                     latent_model_input = torch.cat([latents] * 2)
-                    latent_model_input = scheduler.scale_model_input(
+                    latent_model_input = self.scheduler.scale_model_input(
                         latent_model_input, timestep
                     )
 
@@ -249,11 +254,11 @@ class TensorRTDiffusionRunner(BaseRunner):
                     )
 
                     if scheduler_id in ["deis", "dpm2", "heun", "dpm++", "dpm", "pndm"]:
-                        latents = scheduler.step(
+                        latents = self.scheduler.step(
                             model_output=noise_pred, timestep=timestep, sample=latents
                         ).prev_sample
                     else:
-                        latents = scheduler.step(
+                        latents = self.scheduler.step(
                             model_output=noise_pred,
                             timestep=timestep,
                             sample=latents,

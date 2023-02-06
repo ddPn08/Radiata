@@ -133,7 +133,10 @@ class EngineBuilder:
             ),
         }
 
-        self.model_dir = os.path.join(shared.cmd_opts.model_dir, model_id)
+        self.model_dir = os.path.join(
+            shared.cmd_opts.model_dir,
+            os.path.basename(model_id) if os.path.abspath(model_id) else model_id,
+        )
 
     def build(self, generator=False, on_end=lambda: ()):
         engine_dir = os.path.join(self.model_dir, "engine")
