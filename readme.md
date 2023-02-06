@@ -23,6 +23,11 @@
 ## Docker (All platform) | Easy
 
 1. Clone repository
+```sh
+git clone https://github.com/ddPn08/Lsmith.git
+cd Lsmith
+git submodule update --init --recursive
+```
 2. Launch using Docker compose
 ```sh
 docker compose up
