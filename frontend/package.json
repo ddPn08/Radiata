@@ -14,6 +14,15 @@
     "format-all": "pnpm eslint --fix; pnpm stylelint --fix; pnpm prettier --write"
   },
   "dependencies": {
+    "@emotion/react": "^11.10.5",
+    "@mantine/carousel": "^5.10.3",
+    "@mantine/core": "^5.10.3",
+    "@mantine/dropzone": "^5.10.3",
+    "@mantine/form": "^5.10.3",
+    "@mantine/hooks": "^5.10.3",
+    "@mantine/notifications": "^5.10.3",
+    "@tabler/icons-react": "^2.2.0",
+    "embla-carousel-react": "^7.0.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
