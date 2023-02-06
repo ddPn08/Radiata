@@ -4,7 +4,7 @@ import subprocess
 import sys
 import sys
 import platform
-import requests
+import urllib.request as request
 from typing import Optional
 
 python = sys.executable
@@ -45,16 +45,28 @@ stderr: {result.stderr.decode(encoding="utf8", errors="ignore") if len(result.st
 
 def download(url: str, dest: str):
     print(f"Downloading {url} to {dest}")
-    data = requests.get(url).content
+    with request.urlopen(url) as res:
+        data = res.read()
     with open(dest, mode="wb") as f:
         f.write(data)
 
 
-def check_run(command: str):
-    result = subprocess.run(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-    )
-    return result.returncode == 0
+def which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, _ = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
 
 
 def is_installed(package: str):
@@ -86,13 +98,27 @@ def extract_arg(args: list[str], name: str):
     return [x for x in args if x != name], name in args
 
 
-def torch_version():
-    try:
-        import torch
-
-        return torch.__version__
-    except Exception:
-        return None
+def install_tensorrt(tensorrt_linux_command: str):
+    if platform.system() == "Windows":
+        libfile_path = which("nvinfer.dll")
+        assert (
+            libfile_path is not None
+        ), "Could not find TensorRT. Please check if it is installed correctly."
+        trt_dir = os.path.dirname(os.path.dirname(libfile_path))
+        python_dir = os.path.join(trt_dir, "python")
+        assert os.path.exists(
+            python_dir
+        ), "Couldn't find the python folder in TensorRT's directory. It may not have been installed correctly."
+        key = f"{sys.version_info.major}{sys.version_info.minor}"
+        for file in os.listdir(python_dir):
+            if key in file and file.endswith(".whl"):
+                filepath = os.path.join(python_dir, file)
+                print("Installing tensorrt")
+                run(f'{python} -m pip install "{filepath}"')
+                return
+        raise RuntimeError("Failed to install tensorrt.")
+    else:
+        run(f"{python} -m {tensorrt_linux_command}")
 
 
 def prepare_environment(args: list[str]):
@@ -100,8 +126,8 @@ def prepare_environment(args: list[str]):
         "TORCH_COMMAND",
         "pip install torch==1.12.0+cu116 --extra-index-url https://download.pytorch.org/whl/cu116",
     )
-    tensorrt_command = os.environ.get(
-        "TORCH_COMMAND",
+    tensorrt_linux_command = os.environ.get(
+        "TENSORRT_LINUX_COMMAND",
         "pip install tensorrt==8.5.3.1",
     )
     requirements_file = os.environ.get("REQS_FILE", "requirements.txt")
@@ -125,11 +151,7 @@ def prepare_environment(args: list[str]):
     )
 
     if reinstall_tensorrt or not is_installed("tensorrt"):
-        run(
-            f'"{python}" -m {tensorrt_command}',
-            "Installing tensorrt",
-            "Couldn't install tensorrt",
-        )
+        install_tensorrt(tensorrt_linux_command)
 
     run(
         f"{python} -m pip install -r {requirements_file}",
