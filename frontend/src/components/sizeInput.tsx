@@ -1,4 +1,4 @@
-import { Flex, Input, InputWrapperBaseProps } from '@mantine/core'
+import { Flex, Input, InputWrapperBaseProps, NumberInput } from '@mantine/core'
 import SizeSlider from './sizeSlider'
 
 // 256 to 1024, 64 steps
@@ -14,7 +14,7 @@ const SizeInput = (props: Props) => {
     <Input.Wrapper {...props}>
       <Flex align={'center'} gap={'sm'}>
         <SizeSlider w={'100%'} />
-        <Input w={'80px'} type={'number'} />
+        <NumberInput min={256} max={1024} step={64} defaultValue={768} w={'100px'} />
       </Flex>
     </Input.Wrapper>
   )

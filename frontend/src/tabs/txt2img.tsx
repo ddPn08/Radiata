@@ -86,14 +86,14 @@ const Txt2Img = () => {
             <Input.Wrapper label={'Steps'}>
               <Flex align={'center'} gap={'sm'}>
                 <Slider defaultValue={50} min={1} max={150} step={1} w={'100%'} />
-                <Input w={'80px'} type={'number'} />
+                <NumberInput defaultValue={50} min={1} max={150} step={1} w={'100px'} />
               </Flex>
             </Input.Wrapper>
 
             <Input.Wrapper label={'CFG Scale'}>
               <Flex align={'center'} gap={'sm'}>
                 <Slider defaultValue={7} min={0.1} max={20} step={0.1} w={'100%'} />
-                <Input w={'80px'} type={'number'} />
+                <NumberInput defaultValue={7} min={0.1} max={20} step={0.1} w={'100px'} />
               </Flex>
             </Input.Wrapper>
           </Flex>
