@@ -18,12 +18,9 @@ def custom_generate_unique_id(route: APIRoute):
 
 
 app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
-origins = [
-    "http://172.22.96.142:5173",
-]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
