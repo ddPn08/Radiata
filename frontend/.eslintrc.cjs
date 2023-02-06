@@ -28,7 +28,6 @@ module.exports = {
     '@typescript-eslint/no-empty-function': 'off',
     '@typescript-eslint/no-namespace': 'off',
     '@typescript-eslint/no-non-null-asserted-optional-chain': 'off',
-    'import/no-unresolved': 'off',
     'unused-imports/no-unused-imports': 'error',
     'unused-imports/no-unused-vars': [
       'warn',
@@ -39,15 +38,7 @@ module.exports = {
         argsIgnorePattern: '^_',
       },
     ],
-    // 'import/order': [
-    //   'error',
-    //   {
-    //     alphabetize: {
-    //       order: 'asc',
-    //     },
-    //     groups: [['builtin', 'external', 'internal'], ['parent', 'sibling', 'index'], ['object']],
-    //     'newlines-between': 'always',
-    //   },
-    // ],
+    'react/jsx-uses-react': 'off',
+    'react/react-in-jsx-scope': 'off',
   },
 }

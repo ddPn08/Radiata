@@ -1,1 +1,1 @@
-# my-typescript
+# Lsmith Frontend
