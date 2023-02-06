@@ -1,6 +1,7 @@
+import { TablerIconsProps } from '@tabler/icons-react'
+
 export interface Tab {
   id: string
   label: string
-  icon: JSX.Element
-  component: () => JSX.Element
+  icon: (props: TablerIconsProps) => JSX.Element
 }

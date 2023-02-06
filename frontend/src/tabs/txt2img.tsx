@@ -4,6 +4,7 @@ import {
   Button,
   Divider,
   Flex,
+  Image,
   Input,
   MediaQuery,
   NativeSelect,
@@ -13,6 +14,7 @@ import {
   Textarea,
 } from '@mantine/core'
 import { IconArrowsDownUp, IconDice5, IconRotateClockwise } from '@tabler/icons-react'
+import SizeInput from '../components/sizeInput'
 
 const Txt2Img = () => {
   return (
@@ -25,6 +27,10 @@ const Txt2Img = () => {
           </Stack>
 
           <Button ml={'md'}>Generate</Button>
+
+          <Box>
+            <Image />
+          </Box>
         </Stack>
 
         <Divider orientation="vertical" />
@@ -56,19 +62,11 @@ const Txt2Img = () => {
 
             <Flex align={'center'}>
               <Box w={'100%'}>
-                <Input.Wrapper label={'Width'}>
-                  <Flex align={'center'} gap={'sm'}>
-                    <Slider defaultValue={768} min={256} max={1024} step={64} w={'100%'} />
-                    <Input w={'80px'} type={'number'} />
-                  </Flex>
-                </Input.Wrapper>
+                {/* Width */}
+                <SizeInput label={'Width'} />
 
-                <Input.Wrapper label={'Height'}>
-                  <Flex align={'center'} gap={'sm'}>
-                    <Slider defaultValue={768} min={256} max={1024} step={64} w={'100%'} />
-                    <Input w={'80px'} type={'number'} />
-                  </Flex>
-                </Input.Wrapper>
+                {/* Helight */}
+                <SizeInput label={'Height'} />
               </Box>
               <ActionIcon variant="outline" m={'sm'} color={'blue'}>
                 <IconArrowsDownUp size={16} />
