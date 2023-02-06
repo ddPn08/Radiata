@@ -3,14 +3,23 @@ import os
 import subprocess
 import sys
 import sys
+import platform
+import requests
+from typing import Optional
 
 python = sys.executable
 git = os.environ.get("GIT", "git")
 index_url = os.environ.get("INDEX_URL", "")
 skip_install = False
+__dirname__ = os.path.dirname(__file__)
 
 
-def run(command, desc=None, errdesc=None, custom_env=None):
+def run(
+    command: str,
+    desc: Optional[str] = None,
+    errdesc: Optional[str] = None,
+    custom_env: Optional[str] = None,
+):
     if desc is not None:
         print(desc)
 
@@ -34,14 +43,21 @@ stderr: {result.stderr.decode(encoding="utf8", errors="ignore") if len(result.st
     return result.stdout.decode(encoding="utf8", errors="ignore")
 
 
-def check_run(command):
+def download(url: str, dest: str):
+    print(f"Downloading {url} to {dest}")
+    data = requests.get(url).content
+    with open(dest, mode="wb") as f:
+        f.write(data)
+
+
+def check_run(command: str):
     result = subprocess.run(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
     )
     return result.returncode == 0
 
 
-def is_installed(package):
+def is_installed(package: str):
     try:
         spec = importlib.util.find_spec(package)
     except ModuleNotFoundError:
@@ -50,7 +66,7 @@ def is_installed(package):
     return spec is not None
 
 
-def run_pip(args, desc=None):
+def run_pip(args: str, desc: Optional[str] = None):
     if skip_install:
         return
 
@@ -62,11 +78,11 @@ def run_pip(args, desc=None):
     )
 
 
-def run_python(code, desc=None, errdesc=None):
+def run_python(code: str, desc: Optional[str] = None, errdesc: Optional[str] = None):
     return run(f'"{python}" -c "{code}"', desc, errdesc)
 
 
-def extract_arg(args, name):
+def extract_arg(args: list[str], name: str):
     return [x for x in args if x != name], name in args
 
 
@@ -79,7 +95,7 @@ def torch_version():
         return None
 
 
-def prepare_environment(args):
+def prepare_environment(args: list[str]):
     torch_command = os.environ.get(
         "TORCH_COMMAND",
         "pip install torch==1.12.0+cu116 --extra-index-url https://download.pytorch.org/whl/cu116",
@@ -122,21 +138,48 @@ def prepare_environment(args):
     )
 
 
+def prepare_tensorrt_pluginlib():
+    lib_dir = os.path.join(__dirname__, "lib", "trt", "lib")
+    dest_path = os.path.join(
+        lib_dir,
+        "nvinfer_plugin.dll"
+        if platform.system() == "Windows"
+        else "libnvinfer_plugin.so",
+    )
+
+    if not os.path.exists(dest_path):
+        url = (
+            "https://github.com/ddPn08/Lsmith/releases/download/tensorrt-8.5.3.1/nvinfer_plugin.dll"
+            if platform.system() == "Windows"
+            else "https://github.com/ddPn08/Lsmith/releases/download/tensorrt-8.5.3.1/libnvinfer_plugin.so"
+        )
+        download(url, dest_path)
+
+    if platform.system() == "Windows":
+        os.environ["PATH"] = f'{lib_dir}{os.pathsep}{os.environ.get("PATH", "")}'
+    else:
+        os.environ["LD_PRELOAD"] = os.path.join(lib_dir, "libnvinfer_plugin.so")
+
+
 if __name__ == "__main__":
     sys.argv = sys.argv[1:]
+    main_args = os.environ.get("COMMANDLINE_ARGS", "").split(" ")
+    uvicorn_args = os.environ.get("UVICORN_ARGS", "").split(" ")
+
     if "--" in sys.argv:
         index = sys.argv.index("--")
-        uvicorn_args = sys.argv[:index]
-        main_args = sys.argv[index + 1 :]
+        uvicorn_args += sys.argv[:index]
+        main_args += sys.argv[index + 1 :]
     else:
-        uvicorn_args = sys.argv
-        main_args = ""
+        uvicorn_args += sys.argv
+
+    main_args = [x for x in main_args if x]
+    uvicorn_args = [x for x in uvicorn_args if x]
 
     prepare_environment(main_args)
+    prepare_tensorrt_pluginlib()
 
     env = os.environ.copy()
-    if "COMMANDLINE_ARGS" in env:
-        main_args += f' {env["COMMANDLINE_ARGS"]}'
     env["COMMANDLINE_ARGS"] = " ".join(main_args)
 
     subprocess.run(
