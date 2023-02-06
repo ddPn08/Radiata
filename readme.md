@@ -10,6 +10,7 @@
   - [Linux | Difficult](#linux--difficult)
     - [requirements](#requirements)
   - [Windows | Difficult](#windows--difficult)
+    - [requirements](#requirements-1)
 - [Usage](#usage)
   - [Building the TensorRT engine](#building-the-tensorrt-engine)
   - [Generate images](#generate-images)
@@ -38,7 +39,7 @@ docker compose up
 ### requirements
 - node.js (recommended version is 18)
 - pnpm
-- Python 3.10
+- python 3.10
 - pip
 - CUDA
 - cuDNN < 8.6.0
@@ -68,10 +69,25 @@ LD_PRELOAD="/lib/src/TensorRT/build/out/libnvinfer_plugin.so.8" bash launch.sh -
 ```
 
 ## Windows | Difficult
+### requirements
+- node.js (recommended version is 18)
+- pnpm
+- python 3.10
+- pip
+- CUDA
+- cuDNN < 8.6.0
+- TensorRT 8.5.x
+
 1. Install nvidia gpu driver
 2. Instal cuda 11.x (Click [here](https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/) for the official guide)
 3. Install tensorrt 8.5.3.1 (Click [here](https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html) for the official guide)
-4. 
+4. Clone Lsmith repository
+```sh
+git clone https://github.com/ddPn08/Lsmith.git
+cd Lsmith
+git submodule update --init --recursive
+```
+5. Launch `launch-user.bat`
 
 <br />
 

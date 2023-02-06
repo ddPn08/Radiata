@@ -7,6 +7,8 @@ import platform
 import urllib.request as request
 from typing import Optional
 
+import build
+
 python = sys.executable
 git = os.environ.get("GIT", "git")
 index_url = os.environ.get("INDEX_URL", "")
@@ -138,6 +140,7 @@ def prepare_environment(args: list[str]):
 
     args, reinstall_torch = extract_arg(args, "--reinstall-torch")
     args, reinstall_tensorrt = extract_arg(args, "--reinstall-tensorrt")
+    args, build_frontend = extract_arg(args, "--build-frontend")
 
     if reinstall_torch or not is_installed("torch"):
         run(
@@ -158,6 +161,9 @@ def prepare_environment(args: list[str]):
         desc=f"Installing requirements",
         errdesc=f"Couldn't install requirements",
     )
+
+    if build_frontend:
+        build.build_frontend()
 
 
 def prepare_tensorrt_pluginlib():
