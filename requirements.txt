@@ -1,6 +1,7 @@
 # API Server
 fastapi==0.89.1
 uvicorn==0.20.0
+pywin32; sys_platform == "win32"
 
 tqdm
 

@@ -4,14 +4,15 @@
 
 ---
 
-1. [Benchmark](#benchmark)
-2. [Installation](#installation)
-    - [Docker (All platform) | Easy](#docker-all-platform--easy)
-    - [Linux | Difficult](#linux--difficult)
-    - [Windows | Currently  unavailable](#windows--currently-unavailable)
-3. [Usage](#usage)
-    - [Building the TensorRT engine](#building-the-tensorrt-engine)
-    - [Generate images](#generate-images)
+- [Benchmark](#benchmark)
+- [Installation](#installation)
+  - [Docker (All platform) | Easy](#docker-all-platform--easy)
+  - [Linux | Difficult](#linux--difficult)
+    - [requirements](#requirements)
+  - [Windows | Difficult](#windows--difficult)
+- [Usage](#usage)
+  - [Building the TensorRT engine](#building-the-tensorrt-engine)
+  - [Generate images](#generate-images)
 
 ---
 
@@ -66,9 +67,11 @@ ex.)
 LD_PRELOAD="/lib/src/TensorRT/build/out/libnvinfer_plugin.so.8" bash launch.sh --host 0.0.0.0
 ```
 
-## Windows | Currently unavailable...
-We are looking for a way to do that.
-Use [Docker](#docker-all-platform--easy) instead for now.
+## Windows | Difficult
+1. Install nvidia gpu driver
+2. Instal cuda 11.x (Click [here](https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/) for the official guide)
+3. Install tensorrt 8.5.3.1 (Click [here](https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html) for the official guide)
+4. 
 
 <br />
 
