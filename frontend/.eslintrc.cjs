@@ -2,20 +2,23 @@
 module.exports = {
   env: {
     browser: true,
-    node: true,
+    es2021: true,
   },
   extends: [
-    'plugin:solid/recommended',
     'eslint:recommended',
+    'plugin:react/recommended',
     'plugin:@typescript-eslint/recommended',
-    'plugin:import/recommended',
-    'plugin:import/typescript',
     'prettier',
   ],
-  plugins: ['unused-imports', 'solid'],
+  overrides: [],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  plugins: ['unused-imports', 'react', '@typescript-eslint'],
   rules: {
     'no-empty': 'off',
-    'solid/reactivity': 'off',
     '@typescript-eslint/ban-types': 'off',
     '@typescript-eslint/no-var-requires': 'off',
     '@typescript-eslint/no-empty-interface': 'off',
@@ -36,15 +39,15 @@ module.exports = {
         argsIgnorePattern: '^_',
       },
     ],
-    'import/order': [
-      'error',
-      {
-        alphabetize: {
-          order: 'asc',
-        },
-        groups: [['builtin', 'external', 'internal'], ['parent', 'sibling', 'index'], ['object']],
-        'newlines-between': 'always',
-      },
-    ],
+    // 'import/order': [
+    //   'error',
+    //   {
+    //     alphabetize: {
+    //       order: 'asc',
+    //     },
+    //     groups: [['builtin', 'external', 'internal'], ['parent', 'sibling', 'index'], ['object']],
+    //     'newlines-between': 'always',
+    //   },
+    // ],
   },
 }
