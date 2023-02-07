@@ -40,7 +40,7 @@ const Generator = () => {
               <Textarea
                 label={'Negative'}
                 defaultValue={parameters.negative_prompt}
-                onChange={(e) => setParameters((p) => ({ ...p, prompt: e.target.value }))}
+                onChange={(e) => setParameters((p) => ({ ...p, negative_prompt: e.target.value }))}
                 autosize
               />
             </Stack>
