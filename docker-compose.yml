@@ -9,8 +9,8 @@ services:
       - ./outputs:/app/outputs
       - ./venv:/app/venv
     environment:
-      - COMMANDLINE_ARGS=""
-      - UVICORN_ARGS="--host 0.0.0.0"
+      - COMMANDLINE_ARGS=
+      - UVICORN_ARGS=--host 0.0.0.0
     deploy:
       resources:
         reservations:
