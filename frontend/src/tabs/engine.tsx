@@ -10,55 +10,139 @@ import {
   Stack,
   Text,
 } from '@mantine/core'
+import { useState } from 'react'
 import SizeInput from '../components/sizeInput'
+import { api } from '~/api'
+import { useForm } from '@mantine/form'
+import { BuildRequest } from 'internal:api'
+
+interface BuildRequestForm extends Omit<BuildRequest, 'fp16'> {
+  denoising_precision: string
+}
 
 const Engine = () => {
+  const form = useForm<BuildRequestForm>({
+    initialValues: {
+      model_id: '',
+      hf_token: '',
+      denoising_precision: 'float16',
+      opt_image_height: 512,
+      opt_image_width: 512,
+      max_batch_size: 1,
+      onnx_opset: 16,
+      build_static_batch: false,
+      build_dynamic_shape: true,
+      build_preview_features: false,
+      force_engine_build: false,
+      force_onnx_export: false,
+      force_onnx_optimize: false,
+      onnx_minimal_optimization: false,
+    },
+  })
+
+  const [status, setStatus] = useState<Record<string, any> | null>(null)
+
+  const onSubmit = async (req: BuildRequest) => {
+    console.log(req)
+    await buildEngine(req)
+  }
+
+  const buildEngine = async (req: BuildRequest) => {
+    const { raw } = await api.buildEngineRaw({ buildRequest: req })
+    const reader = raw.body?.getReader()
+    if (!reader) return
+    let done = true
+    while (done) {
+      const res = await reader.read()
+      done = !res.done
+      try {
+        setStatus(JSON.parse(new TextDecoder().decode(res.value) || ''))
+      } catch (_) {}
+    }
+    setStatus(null)
+  }
+
   return (
     <Container py={'md'}>
       <Text size={'lg'}>Build TensorRT from diffusers moodel on Hugging Face</Text>
-      <Stack my={'sm'}>
-        <Input.Wrapper label={'Model ID'} withAsterisk>
-          <Input placeholder="hugging face model id (e.g. CompVis/stablediffusion-v1-4)" />
-        </Input.Wrapper>
+      <form
+        onSubmit={form.onSubmit((values) =>
+          onSubmit({
+            fp16: values.denoising_precision === 'float16',
+            ...values,
+          }),
+        )}
+      >
+        <Stack my={'sm'}>
+          <Input.Wrapper label={'Model ID'} withAsterisk>
+            <Input
+              placeholder="hugging face model id (e.g. CompVis/stablediffusion-v1-4)"
+              {...form.getInputProps('model_id')}
+            />
+          </Input.Wrapper>
 
-        <Input.Wrapper label={'Hugging Face Access Token'}>
-          <Input placeholder="hf_********************" />
-        </Input.Wrapper>
+          <Input.Wrapper label={'Hugging Face Access Token'}>
+            <Input placeholder="hf_********************" {...form.getInputProps('hf_token')} />
+          </Input.Wrapper>
 
-        <SizeInput label={'Optimization Image Width'} />
+          <SizeInput
+            label={'Optimization Image Width'}
+            {...form.getInputProps('opt_image_width')}
+          />
 
-        <SizeInput label={'Optimization Image Height'} />
+          <SizeInput
+            label={'Optimization Image Height'}
+            {...form.getInputProps('opt_image_height')}
+          />
 
-        <Input.Wrapper label={'Denoising precision'}>
-          <NativeSelect data={['float32', 'float16']} />
-        </Input.Wrapper>
+          <Input.Wrapper label={'Denoising precision'}>
+            <NativeSelect data={['float32', 'float16']} {...form.getInputProps('fp16')} />
+          </Input.Wrapper>
 
-        <Input.Wrapper label={'Max batch size'}>
-          <NumberInput min={1} max={32} defaultValue={1} />
-        </Input.Wrapper>
+          <Input.Wrapper label={'Max batch size'}>
+            <NumberInput
+              min={1}
+              max={32}
+              defaultValue={1}
+              {...form.getInputProps('max_batch_size')}
+            />
+          </Input.Wrapper>
 
-        <SimpleGrid
-          cols={4}
-          spacing="lg"
-          breakpoints={[
-            { maxWidth: 'md', cols: 3, spacing: 'md' },
-            { maxWidth: 'sm', cols: 2, spacing: 'sm' },
-            { maxWidth: 'xs', cols: 1, spacing: 'sm' },
-          ]}
-        >
-          <Checkbox label={'Build static batch'} />
-          <Checkbox label={'Build dynamic shape'} />
-          <Checkbox label={'Build preview features'} />
-          <Checkbox label={'Force engine build'} />
-          <Checkbox label={'Force onnx export'} />
-          <Checkbox label={'Force onnx optimize'} />
-          <Checkbox label={'Onnx minimal optimization'} />
-        </SimpleGrid>
+          <SimpleGrid
+            cols={4}
+            spacing="lg"
+            breakpoints={[
+              { maxWidth: 'md', cols: 3, spacing: 'md' },
+              { maxWidth: 'sm', cols: 2, spacing: 'sm' },
+              { maxWidth: 'xs', cols: 1, spacing: 'sm' },
+            ]}
+          >
+            <Checkbox label={'Build static batch'} {...form.getInputProps('build_static_path')} />
+            <Checkbox
+              label={'Build dynamic shape'}
+              {...form.getInputProps('build_dynamic_shape')}
+            />
+            <Checkbox
+              label={'Build preview features'}
+              {...form.getInputProps('build_preview_features')}
+            />
+            <Checkbox label={'Force engine build'} {...form.getInputProps('force_engine_build')} />
+            <Checkbox label={'Force onnx export'} {...form.getInputProps('force_onnx_export')} />
+            <Checkbox
+              label={'Force onnx optimize'}
+              {...form.getInputProps('force_onnx_optimize')}
+            />
+            <Checkbox
+              label={'Onnx minimal optimization'}
+              {...form.getInputProps('onnx_minimal_optimization')}
+            />
+          </SimpleGrid>
 
-        <Space h={'md'} />
+          <Space h={'md'} />
 
-        <Button>Build</Button>
-      </Stack>
+          <Button type={'submit'}>Build</Button>
+        </Stack>
+      </form>
     </Container>
   )
 }
