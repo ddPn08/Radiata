@@ -28,16 +28,18 @@ const Generator = () => {
             <Stack w={'100%'}>
               <Textarea
                 label={'Positive'}
-                onChange={(e) =>
+                defaultValue={parameters.prompt}
+                onChange={(e) => {
                   setParameters((p) => ({
                     ...p,
                     prompt: e.target.value,
                   }))
-                }
+                }}
                 autosize
               />
               <Textarea
                 label={'Negative'}
+                defaultValue={parameters.negative_prompt}
                 onChange={(e) => setParameters((p) => ({ ...p, prompt: e.target.value }))}
                 autosize
               />
