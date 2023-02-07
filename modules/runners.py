@@ -24,7 +24,7 @@ def set_runner(
         with open(meta_path, mode="r") as f:
             meta = json.loads(f.read())
         if "model_id" not in meta:
-            meta["model_id"] = os.path.relpath(model_dir)
+            meta["model_id"] = os.path.relpath(model_dir).replace(os.sep, "/")
         with open(meta_path, mode="w") as f:
             f.write(json.dumps(meta))
     except Exception as e:

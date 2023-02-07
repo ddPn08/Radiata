@@ -22,8 +22,6 @@ from ..runner import BaseRunner
 from .clip import create_clip_engine
 from .models import CLIP, VAE, UNet
 
-diffusers.StableDiffusionImg2ImgPipeline
-
 
 def to_image(images):
     images = (
@@ -76,7 +74,7 @@ def get_scheduler(scheduler_id: str):
     return schedulers[scheduler_id]
 
 
-def preprocess_image(image: Image.Image, fp16: bool):
+def preprocess_image(image: Image.Image):
     w, h = image.size
     w, h = map(lambda x: x - x % 8, (w, h))
     image = image.resize((w, h), resample=diffusers.utils.PIL_INTERPOLATION["lanczos"])
@@ -217,9 +215,18 @@ class TensorRTDiffusionRunner(BaseRunner):
 
         if self.scheduler_id != scheduler_id:
             Scheduler = get_scheduler(scheduler_id)
-            self.scheduler = Scheduler.from_pretrained(
-                self.model_id, subfolder="scheduler"
-            )
+            try:
+                self.scheduler = Scheduler.from_pretrained(
+                    self.model_id, subfolder="scheduler"
+                )
+            except:
+                self.scheduler = Scheduler.from_config(
+                    {
+                        "num_train_timesteps": 1000,
+                        "beta_start": 0.00085,
+                        "beta_end": 0.012,
+                    }
+                )
 
         self.scheduler.set_timesteps(steps, device=self.device)
         timesteps, steps = get_timesteps(
@@ -281,7 +288,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                     batch_size=batch_size,
                     height=image_height,
                     width=image_width,
-                    dtype=torch.float16 if self.fp16 else torch.float32,
+                    dtype=torch.float32,
                     device=self.device,
                     generator=generator,
                 )
