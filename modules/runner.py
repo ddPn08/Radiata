@@ -3,7 +3,7 @@ import os
 
 from modules import config, shared
 
-from .diffusion.tensorrt.inference import TensorRTDiffusionRunner
+from .diffusion.tensorrt.runner import TensorRTDiffusionRunner
 from .images import save_image
 
 current: TensorRTDiffusionRunner = None

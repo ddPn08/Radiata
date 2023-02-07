@@ -1,6 +1,6 @@
 import { Configuration, MainApi } from 'internal:api'
 
-const BASE_PATH = import.meta.env['VITE_API_BASE_PATH'] as string || ""
+const BASE_PATH = (import.meta.env['VITE_API_BASE_PATH'] as string) || ''
 
 const config = {
     basePath: BASE_PATH,

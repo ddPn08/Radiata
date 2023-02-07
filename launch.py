@@ -189,6 +189,16 @@ def prepare_tensorrt_pluginlib():
         os.environ["LD_PRELOAD"] = os.path.join(lib_dir, "libnvinfer_plugin.so")
 
 
+def prepare_tensorrt_pluginlib():
+    lib_dir = os.path.join(__dirname__, "lib", "trt", "lib")
+    if platform.system() == "Windows":
+        os.environ["PATH"] = f'{lib_dir}{os.pathsep}{os.environ.get("PATH", "")}'
+    else:
+        os.environ[
+            "LD_PRELOAD"
+        ] = f'{os.path.join(lib_dir, "libnvinfer_plugin.so")}{os.pathsep}{os.environ.get("LD_PRELOAD", "")}'
+
+
 if __name__ == "__main__":
     sys.argv = sys.argv[1:]
     main_args = os.environ.get("COMMANDLINE_ARGS", "").split(" ")

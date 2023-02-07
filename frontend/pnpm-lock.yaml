@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@iconify-json/material-symbols': ^1.1.27
   '@openapitools/openapi-generator-cli': ^2.5.2
+  '@solid-primitives/upload': ^0.0.107
   '@stylelint/postcss-css-in-js': ^0.38.0
   '@types/autosize': ^4.0.1
   '@types/color': ^3.0.3
@@ -33,6 +34,7 @@ specifiers:
   vite-plugin-solid: ^2.5.0
 
 dependencies:
+  '@solid-primitives/upload': 0.0.107_solid-js@1.6.10
   autosize: 5.0.2
   clsx: 1.2.1
   color: 4.2.3
@@ -836,6 +838,23 @@ packages:
       tiny-glob: 0.2.9
       tslib: 2.5.0
     dev: true
+
+  /@solid-primitives/upload/0.0.107_solid-js@1.6.10:
+    resolution: {integrity: sha512-SOJbRk58Oa6Y9Bp0H/qAy6bmV4xhcOConPYUH+G+zyKwowZMtVEsi+TjyeSXpIk4iQo+/yO/BEXyBo5PXJsd3g==}
+    peerDependencies:
+      solid-js: ^1.6.0
+    dependencies:
+      '@solid-primitives/utils': 5.1.0_solid-js@1.6.10
+      solid-js: 1.6.10
+    dev: false
+
+  /@solid-primitives/utils/5.1.0_solid-js@1.6.10:
+    resolution: {integrity: sha512-1qmY9VaHWbEolBGhszqq7ziPJpXOXtcsQ14I7j8o/57bvfBQtwZ64idJrSdPBPIGzKSyPVZ1olYWz4yfitTBrA==}
+    peerDependencies:
+      solid-js: ^1.6.0
+    dependencies:
+      solid-js: 1.6.10
+    dev: false
 
   /@stylelint/postcss-css-in-js/0.38.0_postcss-syntax@0.36.2:
     resolution: {integrity: sha512-XOz5CAe49kS95p5yRd+DAIWDojTjfmyAQ4bbDlXMdbZTQ5t0ThjSLvWI6JI2uiS7MFurVBkZ6zUqcimzcLTBoQ==}

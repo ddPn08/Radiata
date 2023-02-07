@@ -87,7 +87,13 @@ git clone https://github.com/ddPn08/Lsmith.git
 cd Lsmith
 git submodule update --init --recursive
 ```
-5. Launch `launch-user.bat`
+5. Enter frontend directory and build frontend
+```sh
+cd frontend
+pnpm i
+pnpm build --out-dir ../dist
+```
+6. Launch `launch-user.bat`
 
 <br />
 

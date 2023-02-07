@@ -6,3 +6,4 @@ dist
 /config.json
 /outputs
 /models
+/docker-data

@@ -82,7 +82,10 @@ export const Button: Component<
         if (typeof local.task === 'function') {
           setRunning(true)
           const t = local.task(e)
-          if (typeof t !== 'function' && t.then) t.then(() => setRunning(false))
+          if (typeof t !== 'function' && t.then) {
+            t.then(() => setRunning(false))
+            t.catch(() => setRunning(false))
+          }
         }
         if (typeof local.onClick === 'function') local.onClick(e)
       }}

@@ -36,7 +36,7 @@ export interface ModelListResponseModel {
      * @type {Array<string>}
      * @memberof ModelListResponseModel
      */
-    data: Array<string>;
+    data?: Array<string>;
 }
 
 /**
@@ -45,7 +45,6 @@ export interface ModelListResponseModel {
 export function instanceOfModelListResponseModel(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "status" in value;
-    isInstance = isInstance && "data" in value;
 
     return isInstance;
 }
@@ -62,7 +61,7 @@ export function ModelListResponseModelFromJSONTyped(json: any, ignoreDiscriminat
         
         'status': json['status'],
         'message': !exists(json, 'message') ? undefined : json['message'],
-        'data': json['data'],
+        'data': !exists(json, 'data') ? undefined : json['data'],
     };
 }
 
