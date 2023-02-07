@@ -1,7 +1,7 @@
 import { MantineProvider, Box, Flex } from '@mantine/core'
 import { Tab } from './types/tab'
 import Tabs from './components/tabs'
-import Generator from './tabs/gemerator'
+import Generator from './tabs/generator'
 import { useState } from 'react'
 import Engine from './tabs/engine'
 import { IconEngine, IconPhotoEdit } from '@tabler/icons-react'
