@@ -4,7 +4,9 @@ import os
 
 DEFAULT_CONFIG = {
     "images/txt2img/save_dir": "outputs/txt2img",
-    "images/txt2img/save_name": "{seed}-{prompt}.png",
+    "images/txt2img/save_name": "{index}-{seed}-{prompt}.png",
+    "images/img2img/save_dir": "outputs/img2img",
+    "images/img2img/save_name": "{index}-{seed}-{prompt}.png",
 }
 
 
@@ -46,7 +48,11 @@ def get(key: str):
     if key in cmd_opts_dict and cmd_opts_dict[key] is not None:
         return cmd_opts_dict[key]
     config = get_config()
-    return config[key] if key in config else None
+    return (
+        config[key]
+        if key in config
+        else (DEFAULT_CONFIG[key] if key in DEFAULT_CONFIG else None)
+    )
 
 
 def init():
