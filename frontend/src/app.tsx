@@ -2,7 +2,7 @@ import { MantineProvider, Box, Flex } from '@mantine/core'
 import { Tab } from './types/tab'
 import Tabs from './components/tabs'
 import Txt2Img from './tabs/txt2img'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Engine from './tabs/engine'
 import { IconEngine, IconPhotoEdit } from '@tabler/icons-react'
 import { useAtomValue } from 'jotai'
@@ -21,20 +21,15 @@ const TABS: Tab[] = [
   },
 ]
 
-const PAGES: Record<string, () => JSX.Element> = {
-  txt2img: Txt2Img,
-  engine: Engine,
+const PAGES: Record<string, JSX.Element> = {
+  txt2img: <Txt2Img />,
+  engine: <Engine />,
 }
 
 const App = () => {
   const theme = useAtomValue(themeAtom)
 
   const [currentTab, setCurrentTab] = useState(TABS[0].id)
-  const [currentTabComponent, setCurrentTabComponent] = useState(PAGES[currentTab])
-
-  useEffect(() => {
-    setCurrentTabComponent(PAGES[currentTab])
-  }, [currentTab])
 
   return (
     <MantineProvider
@@ -52,7 +47,7 @@ const App = () => {
             setCurrentTab(id)
           }}
         />
-        <Box w={'100%'}>{currentTabComponent && currentTabComponent}</Box>
+        <Box w={'100%'}>{PAGES[currentTab]}</Box>
       </Flex>
     </MantineProvider>
   )

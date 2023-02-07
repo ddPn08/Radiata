@@ -26,7 +26,7 @@ const Txt2Img = () => {
             <Textarea label={'Negative'} autosize />
           </Stack>
 
-          <Button ml={'md'}>Generate</Button>
+          <Button>Generate</Button>
 
           <Box>
             <Image />
