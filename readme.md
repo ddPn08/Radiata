@@ -32,7 +32,7 @@ git submodule update --init --recursive
 ```
 2. Launch using Docker compose
 ```sh
-docker compose up --build
+docker-compose up --build
 ```
 
 ## Linux | Difficult
