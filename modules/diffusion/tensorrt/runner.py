@@ -1,28 +1,26 @@
+import gc
 import json
 import os
 import random
 import time
 from typing import Optional
-from tqdm import tqdm
 
 import diffusers
 import numpy as np
 import tensorrt as trt
 import torch
-import gc
 from cuda import cudart
 from PIL import Image
 from polygraphy import cuda
-from transformers import CLIPTokenizer, CLIPTextModel
-
-from lib.trt.utilities import TRT_LOGGER, Engine
-from modules import shared
+from tqdm import tqdm
+from transformers import CLIPTextModel, CLIPTokenizer
 
 from lib.diffusers.lpw import LongPromptWeightingPipeline
+from lib.trt.utilities import TRT_LOGGER, Engine
+
 from ..runner import BaseRunner
 from .clip import create_clip_engine
 from .models import CLIP, VAE, UNet
-
 
 diffusers.StableDiffusionImg2ImgPipeline
 
@@ -54,8 +52,6 @@ def get_timesteps(
     if is_text2img:
         return scheduler.timesteps.to(device), num_inference_steps
     else:
-        # get the original timestep using init_timestep
-        # offset = scheduler.config.get("steps_offset", 0)
         init_timestep = int(num_inference_steps * strength)
         init_timestep = min(init_timestep, num_inference_steps)
 
@@ -84,7 +80,7 @@ def preprocess_image(image: Image.Image, fp16: bool):
     w, h = image.size
     w, h = map(lambda x: x - x % 8, (w, h))
     image = image.resize((w, h), resample=diffusers.utils.PIL_INTERPOLATION["lanczos"])
-    image = np.array(image).astype(np.float16 if fp16 else np.float32) / 255.0
+    image = np.array(image).astype(np.float32) / 255.0
     image = image[None].transpose(0, 3, 1, 2)
     image = torch.from_numpy(image)
     return 2.0 * image - 1.0
@@ -124,33 +120,24 @@ def prepare_latents(
                 )
             latents = latents.to(device)
 
-        # scale the initial noise by the standard deviation required by the scheduler
         latents = latents * scheduler.init_noise_sigma
         return latents
     else:
         init_latent_dist = vae.encode(image).latent_dist
         init_latents = init_latent_dist.sample(generator=generator)
         init_latents = torch.cat([0.18215 * init_latents] * batch_size, dim=0)
-        init_latents_orig = init_latents
         shape = init_latents.shape
-
-        # add noise to latents using the timesteps
         noise = torch.randn(shape, generator=generator, device=device, dtype=dtype)
         latents = scheduler.add_noise(init_latents, noise, timestep)
         return latents
 
 
 class TensorRTDiffusionRunner(BaseRunner):
-    def __init__(
-        self,
-        model_id: str,
-    ):
-        meta_filepath = os.path.join(
-            shared.cmd_opts.model_dir, model_id, "model_index.json"
-        )
+    def __init__(self, model_dir: str):
+        meta_filepath = os.path.join(model_dir, "model_index.json")
         if not os.path.exists(meta_filepath):
             raise RuntimeError("Model meta data not found.")
-        engine_dir = os.path.join(shared.cmd_opts.model_dir, model_id, "engine")
+        engine_dir = os.path.join(model_dir, "engine")
 
         with open(meta_filepath, mode="r") as f:
             txt = f.read()
@@ -158,7 +145,11 @@ class TensorRTDiffusionRunner(BaseRunner):
 
         self.scheduler = None
         self.scheduler_id = None
-        self.model_id = model_id
+        self.model_id = (
+            self.meta["model_id"]
+            if "model_id" in self.meta
+            else "CompVis/stable-diffusion-v1-4"
+        )
         self.device = torch.device("cuda")
         self.fp16 = self.meta["denoising_prec"] == "fp16"
         self.engines = {
@@ -244,7 +235,6 @@ class TensorRTDiffusionRunner(BaseRunner):
             seed = random.randrange(0, 4294967294, 1)
 
         for i in range(batch_count):
-            # Allocate buffers for TensorRT engine bindings
             for model_name, obj in self.models.items():
                 self.engines[model_name].allocate_buffers(
                     shape_dict=obj.get_shape_dict(
@@ -253,7 +243,6 @@ class TensorRTDiffusionRunner(BaseRunner):
                     device=self.device,
                 )
 
-            # Create profiling events
             events = {}
             for stage in ["clip", "denoise", "vae"]:
                 for marker in ["start", "stop"]:
@@ -262,7 +251,6 @@ class TensorRTDiffusionRunner(BaseRunner):
             manual_seed = seed + i
             generator = torch.Generator(device="cuda").manual_seed(manual_seed)
 
-            # Run Stable Diffusion pipeline
             with torch.inference_mode(), torch.autocast("cuda"), trt.Runtime(
                 TRT_LOGGER
             ):
@@ -277,8 +265,6 @@ class TensorRTDiffusionRunner(BaseRunner):
                 )
                 if self.fp16:
                     text_embeddings = text_embeddings.to(dtype=torch.float16)
-
-                dtype = text_embeddings.dtype
 
                 cudart.cudaEventRecord(events["clip-stop"], 0)
 
@@ -303,14 +289,12 @@ class TensorRTDiffusionRunner(BaseRunner):
                 torch.cuda.synchronize()
 
                 cudart.cudaEventRecord(events["denoise-start"], 0)
-                for step_index, timestep in enumerate(tqdm(timesteps)):
-                    # expand the latents if we are doing classifier free guidance
+                for _, timestep in enumerate(tqdm(timesteps)):
                     latent_model_input = torch.cat([latents] * 2)
                     latent_model_input = self.scheduler.scale_model_input(
                         latent_model_input, timestep
                     )
 
-                    # predict the noise residual
                     if timestep.dtype != torch.float32:
                         timestep_float = timestep.float()
                     else:
@@ -341,7 +325,6 @@ class TensorRTDiffusionRunner(BaseRunner):
                         },
                     )["latent"]
 
-                    # Perform guidance
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
                     noise_pred = noise_pred_uncond + scale * (
                         noise_pred_text - noise_pred_uncond

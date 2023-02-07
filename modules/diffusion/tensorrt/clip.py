@@ -1,6 +1,6 @@
 import os
 
-import modules.shared as shared
+from modules import config
 
 from .engine import build_engine
 from .models import CLIP
@@ -14,7 +14,7 @@ def create_clip_engine():
         verbose=False,
         max_batch_size=1,
     )
-    model_dir = os.path.join(shared.cmd_opts.model_dir, model_id.replace("/", os.sep))
+    model_dir = os.path.join(config.get("model_dir"), model_id.replace("/", os.sep))
     os.makedirs(model_dir, exist_ok=True)
     os.makedirs(os.path.join(model_dir, "engine"), exist_ok=True)
     os.makedirs(os.path.join(model_dir, "onnx"), exist_ok=True)
