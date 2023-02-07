@@ -20,7 +20,7 @@ def custom_generate_unique_id(route: APIRoute):
 app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[],
+    allow_origins=shared.cmd_opts.allow_hosts.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
