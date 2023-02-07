@@ -276,7 +276,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                 cudart.cudaEventRecord(events["clip-stop"], 0)
 
                 if img is not None:
-                    img = preprocess_image(img, self.fp16).to(device=self.device)
+                    img = preprocess_image(img).to(device=self.device)
 
                 latents = prepare_latents(
                     vae=self.en_vae,
