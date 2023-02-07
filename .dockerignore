@@ -1,4 +1,6 @@
+/.git
 /models
+/models-docker
 /outputs
 /venv
 /dist
