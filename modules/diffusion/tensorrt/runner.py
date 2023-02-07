@@ -2,6 +2,7 @@ import json
 import os
 import random
 import time
+from typing import Optional
 from tqdm import tqdm
 
 import diffusers
@@ -23,6 +24,9 @@ from .clip import create_clip_engine
 from .models import CLIP, VAE, UNet
 
 
+diffusers.StableDiffusionImg2ImgPipeline
+
+
 def to_image(images):
     images = (
         ((images + 1) * 255 / 2)
@@ -40,6 +44,26 @@ def to_image(images):
     return result
 
 
+def get_timesteps(
+    scheduler,
+    num_inference_steps: int,
+    strength: float,
+    device: torch.device,
+    is_text2img: bool,
+):
+    if is_text2img:
+        return scheduler.timesteps.to(device), num_inference_steps
+    else:
+        # get the original timestep using init_timestep
+        # offset = scheduler.config.get("steps_offset", 0)
+        init_timestep = int(num_inference_steps * strength)
+        init_timestep = min(init_timestep, num_inference_steps)
+
+        t_start = max(num_inference_steps - init_timestep, 0)
+        timesteps = scheduler.timesteps[t_start:].to(device)
+        return timesteps, num_inference_steps - t_start
+
+
 def get_scheduler(scheduler_id: str):
     schedulers = {
         "ddim": diffusers.DDIMScheduler,
@@ -54,6 +78,66 @@ def get_scheduler(scheduler_id: str):
         "pndm": diffusers.PNDMScheduler,
     }
     return schedulers[scheduler_id]
+
+
+def preprocess_image(image: Image.Image, fp16: bool):
+    w, h = image.size
+    w, h = map(lambda x: x - x % 8, (w, h))
+    image = image.resize((w, h), resample=diffusers.utils.PIL_INTERPOLATION["lanczos"])
+    image = np.array(image).astype(np.float16 if fp16 else np.float32) / 255.0
+    image = image[None].transpose(0, 3, 1, 2)
+    image = torch.from_numpy(image)
+    return 2.0 * image - 1.0
+
+
+def prepare_latents(
+    vae: VAE,
+    vae_scale_factor: int,
+    unet_in_channels: int,
+    scheduler,
+    image: Optional[Image.Image],
+    timestep,
+    batch_size,
+    height,
+    width,
+    dtype,
+    device,
+    generator,
+    latents=None,
+):
+    if image is None:
+        shape = (
+            batch_size,
+            unet_in_channels,
+            height // vae_scale_factor,
+            width // vae_scale_factor,
+        )
+
+        if latents is None:
+            latents = torch.randn(
+                shape, generator=generator, device=device, dtype=dtype
+            )
+        else:
+            if latents.shape != shape:
+                raise ValueError(
+                    f"Unexpected latents shape, got {latents.shape}, expected {shape}"
+                )
+            latents = latents.to(device)
+
+        # scale the initial noise by the standard deviation required by the scheduler
+        latents = latents * scheduler.init_noise_sigma
+        return latents
+    else:
+        init_latent_dist = vae.encode(image).latent_dist
+        init_latents = init_latent_dist.sample(generator=generator)
+        init_latents = torch.cat([0.18215 * init_latents] * batch_size, dim=0)
+        init_latents_orig = init_latents
+        shape = init_latents.shape
+
+        # add noise to latents using the timesteps
+        noise = torch.randn(shape, generator=generator, device=device, dtype=dtype)
+        latents = scheduler.add_noise(init_latents, noise, timestep)
+        return latents
 
 
 class TensorRTDiffusionRunner(BaseRunner):
@@ -75,7 +159,7 @@ class TensorRTDiffusionRunner(BaseRunner):
         self.scheduler = None
         self.scheduler_id = None
         self.model_id = model_id
-        self.device = "cuda"
+        self.device = torch.device("cuda")
         self.fp16 = self.meta["denoising_prec"] == "fp16"
         self.engines = {
             "clip": create_clip_engine(),
@@ -83,10 +167,15 @@ class TensorRTDiffusionRunner(BaseRunner):
             "vae": Engine("vae", engine_dir),
         }
         self.models = {
-            "clip": CLIP("openai/clip-vit-large-patch14"),
-            "unet": UNet(self.meta["models"]["unet"], fp16=self.fp16),
-            "vae": VAE(self.meta["models"]["vae"]),
+            "clip": CLIP(
+                "openai/clip-vit-large-patch14", fp16=self.fp16, device=self.device
+            ),
+            "unet": UNet(
+                self.meta["models"]["unet"], fp16=self.fp16, device=self.device
+            ),
+            "vae": VAE(self.meta["models"]["vae"], fp16=self.fp16, device=self.device),
         }
+        self.en_vae = self.models["vae"].get_model()
 
     def activate(
         self,
@@ -129,21 +218,23 @@ class TensorRTDiffusionRunner(BaseRunner):
         image_height=512,
         image_width=512,
         seed=None,
+        strength: Optional[float] = None,
+        img: Optional[Image.Image] = None,
     ):
         self.wait_loading()
         batch_size = 1
 
         if self.scheduler_id != scheduler_id:
             Scheduler = get_scheduler(scheduler_id)
-            self.scheduler = Scheduler.from_config(
-                {"num_train_timesteps": 1000, "beta_start": 0.00085, "beta_end": 0.012}
+            self.scheduler = Scheduler.from_pretrained(
+                self.model_id, subfolder="scheduler"
             )
 
         self.scheduler.set_timesteps(steps, device=self.device)
-
-        # Spatial dimensions of latent tensor
-        latent_height = image_height // 8
-        latent_width = image_width // 8
+        timesteps, steps = get_timesteps(
+            self.scheduler, steps, strength, self.device, img is None
+        )
+        latent_timestep = timesteps[:1].repeat(batch_size * batch_count)
 
         e2e_tic = time.perf_counter()
 
@@ -187,31 +278,32 @@ class TensorRTDiffusionRunner(BaseRunner):
                 if self.fp16:
                     text_embeddings = text_embeddings.to(dtype=torch.float16)
 
+                dtype = text_embeddings.dtype
+
                 cudart.cudaEventRecord(events["clip-stop"], 0)
 
-                # latents need to be generated on the target device
-                unet_channels = 4  # unet.in_channels
-                latents_shape = (
-                    batch_size,
-                    unet_channels,
-                    latent_height,
-                    latent_width,
-                )
-                latents_dtype = torch.float32  # text_embeddings.dtype
-                latents = torch.randn(
-                    latents_shape,
+                if img is not None:
+                    img = preprocess_image(img, self.fp16).to(device=self.device)
+
+                latents = prepare_latents(
+                    vae=self.en_vae,
+                    vae_scale_factor=8,
+                    unet_in_channels=4,
+                    scheduler=self.scheduler,
+                    image=img,
+                    timestep=latent_timestep,
+                    batch_size=batch_size,
+                    height=image_height,
+                    width=image_width,
+                    dtype=torch.float16 if self.fp16 else torch.float32,
                     device=self.device,
-                    dtype=latents_dtype,
                     generator=generator,
                 )
-
-                # Scale the initial noise by the standard deviation required by the scheduler
-                latents = latents * self.scheduler.init_noise_sigma
 
                 torch.cuda.synchronize()
 
                 cudart.cudaEventRecord(events["denoise-start"], 0)
-                for step_index, timestep in enumerate(tqdm(self.scheduler.timesteps)):
+                for step_index, timestep in enumerate(tqdm(timesteps)):
                     # expand the latents if we are doing classifier free guidance
                     latent_model_input = torch.cat([latents] * 2)
                     latent_model_input = self.scheduler.scale_model_input(
@@ -223,6 +315,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                         timestep_float = timestep.float()
                     else:
                         timestep_float = timestep
+
                     sample_inp = cuda.DeviceView(
                         ptr=latent_model_input.data_ptr(),
                         shape=latent_model_input.shape,
@@ -238,6 +331,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                         shape=text_embeddings.shape,
                         dtype=np.float16 if self.fp16 else np.float32,
                     )
+
                     noise_pred = self.runEngine(
                         "unet",
                         {
@@ -307,6 +401,9 @@ class TensorRTDiffusionRunner(BaseRunner):
                 )
 
         e2e_toc = time.perf_counter()
-        all_perf_time = (e2e_toc - e2e_tic) * 1000
+        all_perf_time = e2e_toc - e2e_tic
+        print(
+            f"all: {all_perf_time}s, clip: {clip_perf_time/1000}s, denoise: {denoise_perf_time/1000}s, vae: {vae_perf_time/1000}s"
+        )
 
         return results, all_perf_time

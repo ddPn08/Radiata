@@ -6,6 +6,7 @@ import { Tabs, TabPanel } from './components/ui/tabs'
 import { ToastProvider } from './components/ui/toast'
 import { ThemeProvider } from './styles'
 import { Engine } from './tabs/engine'
+import { Img2Img } from './tabs/img2img'
 import { Txt2Img } from './tabs/txt2img'
 
 export const App = () => {
@@ -20,6 +21,7 @@ export const App = () => {
 
 const PAGES = {
   txt2img: Txt2Img,
+  img2img: Img2Img,
   engine: Engine,
 }
 

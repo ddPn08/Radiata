@@ -38,6 +38,8 @@
   },
   "packageManager": "yarn@3.2.2",
   "dependencies": {
+    "@solid-primitives/upload": "^0.0.107",
+    
     "autosize": "^5.0.2",
     "clsx": "^1.2.1",
     "color": "^4.2.3",
