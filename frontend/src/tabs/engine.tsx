@@ -9,12 +9,17 @@ import {
   Space,
   Stack,
   Text,
+  Progress,
+  Box,
+  Alert,
+  Loader,
 } from '@mantine/core'
 import { useState } from 'react'
 import SizeInput from '../components/sizeInput'
 import { api } from '~/api'
 import { useForm } from '@mantine/form'
 import { BuildRequest } from 'internal:api'
+import { IconInfoCircle } from '@tabler/icons-react'
 
 interface BuildRequestForm extends Omit<BuildRequest, 'fp16'> {
   denoising_precision: string
@@ -41,6 +46,7 @@ const Engine = () => {
   })
 
   const [status, setStatus] = useState<Record<string, any> | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const onSubmit = async (req: BuildRequest) => {
     console.log(req)
@@ -48,18 +54,32 @@ const Engine = () => {
   }
 
   const buildEngine = async (req: BuildRequest) => {
-    const { raw } = await api.buildEngineRaw({ buildRequest: req })
-    const reader = raw.body?.getReader()
-    if (!reader) return
-    let done = true
-    while (done) {
-      const res = await reader.read()
-      done = !res.done
-      try {
-        setStatus(JSON.parse(new TextDecoder().decode(res.value) || ''))
-      } catch (_) {}
+    try {
+      setError(null)
+      setStatus({
+        message: 'loading...',
+        progress: 0,
+      })
+      const { raw } = await api.buildEngineRaw({ buildRequest: req })
+      const reader = raw.body?.getReader()
+      if (!reader) return
+      let finish = false
+      while (!finish) {
+        const res = await reader.read()
+
+        if (res.done) {
+          finish = true
+        }
+
+        try {
+          setStatus(JSON.parse(new TextDecoder().decode(res.value) || ''))
+        } catch (_) {}
+      }
+      setStatus(null)
+    } catch (e) {
+      setStatus(null)
+      setError((e as Error).message)
     }
-    setStatus(null)
   }
 
   return (
@@ -140,9 +160,29 @@ const Engine = () => {
 
           <Space h={'md'} />
 
-          <Button type={'submit'}>Build</Button>
+          {status ? (
+            <Box w={'100%'}>
+              <Button w={'100%'} disabled>
+                <Loader />
+              </Button>
+              <Alert title={'Status'}>
+                <Text>{status['message']}</Text>
+                <Progress value={status['progress'] * 100} />
+              </Alert>
+            </Box>
+          ) : (
+            <Button type={'submit'}>Build</Button>
+          )}
         </Stack>
       </form>
+
+      {error && (
+        <Box>
+          <Alert icon={<IconInfoCircle />} title={'Something went wrong...'} color={'red'}>
+            {error}
+          </Alert>
+        </Box>
+      )}
     </Container>
   )
 }
