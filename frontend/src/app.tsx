@@ -1,7 +1,7 @@
 import { MantineProvider, Box, Flex } from '@mantine/core'
 import { Tab } from './types/tab'
 import Tabs from './components/tabs'
-import Txt2Img from './tabs/txt2img'
+import Generator from './tabs/gemerator'
 import { useState } from 'react'
 import Engine from './tabs/engine'
 import { IconEngine, IconPhotoEdit } from '@tabler/icons-react'
@@ -10,8 +10,8 @@ import { themeAtom } from './atoms/theme'
 
 const TABS: Tab[] = [
   {
-    id: 'txt2img',
-    label: 'Text to Image',
+    id: 'generator',
+    label: 'Generator',
     icon: IconPhotoEdit,
   },
   {
@@ -22,7 +22,7 @@ const TABS: Tab[] = [
 ]
 
 const PAGES: Record<string, JSX.Element> = {
-  txt2img: <Txt2Img />,
+  generator: <Generator />,
   engine: <Engine />,
 }
 

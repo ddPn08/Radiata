@@ -16,7 +16,7 @@ import {
 import { IconArrowsDownUp, IconDice5, IconRotateClockwise } from '@tabler/icons-react'
 import SizeInput from '../components/sizeInput'
 
-const Txt2Img = () => {
+const Generator = () => {
   return (
     <Box h={'100%'}>
       <Flex h={'100%'}>
@@ -103,4 +103,4 @@ const Txt2Img = () => {
   )
 }
 
-export default Txt2Img
+export default Generator
