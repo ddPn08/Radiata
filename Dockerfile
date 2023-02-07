@@ -54,6 +54,8 @@ COPY . /app
 
 WORKDIR /app
 
+RUN git submodule update --init --recursive
+
 COPY --from=tensorrt /TensorRT/build/out/libnvinfer_plugin.so.8 /app/lib/trt/lib/libnvinfer_plugin.so
 COPY --from=frontend /Lsmith/frontend/dist /app/dist
 
