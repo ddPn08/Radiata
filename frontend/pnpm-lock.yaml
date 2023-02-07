@@ -23,6 +23,7 @@ specifiers:
   eslint-plugin-import: ^2.27.5
   eslint-plugin-react: ^7.32.2
   eslint-plugin-unused-imports: ^2.0.0
+  jotai: ^2.0.0
   prettier: ^2.8.3
   react: ^18.2.0
   react-dom: ^18.2.0
@@ -43,6 +44,7 @@ dependencies:
   '@mantine/notifications': 5.10.3_7qw7iibcf4wkwwwrwp57hnnlya
   '@tabler/icons-react': 2.2.0_react@18.2.0
   embla-carousel-react: 7.0.9_react@18.2.0
+  jotai: 2.0.0_react@18.2.0
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
 
@@ -2676,6 +2678,18 @@ packages:
     resolution: {integrity: sha512-RKYVTCjAnRthyJes037NX/IiqeidgN1xc3j1RjFfECFp28A1GVwK9nA+i0rJPaHqSZwygLzRnFlzUuHFoWWy+Q==}
     engines: {node: '>=6'}
     dev: true
+
+  /jotai/2.0.0_react@18.2.0:
+    resolution: {integrity: sha512-04G0CRZQgp3xrFAezd6X14psZ2TRGekHeYMBcbDJ/BR8ZJQPS+j0YkMTxUxyG58HJnN2+adfj5sWQWoqgtp1XQ==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      react: '>=17.0.0'
+    peerDependenciesMeta:
+      react:
+        optional: true
+    dependencies:
+      react: 18.2.0
+    dev: false
 
   /js-sdsl/4.3.0:
     resolution: {integrity: sha512-mifzlm2+5nZ+lEcLJMoBK0/IH/bDg8XnJfd/Wq6IP+xoCjLZsTOnV2QpxlVbX9bMnkl5PdEjNtBJ9Cj1NjifhQ==}
