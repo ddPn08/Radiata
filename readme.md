@@ -65,7 +65,7 @@ pnpm build --out-dir ../dist
 4. Run launch.sh with the path to libnvinfer_plugin.so in the LD_PRELOAD variable.
 ```sh
 ex.)
-LD_PRELOAD="/lib/src/TensorRT/build/out/libnvinfer_plugin.so.8" bash launch.sh --host 0.0.0.0
+bash launch.sh --host 0.0.0.0
 ```
 
 ## Windows | Difficult
