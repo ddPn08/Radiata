@@ -1,7 +1,8 @@
 import glob
+import json
 import os
 
-from modules import config, shared
+from modules import config
 
 from .diffusion.tensorrt.runner import TensorRTDiffusionRunner
 from .images import save_image
@@ -10,27 +11,43 @@ current: TensorRTDiffusionRunner = None
 
 
 def set_runner(
-    model_id: str,
+    model_dir: str,
     tokenizer_id="openai/clip-vit-large-patch14",
 ):
     global current
     if current is not None:
         current.teardown()
+
+    meta_path = os.path.join(config.get("model_dir"), model_dir, "model_index.json")
+
     try:
-        current = TensorRTDiffusionRunner(model_id)
+        with open(meta_path, mode="r") as f:
+            meta = json.loads(f.read())
+        if "model_id" not in meta:
+            meta["model_id"] = os.path.relpath(model_dir)
+        with open(meta_path, mode="w") as f:
+            f.write(json.dumps(meta))
+    except Exception as e:
+        print(e)
+
+    try:
+        current = TensorRTDiffusionRunner(
+            os.path.join(config.get("model_dir"), model_dir)
+        )
         current.activate(tokenizer_id)
-        config.set("model", model_id)
+        config.set("model", model_dir)
     except RuntimeError:
-        print(f"Failed to load model: {model_id}")
+        print(f"Failed to load model: {model_dir}")
 
 
 def get_runners():
     model_dirs = glob.glob(
-        os.path.join(shared.cmd_opts.model_dir, "**", "model_index.json"),
+        os.path.join(config.get("model_dir"), "**", "model_index.json"),
         recursive=True,
     )
+
     return [
-        os.path.relpath(os.path.dirname(x), shared.cmd_opts.model_dir).replace(
+        os.path.relpath(os.path.dirname(x), config.get("model_dir")).replace(
             os.sep, "/"
         )
         for x in model_dirs
@@ -48,9 +65,9 @@ def generate(**kwargs):
 
 
 def set_default_model():
-    if os.path.exists(shared.cmd_opts.model_dir):
+    if os.path.exists(config.get("model_dir")):
         models = glob.glob(
-            os.path.join(shared.cmd_opts.model_dir, "**", "model_index.json"),
+            os.path.join(config.get("model_dir"), "**", "model_index.json"),
             recursive=True,
         )
 
@@ -59,14 +76,12 @@ def set_default_model():
 
         previous = config.get("model")
         if previous is not None:
-            model = os.path.join(shared.cmd_opts.model_dir, previous)
+            model = os.path.join(config.get("model_dir"), previous)
             if os.path.exists(model):
                 set_runner(previous)
                 return
 
-        model_dir = os.path.relpath(
-            os.path.dirname(models[0]), shared.cmd_opts.model_dir
-        )
+        model_dir = os.path.relpath(os.path.dirname(models[0]), config.get("model_dir"))
 
         set_runner(model_dir)
         config.set("model", model_dir)

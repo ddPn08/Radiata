@@ -1,9 +1,8 @@
 import importlib.util
 import os
+import platform
 import subprocess
 import sys
-import sys
-import platform
 import urllib.request as request
 from typing import Optional
 

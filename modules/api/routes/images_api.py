@@ -1,12 +1,12 @@
 import base64
 import io
-
 from typing import Optional
-from fastapi import Response
-from pydantic import BaseModel
-from PIL import Image
 
-from modules import images, runner
+from fastapi import Response
+from PIL import Image
+from pydantic import BaseModel
+
+from modules import images, runners
 from modules.api.models.base import BaseResponseModel
 
 from ..api_router import api
@@ -40,7 +40,7 @@ class GenerateImageResponseModel(BaseResponseModel):
 def generate_image(req: GenerateImageRequest):
     if req.img is not None:
         req.img = Image.open(io.BytesIO(base64.b64decode(req.img)))
-    images, performance = runner.generate(
+    images, performance = runners.generate(
         prompt=req.prompt,
         negative_prompt=req.negative_prompt,
         batch_size=req.batch_size,

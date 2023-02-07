@@ -1,11 +1,11 @@
 import torch
+from transformers import CLIPTextModel
+
+from lib.trt import models
 from submodules.diffusers_0_7_2.src.diffusers.models import (
     AutoencoderKL,
     UNet2DConditionModel,
 )
-from transformers import CLIPTextModel
-
-from lib.trt import models
 
 
 class CLIP(models.CLIP):

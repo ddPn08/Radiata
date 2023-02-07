@@ -3,7 +3,7 @@ import time
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from modules import runner
+from modules import runners
 
 from ...diffusion.tensorrt.engine import EngineBuilder
 from ..api_router import api
@@ -43,9 +43,9 @@ async def build_engine(req: BuildRequest):
     if build_thread is not None and build_thread.is_alive():
         return {"status": "error", "message": "building another model"}
 
-    if runner.current is not None:
-        runner.current.teardown()
-    runner.current = None
+    if runners.current is not None:
+        runners.current.teardown()
+    runners.current = None
 
     builder = EngineBuilder(
         model_id=req.model_id,
@@ -66,5 +66,5 @@ async def build_engine(req: BuildRequest):
     )
 
     return StreamingResponse(
-        builder.build(generator=True, on_end=lambda: runner.set_default_model())
+        builder.build(generator=True, on_end=lambda: runners.set_default_model())
     )

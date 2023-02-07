@@ -1,6 +1,8 @@
-from typing import List, Tuple, Dict
 import time
+from typing import Dict, List, Tuple
+
 from PIL.Image import Image
+
 
 class BaseRunner:
     loading = True
