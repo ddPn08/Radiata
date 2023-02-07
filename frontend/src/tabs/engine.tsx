@@ -15,7 +15,7 @@ import {
   Loader,
 } from '@mantine/core'
 import { useState } from 'react'
-import NumberSliderInput from '../components/numberSliderInput'
+import NumberSliderInput from '../components/ui/numberSliderInput'
 import { api } from '~/api'
 import { useForm } from '@mantine/form'
 import { BuildRequest } from 'internal:api'
