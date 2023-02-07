@@ -62,13 +62,14 @@ const ImageItem: Component<{ src: string; info: Record<string, string>; onClick:
 ) => {
   return (
     <StyledItem onClick={props.onClick}>
-      <img src={createUrl(`/api/images/txt2img/${props.src}`)} alt="" />
+      <img src={props.src} alt="" />
     </StyledItem>
   )
 }
 
 export const Gallery: Component<{
   images: [string, Record<string, string>][]
+  category: 'txt2img' | 'img2img'
 }> = (props) => {
   const theme = useTheme()
   const [selected, setSelected] = createSignal<[string, Record<string, string>] | null>(null)
@@ -85,7 +86,11 @@ export const Gallery: Component<{
       <Inner>
         <For each={props.images}>
           {([src, info]) => (
-            <ImageItem src={src} info={info} onClick={() => setSelected([src, info])} />
+            <ImageItem
+              src={createUrl(`/api/images/${props.category}/${src}`)}
+              info={info}
+              onClick={() => setSelected([src, info])}
+            />
           )}
         </For>
       </Inner>
@@ -109,7 +114,7 @@ export const Gallery: Component<{
               `}
             >
               <img
-                src={createUrl(`/api/images/txt2img/${src}`)}
+                src={createUrl(`/api/images/${props.category}/${src}`)}
                 onClick={() => setSelected(null)}
               />
             </div>

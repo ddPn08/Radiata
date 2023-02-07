@@ -1,10 +1,10 @@
+from typing import Optional, List
 import importlib.util
 import os
 import platform
 import subprocess
 import sys
 import urllib.request as request
-from typing import Optional
 
 import build
 
@@ -95,7 +95,7 @@ def run_python(code: str, desc: Optional[str] = None, errdesc: Optional[str] = N
     return run(f'"{python}" -c "{code}"', desc, errdesc)
 
 
-def extract_arg(args: list[str], name: str):
+def extract_arg(args: List[str], name: str):
     return [x for x in args if x != name], name in args
 
 
@@ -122,7 +122,7 @@ def install_tensorrt(tensorrt_linux_command: str):
         run(f"{python} -m {tensorrt_linux_command}")
 
 
-def prepare_environment(args: list[str]):
+def prepare_environment(args: List[str]):
     torch_command = os.environ.get(
         "TORCH_COMMAND",
         "pip install torch==1.12.0+cu116 --extra-index-url https://download.pytorch.org/whl/cu116",
@@ -187,8 +187,6 @@ def prepare_tensorrt_pluginlib():
     else:
         os.environ["LD_PRELOAD"] = os.path.join(lib_dir, "libnvinfer_plugin.so")
 
-
-def prepare_tensorrt_pluginlib():
     lib_dir = os.path.join(__dirname__, "lib", "trt", "lib")
     if platform.system() == "Windows":
         os.environ["PATH"] = f'{lib_dir}{os.pathsep}{os.environ.get("PATH", "")}'

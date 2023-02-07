@@ -74,10 +74,11 @@ def get_scheduler(scheduler_id: str):
     return schedulers[scheduler_id]
 
 
-def preprocess_image(image: Image.Image):
-    w, h = image.size
-    w, h = map(lambda x: x - x % 8, (w, h))
-    image = image.resize((w, h), resample=diffusers.utils.PIL_INTERPOLATION["lanczos"])
+def preprocess_image(image: Image.Image, height: int, width: int):
+    width, height = map(lambda x: x - x % 8, (width, height))
+    image = image.resize(
+        (width, height), resample=diffusers.utils.PIL_INTERPOLATION["lanczos"]
+    )
     image = np.array(image).astype(np.float32) / 255.0
     image = image[None].transpose(0, 3, 1, 2)
     image = torch.from_numpy(image)
@@ -276,7 +277,9 @@ class TensorRTDiffusionRunner(BaseRunner):
                 cudart.cudaEventRecord(events["clip-stop"], 0)
 
                 if img is not None:
-                    img = preprocess_image(img).to(device=self.device)
+                    img = preprocess_image(img, image_height, image_width).to(
+                        device=self.device
+                    )
 
                 latents = prepare_latents(
                     vae=self.en_vae,
@@ -381,6 +384,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                             "seed": manual_seed,
                             "height": image_height,
                             "width": image_width,
+                            "img2img": img is not None,
                         },
                         {
                             "clip": clip_perf_time,

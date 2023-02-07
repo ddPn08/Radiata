@@ -215,7 +215,7 @@ export const ImageGenerator: Component<{ img2img?: boolean | undefined }> = (pro
           </Item>
         </VStack>
         <div>
-          <Gallery images={results()} />
+          <Gallery images={results()} category={props.img2img ? 'img2img' : 'txt2img'} />
           <Show when={time()} keyed>
             {(time) => <div>{Math.round(time * 1000) / 1000}s</div>}
           </Show>
