@@ -7,9 +7,6 @@ interface Props {
   current?: string | number | undefined
   onChange?: (tab: string) => void
   tabs: Tab[]
-  //   closed?: boolean
-  //   vertical?: boolean
-  //   component?: ([label, Comp]: [string, Component]) => JSX.Element
 }
 
 const useStyles = createStyles((theme, _params, getRef) => {

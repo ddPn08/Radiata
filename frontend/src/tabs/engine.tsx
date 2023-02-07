@@ -15,11 +15,12 @@ import {
   Loader,
 } from '@mantine/core'
 import { useState } from 'react'
-import SizeInput from '../components/sizeInput'
+import NumberSliderInput from '../components/numberSliderInput'
 import { api } from '~/api'
 import { useForm } from '@mantine/form'
 import { BuildRequest } from 'internal:api'
 import { IconInfoCircle } from '@tabler/icons-react'
+import { IMAGE_SIZE_STEP, MAX_IMAGE_SIZE, MIN_IMAGE_SIZE } from '~/utils/static'
 
 interface BuildRequestForm extends Omit<BuildRequest, 'fp16'> {
   denoising_precision: string
@@ -105,13 +106,21 @@ const Engine = () => {
             <Input placeholder="hf_********************" {...form.getInputProps('hf_token')} />
           </Input.Wrapper>
 
-          <SizeInput
+          <NumberSliderInput
             label={'Optimization Image Width'}
+            defaultValue={768}
+            min={MIN_IMAGE_SIZE}
+            max={MAX_IMAGE_SIZE}
+            step={IMAGE_SIZE_STEP}
             {...form.getInputProps('opt_image_width')}
           />
 
-          <SizeInput
+          <NumberSliderInput
             label={'Optimization Image Height'}
+            defaultValue={768}
+            min={MIN_IMAGE_SIZE}
+            max={MAX_IMAGE_SIZE}
+            step={IMAGE_SIZE_STEP}
             {...form.getInputProps('opt_image_height')}
           />
 
