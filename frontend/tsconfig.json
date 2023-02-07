@@ -1,45 +1,26 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
     "target": "ESNext",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ESNext",
-    ],
-    "strict": true,
-    "esModuleInterop": true,
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "allowJs": false,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "allowUnusedLabels": false,
-    "allowUnreachableCode": false,
-    "exactOptionalPropertyTypes": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "importsNotUsedAsValues": "error",
-    "checkJs": true,
+    "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "resolveJsonModule": true,
+    "isolatedModules": true,
     "noEmit": true,
-    "jsxImportSource": "solid-js",
-    "jsx": "preserve",
-    "types": [
-      "unplugin-icons/types/solid",
-      "vite/client"
-    ],
+    "jsx": "react-jsx",
     "baseUrl": "./",
     "paths": {
-      "~/*": [
-        "./src/*"
-      ],
-      "internal:api": [
-        "./modules/api/index"
-      ]
-    },
-  }
+      "~/*": ["./src/*"],
+      "internal:api": ["./modules/api/index"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

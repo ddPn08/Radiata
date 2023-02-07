@@ -23,6 +23,7 @@
     "@mantine/notifications": "^5.10.3",
     "@tabler/icons-react": "^2.2.0",
     "embla-carousel-react": "^7.0.9",
+    "jotai": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
