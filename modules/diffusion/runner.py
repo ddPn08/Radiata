@@ -1,6 +1,6 @@
+from typing import List, Tuple, Dict
 import time
 from PIL.Image import Image
-
 
 class BaseRunner:
     loading = True
@@ -8,10 +8,10 @@ class BaseRunner:
     def __init__(self) -> None:
         pass
 
-    def activate() -> None:
+    def activate(self) -> None:
         pass
 
-    def teardown() -> None:
+    def teardown(self) -> None:
         pass
 
     def wait_loading(self):
@@ -32,5 +32,5 @@ class BaseRunner:
         image_height: int,
         image_width: int,
         seed: int,
-    ) -> tuple[list[tuple[list[Image], dict, dict]], float]:
+    ) -> Tuple[List[Tuple[List[Image], Dict, Dict]], float]:
         pass
