@@ -17,53 +17,51 @@ const ImageSizeParameter = () => {
   }
 
   return (
-    <Flex align={'center'}>
-      <Flex w={'100%'} align={'end'}>
-        {/* Width */}
-        <Input.Wrapper label={'Width'}>
-          <BetterNumInput
-            defaultValue={parameters.image_width}
-            value={parameters.image_width}
-            min={MIN_IMAGE_SIZE}
-            max={MAX_IMAGE_SIZE}
-            step={IMAGE_SIZE_STEP}
-            onChange={(e) => {
-              if (e) {
-                setParameters({ ...parameters, image_width: e })
-              }
-            }}
-            allowWheel
-          />
-        </Input.Wrapper>
-
-        <ActionIcon
-          variant="outline"
-          m={'sm'}
-          color={'blue'}
-          onClick={() => {
-            swapWidthHeight()
+    <Flex w={'100%'} align={'end'}>
+      {/* Width */}
+      <Input.Wrapper label={'Width'} w={'100%'}>
+        <BetterNumInput
+          defaultValue={parameters.image_width}
+          value={parameters.image_width}
+          min={MIN_IMAGE_SIZE}
+          max={MAX_IMAGE_SIZE}
+          step={IMAGE_SIZE_STEP}
+          onChange={(e) => {
+            if (e) {
+              setParameters({ ...parameters, image_width: e })
+            }
           }}
-        >
-          <IconArrowsLeftRight size={16} />
-        </ActionIcon>
+          allowWheel
+        />
+      </Input.Wrapper>
 
-        {/* Helight */}
-        <Input.Wrapper label={'Height'}>
-          <BetterNumInput
-            defaultValue={parameters.image_height}
-            value={parameters.image_height}
-            min={MIN_IMAGE_SIZE}
-            max={MAX_IMAGE_SIZE}
-            step={IMAGE_SIZE_STEP}
-            onChange={(e) => {
-              if (e) {
-                setParameters({ ...parameters, image_height: e })
-              }
-            }}
-            allowWheel
-          />
-        </Input.Wrapper>
-      </Flex>
+      <ActionIcon
+        variant="outline"
+        m={'sm'}
+        color={'blue'}
+        onClick={() => {
+          swapWidthHeight()
+        }}
+      >
+        <IconArrowsLeftRight size={16} />
+      </ActionIcon>
+
+      {/* Helight */}
+      <Input.Wrapper label={'Height'} w={'100%'}>
+        <BetterNumInput
+          defaultValue={parameters.image_height}
+          value={parameters.image_height}
+          min={MIN_IMAGE_SIZE}
+          max={MAX_IMAGE_SIZE}
+          step={IMAGE_SIZE_STEP}
+          onChange={(e) => {
+            if (e) {
+              setParameters({ ...parameters, image_height: e })
+            }
+          }}
+          allowWheel
+        />
+      </Input.Wrapper>
     </Flex>
   )
 }

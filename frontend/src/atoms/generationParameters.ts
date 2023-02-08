@@ -6,7 +6,7 @@ export interface GenerationParameters {
     negative_prompt: string
     image_height: number
     image_width: number
-    scheduler_id: SchedulerName
+    scheduler_id: string
     scale: number
     batch_count: number
     steps: number
@@ -15,7 +15,9 @@ export interface GenerationParameters {
     img: string | undefined
 }
 
-export interface GenerationParamertersForm extends GenerationParameters {}
+export interface GenerationParamertersForm extends GenerationParameters {
+    scheduler_id: SchedulerName
+}
 
 // value for frontend
 export const generationParametersAtom = atom<GenerationParamertersForm>({
