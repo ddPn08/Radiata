@@ -1,6 +1,7 @@
-import { Flex, NativeSelect } from '@mantine/core'
+import { Divider, NativeSelect, Stack } from '@mantine/core'
 import { useAtom } from 'jotai'
 
+import ImageParameter from './parameters/imageParameter'
 import ImageSizeParameter from './parameters/imageSizeParameter'
 import ModelParameter from './parameters/modelParameter'
 import SeedParameter from './parameters/seedParameter'
@@ -13,7 +14,7 @@ const Parameters = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
 
   return (
-    <Flex w={'100%'} direction={'column'} p={'md'} gap={'md'}>
+    <Stack w={'100%'} p={'md'} spacing={'md'}>
       <ModelParameter />
 
       <ImageSizeParameter />
@@ -65,7 +66,11 @@ const Parameters = () => {
           }
         }}
       />
-    </Flex>
+
+      <Divider />
+
+      <ImageParameter />
+    </Stack>
   )
 }
 

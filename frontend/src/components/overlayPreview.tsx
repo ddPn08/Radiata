@@ -15,7 +15,6 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
   const [currentInfo, setCurrentInfo] = useState(images[initialIndex].info)
 
   const onSlideChange = (index: number) => {
-    console.log('slide change', index)
     setCurrentIndex(index)
     setCurrentInfo(images[index].info)
   }
@@ -91,7 +90,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
                 return (
                   <tr key={key}>
                     <td>{key}</td>
-                    <td>{value == '' ? 'none' : value}</td>
+                    <td>{String(value) == '' ? 'none' : value}</td>
                   </tr>
                 )
               })}
