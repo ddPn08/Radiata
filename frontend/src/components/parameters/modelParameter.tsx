@@ -1,6 +1,7 @@
 import { ActionIcon, Flex, Input, NativeSelect, Skeleton } from '@mantine/core'
 import { IconRotateClockwise } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
+
 import { api } from '~/api'
 
 const ModelParameter = () => {

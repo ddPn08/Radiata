@@ -1,4 +1,5 @@
 import { atom } from 'jotai'
+
 import { SchedulerName } from '~/types/generate'
 
 export interface GenerationParameters {

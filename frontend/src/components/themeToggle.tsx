@@ -1,6 +1,7 @@
 import { ActionIcon, Center } from '@mantine/core'
 import { IconMoon, IconSun } from '@tabler/icons-react'
 import { useAtom } from 'jotai'
+
 import { themeAtom } from '../atoms/theme'
 
 const ThemeToggle = () => {

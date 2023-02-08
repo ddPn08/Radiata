@@ -1,7 +1,8 @@
 import { Box, Center, createStyles, Flex, MediaQuery, Navbar, Stack } from '@mantine/core'
-import { Tab } from '../types/tab'
+
 import GithubButton from './githubButton'
 import ThemeToggle from './themeToggle'
+import { Tab } from '../types/tab'
 
 interface Props {
   current?: string | number | undefined

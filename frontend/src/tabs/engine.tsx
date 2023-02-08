@@ -13,14 +13,17 @@ import {
   Alert,
   Loader,
 } from '@mantine/core'
-import { useState } from 'react'
-import NumberSliderInput from '../components/ui/numberSliderInput'
-import { api } from '~/api'
-import { BuildRequest } from 'internal:api'
 import { IconInfoCircle } from '@tabler/icons-react'
-import { IMAGE_SIZE_STEP, MAX_IMAGE_SIZE, MIN_IMAGE_SIZE } from '~/utils/static'
+import { BuildRequest } from 'internal:api'
 import { useAtom } from 'jotai'
+import { useState } from 'react'
+
+import NumberSliderInput from '../components/ui/numberSliderInput'
+
+import { api } from '~/api'
 import { engineFormAtom } from '~/atoms/engine'
+import { IMAGE_SIZE_STEP, MAX_IMAGE_SIZE, MIN_IMAGE_SIZE } from '~/utils/static'
+
 
 const Engine = () => {
   const [form, setForm] = useAtom(engineFormAtom)

@@ -1,11 +1,13 @@
 import { Flex, NativeSelect } from '@mantine/core'
 import { useAtom } from 'jotai'
-import { generationParametersAtom } from '~/atoms/generationParameters'
-import NumberSliderInput from '~/components/ui/numberSliderInput'
-import { schedulerNames } from '~/types/generate'
+
 import ImageSizeParameter from './parameters/imageSizeParameter'
 import ModelParameter from './parameters/modelParameter'
 import SeedParameter from './parameters/seedParameter'
+
+import { generationParametersAtom } from '~/atoms/generationParameters'
+import NumberSliderInput from '~/components/ui/numberSliderInput'
+import { schedulerNames } from '~/types/generate'
 
 const Parameters = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
