@@ -79,6 +79,18 @@ export interface GenerateImageRequest {
      * @memberof GenerateImageRequest
      */
     seed?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof GenerateImageRequest
+     */
+    strength?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof GenerateImageRequest
+     */
+    img?: string;
 }
 
 /**
@@ -111,6 +123,8 @@ export function GenerateImageRequestFromJSONTyped(json: any, ignoreDiscriminator
         'image_height': !exists(json, 'image_height') ? undefined : json['image_height'],
         'image_width': !exists(json, 'image_width') ? undefined : json['image_width'],
         'seed': !exists(json, 'seed') ? undefined : json['seed'],
+        'strength': !exists(json, 'strength') ? undefined : json['strength'],
+        'img': !exists(json, 'img') ? undefined : json['img'],
     };
 }
 
@@ -133,6 +147,8 @@ export function GenerateImageRequestToJSON(value?: GenerateImageRequest | null):
         'image_height': value.image_height,
         'image_width': value.image_width,
         'seed': value.seed,
+        'strength': value.strength,
+        'img': value.img,
     };
 }
 

@@ -36,7 +36,7 @@ export interface ModelCurrentResponseModel {
      * @type {string}
      * @memberof ModelCurrentResponseModel
      */
-    data: string;
+    data?: string;
 }
 
 /**
@@ -45,7 +45,6 @@ export interface ModelCurrentResponseModel {
 export function instanceOfModelCurrentResponseModel(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "status" in value;
-    isInstance = isInstance && "data" in value;
 
     return isInstance;
 }
@@ -62,7 +61,7 @@ export function ModelCurrentResponseModelFromJSONTyped(json: any, ignoreDiscrimi
         
         'status': json['status'],
         'message': !exists(json, 'message') ? undefined : json['message'],
-        'data': json['data'],
+        'data': !exists(json, 'data') ? undefined : json['data'],
     };
 }
 
