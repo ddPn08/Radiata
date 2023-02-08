@@ -1,12 +1,13 @@
 import { MantineProvider, Box, Flex } from '@mantine/core'
-import { Tab } from './types/tab'
-import Tabs from './components/tabs'
-import Generator from './tabs/generator'
-import { useState } from 'react'
-import Engine from './tabs/engine'
 import { IconEngine, IconPhotoEdit } from '@tabler/icons-react'
 import { useAtomValue } from 'jotai'
+import { useState } from 'react'
+
 import { themeAtom } from './atoms/theme'
+import Tabs from './components/tabs'
+import Engine from './tabs/engine'
+import Generator from './tabs/generator'
+import { Tab } from './types/tab'
 
 const TABS: Tab[] = [
   {

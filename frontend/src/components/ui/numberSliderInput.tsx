@@ -1,5 +1,6 @@
 import { Flex, Input, InputWrapperBaseProps, Slider } from '@mantine/core'
 import { useRef, useState } from 'react'
+
 import BetterNumInput from './betterNumInput'
 
 interface Props extends InputWrapperBaseProps {

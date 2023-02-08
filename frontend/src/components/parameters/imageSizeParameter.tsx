@@ -1,6 +1,7 @@
 import { ActionIcon, Flex, Input } from '@mantine/core'
 import { IconArrowsLeftRight } from '@tabler/icons-react'
 import { useAtom } from 'jotai'
+
 import { generationParametersAtom } from '~/atoms/generationParameters'
 import BetterNumInput from '~/components/ui/betterNumInput'
 import { IMAGE_SIZE_STEP, MAX_IMAGE_SIZE, MIN_IMAGE_SIZE } from '~/utils/static'

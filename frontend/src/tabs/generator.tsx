@@ -12,6 +12,7 @@ import {
 import { useMediaQuery } from '@mantine/hooks'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
+
 import { api, createUrl } from '~/api'
 import {
   GenerationParamertersForm,

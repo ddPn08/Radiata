@@ -1,6 +1,7 @@
 import { ActionIcon, Flex, Input } from '@mantine/core'
 import { IconDice5 } from '@tabler/icons-react'
 import { useAtom } from 'jotai'
+
 import { generationParametersAtom } from '~/atoms/generationParameters'
 import BetterNumInput from '~/components/ui/betterNumInput'
 import { generateRandomNumber } from '~/utils/rand'
