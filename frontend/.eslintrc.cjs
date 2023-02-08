@@ -5,8 +5,10 @@ module.exports = {
     es2021: true,
   },
   extends: [
-    'eslint:recommended',
     'plugin:react/recommended',
+    'eslint:recommended',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
     'plugin:@typescript-eslint/recommended',
     'prettier',
   ],
@@ -28,6 +30,7 @@ module.exports = {
     '@typescript-eslint/no-empty-function': 'off',
     '@typescript-eslint/no-namespace': 'off',
     '@typescript-eslint/no-non-null-asserted-optional-chain': 'off',
+    'import/no-unresolved': 'off',
     'unused-imports/no-unused-imports': 'error',
     'unused-imports/no-unused-vars': [
       'warn',
