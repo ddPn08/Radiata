@@ -56,6 +56,8 @@ const Generator = () => {
       }
 
       setIsLoading(true)
+      setErrorMessage(null)
+      setPerformance(null)
       const res = await api.generateImage({
         generateImageRequest: requestBody,
       })
@@ -90,15 +92,11 @@ const Generator = () => {
   }
 
   return (
-    <Box
-      h={'100%'}
-      sx={{
-        overflow: isLargeScreen ? 'hidden' : 'scroll',
-      }}
-    >
+    <Box h={'100%'}>
       <form
         style={{
           height: '100%',
+          overflow: isLargeScreen ? 'hidden' : 'scroll',
         }}
         onSubmit={(e) => {
           e.preventDefault()
@@ -109,9 +107,11 @@ const Generator = () => {
           <Stack
             w={'100%'}
             p={'md'}
-            sx={{
-              overflow: 'hidden',
-            }}
+            sx={
+              {
+                // overflow: 'hidden',
+              }
+            }
           >
             <Stack w={'100%'}>
               <Textarea
@@ -149,7 +149,8 @@ const Generator = () => {
             {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
 
             <Box
-              h={isLargeScreen ? '80%' : '480px'}
+              mah={isLargeScreen ? '80%' : '480px'}
+              pos={'relative'}
               sx={{
                 overflow: 'scroll',
               }}
