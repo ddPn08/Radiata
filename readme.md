@@ -106,8 +106,8 @@ First of all, we need to convert our existing diffusers model to the tensorrt en
 ## Building the TensorRT engine
 1. Click on the "engine" tab
 ![](./docs/images/readme-usage-screenshot-01.png)
-2. Enter Hugging Face's Diffusers model ID in `Model ID` (ex: `CompVis/stable-diffusion-v1-4`)
-3. Enter your Hugging Face access token in `HuggingFace Access Token` (required for some repositories).
+2. Enter Huggingface's Diffusers model ID in `Model ID` (ex: `CompVis/stable-diffusion-v1-4`)
+3. Enter your Huggingface access token in `HuggingFace Access Token` (required for some repositories).
 Access tokens can be obtained or created from [this page](https://huggingface.co/settings/tokens).
 4. Click the `Build` button to start building the engine.
     - There may be some warnings during the engine build, but you can safely ignore them unless the build fails.
