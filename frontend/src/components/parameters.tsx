@@ -11,16 +11,7 @@ const Parameters = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
 
   return (
-    <Flex
-      w={{
-        sm: 540,
-        md: 640,
-        lg: 720,
-      }}
-      direction={'column'}
-      p={'md'}
-      gap={'md'}
-    >
+    <Flex w={'100%'} direction={'column'} p={'md'} gap={'md'}>
       <ModelParameter />
 
       <ImageSizeParameter />

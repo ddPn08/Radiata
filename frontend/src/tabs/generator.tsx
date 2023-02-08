@@ -1,19 +1,46 @@
-import { Box, Button, Divider, Flex, Image, MediaQuery, Stack, Textarea } from '@mantine/core'
+import { Box, Button, Divider, Flex, Image, Stack, Textarea } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { useAtom } from 'jotai'
-import { GenerationParamertersForm, generationParametersAtom } from '~/atoms/generationParameters'
+import { api } from '~/api'
+import {
+  GenerationParamertersForm,
+  GenerationParameters,
+  generationParametersAtom,
+} from '~/atoms/generationParameters'
 import Parameters from '~/components/parameters'
+import { Scheduler } from '~/types/generate'
 
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
 
+  const isLargeScreen = useMediaQuery('(min-width: 992px)', true)
+
   const onModelChange = (value: string) => {}
 
-  const onSubmit = (values: GenerationParamertersForm) => {
+  const onSubmit = async (values: GenerationParamertersForm) => {
     console.log(values)
+
+    const requestBody: GenerationParameters = {
+      ...values,
+      scheduler_id: Scheduler[values.scheduler_id],
+    }
+    const res = await api.generateImage({
+      generateImageRequest: requestBody,
+    })
+
+    console.log(res)
+
+    // setResults(Object.entries(res.data.images) as any)
+    // setTime(res.data.performance)
   }
 
   return (
-    <Box h={'100%'}>
+    <Box
+      h={'100%'}
+      sx={{
+        overflow: isLargeScreen ? 'hidden' : 'scroll',
+      }}
+    >
       <form
         style={{
           height: '100%',
@@ -23,8 +50,8 @@ const Generator = () => {
           onSubmit(parameters)
         }}
       >
-        <Flex h={'100%'}>
-          <Stack w={'100%'} m={'md'}>
+        <Flex h={'100%'} direction={isLargeScreen ? 'row' : 'column'}>
+          <Stack w={'100%'} p={'md'}>
             <Stack w={'100%'}>
               <Textarea
                 label={'Positive'}
@@ -47,21 +74,25 @@ const Generator = () => {
 
             <Button type={'submit'}>Generate</Button>
 
-            <Box>
+            <Box h={isLargeScreen ? '80%' : '480px'}>
               <Image />
             </Box>
           </Stack>
 
-          <Divider orientation="vertical" />
+          <Divider orientation={isLargeScreen ? 'vertical' : 'horizontal'} />
 
-          <MediaQuery
-            smallerThan={'sm'}
-            styles={{
-              display: 'none',
-            }}
+          <Box
+            w={
+              isLargeScreen
+                ? {
+                    md: 640,
+                    lg: 720,
+                  }
+                : '100%'
+            }
           >
             <Parameters />
-          </MediaQuery>
+          </Box>
         </Flex>
       </form>
     </Box>
