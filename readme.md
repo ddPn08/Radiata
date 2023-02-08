@@ -22,7 +22,7 @@
 
 # Installation
 
-## Docker (All platform) | Easy
+## Docker (All platform, Recommended) | Easy
 
 1. Clone repository
 ```sh
