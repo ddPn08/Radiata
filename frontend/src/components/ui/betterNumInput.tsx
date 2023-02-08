@@ -12,6 +12,8 @@ const BetterNumInput = (
   const updateValueWithWheel = (e: React.WheelEvent<HTMLInputElement>) => {
     if (!step) return
 
+    e.preventDefault()
+
     const delta = e.deltaY > 0 ? -step : step
     const newValue = Number(e.currentTarget.value) + delta
 
@@ -48,7 +50,7 @@ const BetterNumInput = (
         }
 
         if (min && max) {
-          if ((max - min) % step !== 0) {
+          if ((max - min) / step !== Math.floor((max - min) / step)) {
             console.warn('Step must be a factor of max-min')
             return
           }
