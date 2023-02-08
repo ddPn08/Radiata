@@ -1,21 +1,38 @@
-import { Box, Button, Divider, Flex, Image, Stack, Textarea } from '@mantine/core'
+import { Box, Button, Divider, Flex, Notification, Stack, Textarea } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { useAtom } from 'jotai'
-import { api } from '~/api'
+import { useState } from 'react'
+import { api, createUrl } from '~/api'
 import {
   GenerationParamertersForm,
   GenerationParameters,
   generationParametersAtom,
 } from '~/atoms/generationParameters'
+import Gallery from '~/components/gallery'
 import Parameters from '~/components/parameters'
 import { Scheduler } from '~/types/generate'
+import { GeneratedImage } from '~/types/generatedImage'
 
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
+  const [images, setImages] = useState<GeneratedImage[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const isLargeScreen = useMediaQuery('(min-width: 992px)', true)
 
-  const onModelChange = (value: string) => {}
+  const parseImages = (images: any): GeneratedImage[] => {
+    const data: GeneratedImage[] = []
+
+    Object.entries(images).forEach(([key, value]: [string, any]) => {
+      data.push({
+        url: createUrl(`/api/images/${value.info.img2img ? 'img2img' : 'txt2img'}/${key}`),
+        info: value.info,
+      })
+    })
+
+    return data
+  }
 
   const onSubmit = async (values: GenerationParamertersForm) => {
     console.log(values)
@@ -24,14 +41,32 @@ const Generator = () => {
       ...values,
       scheduler_id: Scheduler[values.scheduler_id],
     }
+
+    setIsLoading(true)
     const res = await api.generateImage({
       generateImageRequest: requestBody,
     })
+    setIsLoading(false)
 
-    console.log(res)
+    console.log(res.data)
 
-    // setResults(Object.entries(res.data.images) as any)
-    // setTime(res.data.performance)
+    if (res.status !== 'success') {
+      if (res.message) {
+        setErrorMessage(res.message)
+      } else {
+        setErrorMessage('Something went wrong')
+      }
+    }
+
+    const data = parseImages(res.data.images)
+    setImages((imgs) => [...data, ...imgs])
+  }
+
+  const onKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // if Enter + Ctrl or Enter + Cmd
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      onSubmit(parameters)
+    }
   }
 
   return (
@@ -50,8 +85,14 @@ const Generator = () => {
           onSubmit(parameters)
         }}
       >
-        <Flex h={'100%'} direction={isLargeScreen ? 'row' : 'column'}>
-          <Stack w={'100%'} p={'md'}>
+        <Flex h={'100%'} w={'100%'} direction={isLargeScreen ? 'row' : 'column'}>
+          <Stack
+            w={'100%'}
+            p={'md'}
+            sx={{
+              overflow: 'hidden',
+            }}
+          >
             <Stack w={'100%'}>
               <Textarea
                 label={'Positive'}
@@ -62,20 +103,36 @@ const Generator = () => {
                     prompt: e.target.value,
                   }))
                 }}
+                onKeyDown={onKeyPress}
                 autosize
               />
               <Textarea
                 label={'Negative'}
                 defaultValue={parameters.negative_prompt}
                 onChange={(e) => setParameters((p) => ({ ...p, negative_prompt: e.target.value }))}
+                onKeyDown={onKeyPress}
                 autosize
               />
             </Stack>
 
-            <Button type={'submit'}>Generate</Button>
+            <Button
+              mih={'36px'}
+              type={'submit'}
+              disabled={isLoading}
+              sx={{
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              Generate
+            </Button>
 
-            <Box h={isLargeScreen ? '80%' : '480px'}>
-              <Image />
+            <Box
+              h={isLargeScreen ? '80%' : '480px'}
+              sx={{
+                overflow: 'scroll',
+              }}
+            >
+              <Gallery images={images} isLoading={isLoading} />
             </Box>
           </Stack>
 
@@ -95,6 +152,18 @@ const Generator = () => {
           </Box>
         </Flex>
       </form>
+
+      {errorMessage && (
+        <Notification
+          title={'Error occured'}
+          color={'red'}
+          onClose={() => {
+            setErrorMessage(null)
+          }}
+        >
+          {errorMessage}
+        </Notification>
+      )}
     </Box>
   )
 }
