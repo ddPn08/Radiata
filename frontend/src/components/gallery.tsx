@@ -1,6 +1,7 @@
-import { Box, Image, Portal, SimpleGrid, Skeleton } from '@mantine/core'
+import { Box, Portal, SimpleGrid, Skeleton } from '@mantine/core'
 import { useState } from 'react'
 
+import GalleryImage from './galleryImage'
 import OverlayPreview from './overlayPreview'
 
 import { GeneratedImage } from '~/types/generatedImage'
@@ -40,19 +41,14 @@ const Gallery = ({ images, isLoading }: Props) => {
         >
           {images.map((image, i) => {
             return (
-              <Box key={image.url}>
-                <Image
-                  src={image.url}
-                  alt={image.info.prompt}
-                  sx={{
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    setInitialIndex(i)
-                    setShowOverlay(true)
-                  }}
-                />
-              </Box>
+              <GalleryImage
+                key={image.url}
+                image={image}
+                onClick={() => {
+                  setInitialIndex(i)
+                  setShowOverlay(true)
+                }}
+              />
             )
           })}
         </SimpleGrid>

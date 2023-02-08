@@ -58,6 +58,8 @@ const NumberSliderInput = ({
             onChange && onChange(e)
           }}
           onWheel={(e) => {
+            // blur した際に value が確定され、onChage が発火するため、
+            // わざと一度 blur してから focus しなおしている
             e.currentTarget.blur()
             e.currentTarget.focus()
           }}
