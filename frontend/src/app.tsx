@@ -47,7 +47,19 @@ const App = () => {
             setCurrentTab(id)
           }}
         />
-        <Box w={'100%'}>{PAGES[currentTab]}</Box>
+        {Object.keys(PAGES).map((key) => {
+          return (
+            <Box
+              key={key}
+              sx={{
+                display: currentTab === key ? 'block' : 'none',
+              }}
+              w={'100%'}
+            >
+              {PAGES[key]}
+            </Box>
+          )
+        })}
       </Flex>
     </MantineProvider>
   )
