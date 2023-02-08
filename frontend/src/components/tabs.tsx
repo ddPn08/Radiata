@@ -1,4 +1,4 @@
-import { createStyles, Flex, MediaQuery, Navbar, Stack } from '@mantine/core'
+import { Box, Center, createStyles, Flex, MediaQuery, Navbar, Stack } from '@mantine/core'
 import { Tab } from '../types/tab'
 import GithubButton from './githubButton'
 import ThemeToggle from './themeToggle'
@@ -52,7 +52,7 @@ const Tabs = ({ current, onChange, tabs }: Props) => {
   const { classes, cx } = useStyles()
 
   const largeLinks = tabs.map((item) => (
-    <a
+    <Box
       className={cx(classes.link, { [classes.linkActive]: item.id === current })}
       key={item.id}
       onClick={(event) => {
@@ -62,11 +62,11 @@ const Tabs = ({ current, onChange, tabs }: Props) => {
     >
       <item.icon />
       <span>{item.label}</span>
-    </a>
+    </Box>
   ))
 
   const smallLinks = tabs.map((item) => (
-    <a
+    <Center
       className={cx(classes.link, { [classes.linkActive]: item.id === current })}
       key={item.id}
       onClick={(event) => {
@@ -75,7 +75,7 @@ const Tabs = ({ current, onChange, tabs }: Props) => {
       }}
     >
       <item.icon />
-    </a>
+    </Center>
   ))
 
   return (
