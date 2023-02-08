@@ -52,6 +52,19 @@ const Parameters = () => {
           }
         }}
       />
+
+      <NumberSliderInput
+        label={'Batch Count'}
+        defaultValue={parameters.batch_count}
+        min={1}
+        max={100}
+        step={1}
+        onChange={(e) => {
+          if (e) {
+            setParameters((p) => ({ ...p, batch_count: e }))
+          }
+        }}
+      />
     </Flex>
   )
 }

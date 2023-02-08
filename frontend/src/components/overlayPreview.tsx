@@ -50,7 +50,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
           {images.map((image) => {
             return (
               <Carousel.Slide key={image.url}>
-                <Center>
+                <Center h={'100%'}>
                   <img
                     src={image.url}
                     style={{
