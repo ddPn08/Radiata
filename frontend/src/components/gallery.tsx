@@ -1,4 +1,8 @@
-import { Box, Image, SimpleGrid, Skeleton } from '@mantine/core'
+import { Box, Image, Portal, SimpleGrid, Skeleton } from '@mantine/core'
+import { useState } from 'react'
+
+import OverlayPreview from './overlayPreview'
+
 import { GeneratedImage } from '~/types/generatedImage'
 
 interface Props {
@@ -7,37 +11,64 @@ interface Props {
 }
 
 const Gallery = ({ images, isLoading }: Props) => {
+  const [showOverlay, setShowOverlay] = useState(false)
+  const [initialIndex, setInitialIndex] = useState(0)
+
   return (
-    <Box>
-      {isLoading && (
-        <Skeleton
-          h={{
-            xs: 300,
-            sm: 400,
-            md: 300,
-          }}
-          my={'sm'}
-        />
+    <>
+      <Box>
+        {isLoading && (
+          <Skeleton
+            h={{
+              xs: 300,
+              sm: 400,
+              md: 300,
+            }}
+            my={'sm'}
+          />
+        )}
+        <SimpleGrid
+          breakpoints={[
+            { maxWidth: 'xs', cols: 1 },
+            { maxWidth: 'sm', cols: 2 },
+            { minWidth: 'sm', cols: 2 },
+            { minWidth: 'md', cols: 2 },
+            { minWidth: 'lg', cols: 3 },
+            { minWidth: 'xl', cols: 4 },
+          ]}
+        >
+          {images.map((image, i) => {
+            return (
+              <Box key={image.url}>
+                <Image
+                  src={image.url}
+                  alt={image.info.prompt}
+                  sx={{
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => {
+                    setInitialIndex(i)
+                    setShowOverlay(true)
+                  }}
+                />
+              </Box>
+            )
+          })}
+        </SimpleGrid>
+      </Box>
+
+      {showOverlay && (
+        <Portal>
+          <OverlayPreview
+            images={images}
+            initialIndex={initialIndex}
+            onClose={() => {
+              setShowOverlay(false)
+            }}
+          />
+        </Portal>
       )}
-      <SimpleGrid
-        breakpoints={[
-          { maxWidth: 'xs', cols: 1 },
-          { maxWidth: 'sm', cols: 2 },
-          { minWidth: 'sm', cols: 2 },
-          { minWidth: 'md', cols: 2 },
-          { minWidth: 'lg', cols: 3 },
-          { minWidth: 'xl', cols: 4 },
-        ]}
-      >
-        {images.map((image) => {
-          return (
-            <Box key={image.url}>
-              <Image src={image.url} />
-            </Box>
-          )
-        })}
-      </SimpleGrid>
-    </Box>
+    </>
   )
 }
 
