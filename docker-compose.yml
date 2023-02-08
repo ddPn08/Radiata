@@ -5,9 +5,11 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - ./models-docker:/app/models
-      - ./outputs:/app/outputs
-      - ./venv:/app/venv
+      - ./docker-data/models:/app/models
+      - ./docker-data/outputs:/app/outputs
+    environment:
+      - COMMANDLINE_ARGS=
+      - UVICORN_ARGS=--host 0.0.0.0
     deploy:
       resources:
         reservations:

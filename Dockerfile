@@ -54,7 +54,9 @@ COPY . /app
 
 WORKDIR /app
 
-COPY --from=tensorrt /TensorRT/build/out/libnvinfer_plugin.so.8 /app/libnvinfer_plugin.so.8
+RUN git submodule update --init --recursive
+
+COPY --from=tensorrt /TensorRT/build/out/libnvinfer_plugin.so.8 /app/lib/trt/lib/libnvinfer_plugin.so
 COPY --from=frontend /Lsmith/frontend/dist /app/dist
 
-ENTRYPOINT [ "bash", "docker.launch.sh" ]
+ENTRYPOINT [ "/usr/bin/python3.10", "-u", "/app/launch.py" ]

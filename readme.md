@@ -4,14 +4,16 @@
 
 ---
 
-1. [Benchmark](#benchmark)
-2. [Installation](#installation)
-    - [Docker (All platform) | Easy](#docker-all-platform--easy)
-    - [Linux | Difficult](#linux--difficult)
-    - [Windows | Currently  unavailable](#windows--currently-unavailable)
-3. [Usage](#usage)
-    - [Building the TensorRT engine](#building-the-tensorrt-engine)
-    - [Generate images](#generate-images)
+- [Benchmark](#benchmark)
+- [Installation](#installation)
+  - [Docker (All platform) | Easy](#docker-all-platform--easy)
+  - [Linux | Difficult](#linux--difficult)
+    - [requirements](#requirements)
+  - [Windows | Difficult](#windows--difficult)
+    - [requirements](#requirements-1)
+- [Usage](#usage)
+  - [Building the TensorRT engine](#building-the-tensorrt-engine)
+  - [Generate images](#generate-images)
 
 ---
 
@@ -23,16 +25,21 @@
 ## Docker (All platform) | Easy
 
 1. Clone repository
+```sh
+git clone https://github.com/ddPn08/Lsmith.git
+cd Lsmith
+git submodule update --init --recursive
+```
 2. Launch using Docker compose
 ```sh
-docker compose up
+docker-compose up --build
 ```
 
 ## Linux | Difficult
 ### requirements
 - node.js (recommended version is 18)
 - pnpm
-- Python 3.10
+- python 3.10
 - pip
 - CUDA
 - cuDNN < 8.6.0
@@ -58,12 +65,36 @@ pnpm build --out-dir ../dist
 4. Run launch.sh with the path to libnvinfer_plugin.so in the LD_PRELOAD variable.
 ```sh
 ex.)
-LD_PRELOAD="/lib/src/TensorRT/build/out/libnvinfer_plugin.so.8" bash launch.sh --host 0.0.0.0
+bash launch.sh --host 0.0.0.0
 ```
 
-## Windows | Currently unavailable...
-We are looking for a way to do that.
-Use [Docker](#docker-all-platform--easy) instead for now.
+## Windows | Difficult
+### requirements
+- node.js (recommended version is 18)
+- pnpm
+- python 3.10
+- pip
+- CUDA
+- cuDNN < 8.6.0
+- TensorRT 8.5.x
+
+1. Install nvidia gpu driver
+2. Instal cuda 11.x (Click [here](https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/) for the official guide)
+2. Instal cudnn 8.6.0 (Click [here](https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html) for the official guide)
+3. Install tensorrt 8.5.3.1 (Click [here](https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html) for the official guide)
+4. Clone Lsmith repository
+```sh
+git clone https://github.com/ddPn08/Lsmith.git
+cd Lsmith
+git submodule update --init --recursive
+```
+5. Enter frontend directory and build frontend
+```sh
+cd frontend
+pnpm i
+pnpm build --out-dir ../dist
+```
+6. Launch `launch-user.bat`
 
 <br />
 

@@ -6,7 +6,7 @@ import onnx
 import torch
 
 from lib.trt.utilities import Engine
-from modules import shared
+from modules import config
 
 from .models import VAE, UNet
 
@@ -133,7 +133,10 @@ class EngineBuilder:
             ),
         }
 
-        self.model_dir = os.path.join(shared.cmd_opts.model_dir, model_id)
+        self.model_dir = os.path.join(
+            config.get("model_dir"),
+            os.path.basename(model_id) if os.path.isabs(model_id) else model_id,
+        )
 
     def build(self, generator=False, on_end=lambda: ()):
         engine_dir = os.path.join(self.model_dir, "engine")

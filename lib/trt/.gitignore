@@ -1,0 +1,2 @@
+/lib/*
+!/lib/nvinfer_plugin_library_files_here.txt

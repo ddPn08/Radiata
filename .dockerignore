@@ -1,6 +1,9 @@
+/docker-data
 /models
 /outputs
 /venv
 /dist
-*/__pycache__*
-*/node_modules*
+**/__pycache__
+**/node_modules
+
+/lib/trt/lib/*

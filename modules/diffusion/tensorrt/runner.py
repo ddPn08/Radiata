@@ -1,23 +1,23 @@
+import gc
 import json
 import os
 import random
 import time
-from tqdm import tqdm
+from typing import Optional
 
 import diffusers
 import numpy as np
 import tensorrt as trt
 import torch
-import gc
 from cuda import cudart
 from PIL import Image
 from polygraphy import cuda
-from transformers import CLIPTokenizer, CLIPTextModel
-
-from lib.trt.utilities import TRT_LOGGER, Engine
-from modules import shared
+from tqdm import tqdm
+from transformers import CLIPTextModel, CLIPTokenizer
 
 from lib.diffusers.lpw import LongPromptWeightingPipeline
+from lib.trt.utilities import TRT_LOGGER, Engine
+
 from ..runner import BaseRunner
 from .clip import create_clip_engine
 from .models import CLIP, VAE, UNet
@@ -40,6 +40,24 @@ def to_image(images):
     return result
 
 
+def get_timesteps(
+    scheduler,
+    num_inference_steps: int,
+    strength: float,
+    device: torch.device,
+    is_text2img: bool,
+):
+    if is_text2img:
+        return scheduler.timesteps.to(device), num_inference_steps
+    else:
+        init_timestep = int(num_inference_steps * strength)
+        init_timestep = min(init_timestep, num_inference_steps)
+
+        t_start = max(num_inference_steps - init_timestep, 0)
+        timesteps = scheduler.timesteps[t_start:].to(device)
+        return timesteps, num_inference_steps - t_start
+
+
 def get_scheduler(scheduler_id: str):
     schedulers = {
         "ddim": diffusers.DDIMScheduler,
@@ -56,24 +74,82 @@ def get_scheduler(scheduler_id: str):
     return schedulers[scheduler_id]
 
 
-class TensorRTDiffusionRunner(BaseRunner):
-    def __init__(
-        self,
-        model_id: str,
-    ):
-        meta_filepath = os.path.join(
-            shared.cmd_opts.model_dir, model_id, "model_index.json"
+def preprocess_image(image: Image.Image, height: int, width: int):
+    width, height = map(lambda x: x - x % 8, (width, height))
+    image = image.resize(
+        (width, height), resample=diffusers.utils.PIL_INTERPOLATION["lanczos"]
+    )
+    image = np.array(image).astype(np.float32) / 255.0
+    image = image[None].transpose(0, 3, 1, 2)
+    image = torch.from_numpy(image)
+    return 2.0 * image - 1.0
+
+
+def prepare_latents(
+    vae: VAE,
+    vae_scale_factor: int,
+    unet_in_channels: int,
+    scheduler,
+    image: Optional[Image.Image],
+    timestep,
+    batch_size,
+    height,
+    width,
+    dtype,
+    device,
+    generator,
+    latents=None,
+):
+    if image is None:
+        shape = (
+            batch_size,
+            unet_in_channels,
+            height // vae_scale_factor,
+            width // vae_scale_factor,
         )
+
+        if latents is None:
+            latents = torch.randn(
+                shape, generator=generator, device=device, dtype=dtype
+            )
+        else:
+            if latents.shape != shape:
+                raise ValueError(
+                    f"Unexpected latents shape, got {latents.shape}, expected {shape}"
+                )
+            latents = latents.to(device)
+
+        latents = latents * scheduler.init_noise_sigma
+        return latents
+    else:
+        init_latent_dist = vae.encode(image).latent_dist
+        init_latents = init_latent_dist.sample(generator=generator)
+        init_latents = torch.cat([0.18215 * init_latents] * batch_size, dim=0)
+        shape = init_latents.shape
+        noise = torch.randn(shape, generator=generator, device=device, dtype=dtype)
+        latents = scheduler.add_noise(init_latents, noise, timestep)
+        return latents
+
+
+class TensorRTDiffusionRunner(BaseRunner):
+    def __init__(self, model_dir: str):
+        meta_filepath = os.path.join(model_dir, "model_index.json")
         if not os.path.exists(meta_filepath):
             raise RuntimeError("Model meta data not found.")
-        engine_dir = os.path.join(shared.cmd_opts.model_dir, model_id, "engine")
+        engine_dir = os.path.join(model_dir, "engine")
 
         with open(meta_filepath, mode="r") as f:
             txt = f.read()
             self.meta = json.loads(txt)
 
-        self.model_id = model_id
-        self.device = "cuda"
+        self.scheduler = None
+        self.scheduler_id = None
+        self.model_id = (
+            self.meta["model_id"]
+            if "model_id" in self.meta
+            else "CompVis/stable-diffusion-v1-4"
+        )
+        self.device = torch.device("cuda")
         self.fp16 = self.meta["denoising_prec"] == "fp16"
         self.engines = {
             "clip": create_clip_engine(),
@@ -81,10 +157,15 @@ class TensorRTDiffusionRunner(BaseRunner):
             "vae": Engine("vae", engine_dir),
         }
         self.models = {
-            "clip": CLIP("openai/clip-vit-large-patch14"),
-            "unet": UNet(self.meta["models"]["unet"], fp16=self.fp16),
-            "vae": VAE(self.meta["models"]["vae"]),
+            "clip": CLIP(
+                "openai/clip-vit-large-patch14", fp16=self.fp16, device=self.device
+            ),
+            "unet": UNet(
+                self.meta["models"]["unet"], fp16=self.fp16, device=self.device
+            ),
+            "vae": VAE(self.meta["models"]["vae"], fp16=self.fp16, device=self.device),
         }
+        self.en_vae = self.models["vae"].get_model()
 
     def activate(
         self,
@@ -127,18 +208,32 @@ class TensorRTDiffusionRunner(BaseRunner):
         image_height=512,
         image_width=512,
         seed=None,
+        strength: Optional[float] = None,
+        img: Optional[Image.Image] = None,
     ):
         self.wait_loading()
         batch_size = 1
 
-        Scheduler = get_scheduler(scheduler_id)
+        if self.scheduler_id != scheduler_id:
+            Scheduler = get_scheduler(scheduler_id)
+            try:
+                self.scheduler = Scheduler.from_pretrained(
+                    self.model_id, subfolder="scheduler"
+                )
+            except:
+                self.scheduler = Scheduler.from_config(
+                    {
+                        "num_train_timesteps": 1000,
+                        "beta_start": 0.00085,
+                        "beta_end": 0.012,
+                    }
+                )
 
-        scheduler = Scheduler.from_config(self.model_id, subfolder="scheduler")
-        scheduler.set_timesteps(steps, device=self.device)
-
-        # Spatial dimensions of latent tensor
-        latent_height = image_height // 8
-        latent_width = image_width // 8
+        self.scheduler.set_timesteps(steps, device=self.device)
+        timesteps, steps = get_timesteps(
+            self.scheduler, steps, strength, self.device, img is None
+        )
+        latent_timestep = timesteps[:1].repeat(batch_size * batch_count)
 
         e2e_tic = time.perf_counter()
 
@@ -148,7 +243,6 @@ class TensorRTDiffusionRunner(BaseRunner):
             seed = random.randrange(0, 4294967294, 1)
 
         for i in range(batch_count):
-            # Allocate buffers for TensorRT engine bindings
             for model_name, obj in self.models.items():
                 self.engines[model_name].allocate_buffers(
                     shape_dict=obj.get_shape_dict(
@@ -157,7 +251,6 @@ class TensorRTDiffusionRunner(BaseRunner):
                     device=self.device,
                 )
 
-            # Create profiling events
             events = {}
             for stage in ["clip", "denoise", "vae"]:
                 for marker in ["start", "stop"]:
@@ -166,7 +259,6 @@ class TensorRTDiffusionRunner(BaseRunner):
             manual_seed = seed + i
             generator = torch.Generator(device="cuda").manual_seed(manual_seed)
 
-            # Run Stable Diffusion pipeline
             with torch.inference_mode(), torch.autocast("cuda"), trt.Runtime(
                 TRT_LOGGER
             ):
@@ -184,40 +276,40 @@ class TensorRTDiffusionRunner(BaseRunner):
 
                 cudart.cudaEventRecord(events["clip-stop"], 0)
 
-                # latents need to be generated on the target device
-                unet_channels = 4  # unet.in_channels
-                latents_shape = (
-                    batch_size,
-                    unet_channels,
-                    latent_height,
-                    latent_width,
-                )
-                latents_dtype = torch.float32  # text_embeddings.dtype
-                latents = torch.randn(
-                    latents_shape,
+                if img is not None:
+                    img = preprocess_image(img, image_height, image_width).to(
+                        device=self.device
+                    )
+
+                latents = prepare_latents(
+                    vae=self.en_vae,
+                    vae_scale_factor=8,
+                    unet_in_channels=4,
+                    scheduler=self.scheduler,
+                    image=img,
+                    timestep=latent_timestep,
+                    batch_size=batch_size,
+                    height=image_height,
+                    width=image_width,
+                    dtype=torch.float32,
                     device=self.device,
-                    dtype=latents_dtype,
                     generator=generator,
                 )
-
-                # Scale the initial noise by the standard deviation required by the scheduler
-                latents = latents * scheduler.init_noise_sigma
 
                 torch.cuda.synchronize()
 
                 cudart.cudaEventRecord(events["denoise-start"], 0)
-                for step_index, timestep in enumerate(tqdm(scheduler.timesteps)):
-                    # expand the latents if we are doing classifier free guidance
+                for _, timestep in enumerate(tqdm(timesteps)):
                     latent_model_input = torch.cat([latents] * 2)
-                    latent_model_input = scheduler.scale_model_input(
+                    latent_model_input = self.scheduler.scale_model_input(
                         latent_model_input, timestep
                     )
 
-                    # predict the noise residual
                     if timestep.dtype != torch.float32:
                         timestep_float = timestep.float()
                     else:
                         timestep_float = timestep
+
                     sample_inp = cuda.DeviceView(
                         ptr=latent_model_input.data_ptr(),
                         shape=latent_model_input.shape,
@@ -233,6 +325,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                         shape=text_embeddings.shape,
                         dtype=np.float16 if self.fp16 else np.float32,
                     )
+
                     noise_pred = self.runEngine(
                         "unet",
                         {
@@ -242,18 +335,17 @@ class TensorRTDiffusionRunner(BaseRunner):
                         },
                     )["latent"]
 
-                    # Perform guidance
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
                     noise_pred = noise_pred_uncond + scale * (
                         noise_pred_text - noise_pred_uncond
                     )
 
                     if scheduler_id in ["deis", "dpm2", "heun", "dpm++", "dpm", "pndm"]:
-                        latents = scheduler.step(
+                        latents = self.scheduler.step(
                             model_output=noise_pred, timestep=timestep, sample=latents
                         ).prev_sample
                     else:
-                        latents = scheduler.step(
+                        latents = self.scheduler.step(
                             model_output=noise_pred,
                             timestep=timestep,
                             sample=latents,
@@ -292,6 +384,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                             "seed": manual_seed,
                             "height": image_height,
                             "width": image_width,
+                            "img2img": img is not None,
                         },
                         {
                             "clip": clip_perf_time,
@@ -302,6 +395,9 @@ class TensorRTDiffusionRunner(BaseRunner):
                 )
 
         e2e_toc = time.perf_counter()
-        all_perf_time = (e2e_toc - e2e_tic) * 1000
+        all_perf_time = e2e_toc - e2e_tic
+        print(
+            f"all: {all_perf_time}s, clip: {clip_perf_time/1000}s, denoise: {denoise_perf_time/1000}s, vae: {vae_perf_time/1000}s"
+        )
 
         return results, all_perf_time
