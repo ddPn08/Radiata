@@ -28,10 +28,10 @@ const ModelParameter = () => {
 
   const modelRefresh = async () => {
     const runners = await api.getRunners().then((res) => res.data)
-    setModels(runners)
+    setModels(runners as string[])
 
     const currentRunner = await api.getCurrentRunner().then((res) => res.data)
-    setCurrentModel(currentRunner)
+    setCurrentModel(currentRunner as string)
   }
 
   useEffect(() => {
