@@ -6,7 +6,8 @@
 
 - [Benchmark](#benchmark)
 - [Installation](#installation)
-  - [Docker (All platform) | Easy](#docker-all-platform--easy)
+  - [Docker (All platform, Recommended) | Easy](#docker-all-platform-recommended--easy)
+    - [Customization](#customization)
   - [Linux | Difficult](#linux--difficult)
     - [requirements](#requirements)
   - [Windows | Difficult](#windows--difficult)
@@ -34,6 +35,20 @@ git submodule update --init --recursive
 ```sh
 docker-compose up --build
 ```
+
+Data such as models and output images are saved in the `docker-data` directory.
+
+### Customization
+
+There are two types of Dockerfile.
+
+|||
+|-|-|
+|Dockerfile.full|Build the TensorRT plugin. The build can take tens of minutes.|
+|Dockerfile.lite|Download the pre-built TensorRT plugin from Github Releases. Build times are significantly reduced.|
+
+You can change the Dockerfile to use by changing the value of `services.lsmith.build.dockerfile` in docker-compose.yml.
+By default it uses `Dockerfile.lite`.
 
 ## Linux | Difficult
 ### requirements
