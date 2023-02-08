@@ -1,5 +1,6 @@
 import { Carousel } from '@mantine/carousel'
-import { Box, Center, CloseButton, Flex } from '@mantine/core'
+import { Box, Center, CloseButton, Flex, Table, Text } from '@mantine/core'
+import { useState } from 'react'
 
 import { GeneratedImage } from '~/types/generatedImage'
 
@@ -10,6 +11,15 @@ interface Props {
 }
 
 const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex)
+  const [currentInfo, setCurrentInfo] = useState(images[initialIndex].info)
+
+  const onSlideChange = (index: number) => {
+    console.log('slide change', index)
+    setCurrentIndex(index)
+    setCurrentInfo(images[index].info)
+  }
+
   return (
     <Box
       pos={'absolute'}
@@ -45,6 +55,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
           sx={{
             overflowY: 'hidden',
           }}
+          onSlideChange={onSlideChange}
           loop
         >
           {images.map((image) => {
@@ -64,7 +75,29 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
             )
           })}
         </Carousel>
-        <Box h={'100%'} w={'400px'} bg={'dark'}></Box>
+        <Box h={'100%'} w={'480px'} bg={'dark'}>
+          <Text size={'lg'} weight={'bold'} p={'md'}>
+            Information
+          </Text>
+          <Table horizontalSpacing={'md'} verticalSpacing={'sm'} fontSize={'md'}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(currentInfo).map(([key, value]) => {
+                return (
+                  <tr key={key}>
+                    <td>{key}</td>
+                    <td>{value == '' ? 'none' : value}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </Table>
+        </Box>
       </Flex>
       <CloseButton
         variant={'filled'}
