@@ -31,6 +31,6 @@ export const generationParametersAtom = atom<GenerationParamertersForm>({
     batch_count: 1,
     steps: 50,
     seed: -1,
-    strength: 1,
+    strength: 0.7,
     img: undefined,
 })

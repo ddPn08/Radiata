@@ -31,11 +31,11 @@ const Gallery = ({ images, isLoading }: Props) => {
           cols={3}
           breakpoints={[
             { maxWidth: 'xs', cols: 2 },
-            { maxWidth: 'sm', cols: 3 },
-            { minWidth: 'sm', cols: 3 },
-            { minWidth: 'md', cols: 3 },
-            { minWidth: 'lg', cols: 4 },
-            { minWidth: 'xl', cols: 5 },
+            { maxWidth: 'sm', cols: 2 },
+            { minWidth: 'sm', cols: 2 },
+            { minWidth: 'md', cols: 2 },
+            { minWidth: 'lg', cols: 3 },
+            { minWidth: 'xl', cols: 4 },
           ]}
         >
           {images.map((image, i) => {

@@ -30,6 +30,7 @@ const NumberSliderInput = ({
     <Input.Wrapper label={label}>
       <Flex align={'center'} gap={'sm'}>
         <Slider
+          label={value}
           defaultValue={defaultValue}
           value={value}
           min={min}

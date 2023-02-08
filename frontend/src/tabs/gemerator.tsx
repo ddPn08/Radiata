@@ -58,6 +58,8 @@ const Generator = () => {
       setIsLoading(true)
       setErrorMessage(null)
       setPerformance(null)
+
+      console.log(requestBody)
       const res = await api.generateImage({
         generateImageRequest: requestBody,
       })
@@ -104,15 +106,7 @@ const Generator = () => {
         }}
       >
         <Flex h={'100%'} w={'100%'} direction={isLargeScreen ? 'row' : 'column'}>
-          <Stack
-            w={'100%'}
-            p={'md'}
-            sx={
-              {
-                // overflow: 'hidden',
-              }
-            }
-          >
+          <Stack w={'100%'} p={'md'}>
             <Stack w={'100%'}>
               <Textarea
                 label={'Positive'}
@@ -143,7 +137,7 @@ const Generator = () => {
                 cursor: isLoading ? 'not-allowed' : 'pointer',
               }}
             >
-              Generate
+              <Text>{parameters.img ? 'Generate (img2img mode)' : 'Generate'}</Text>
             </Button>
 
             {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
@@ -152,7 +146,7 @@ const Generator = () => {
               mah={isLargeScreen ? '80%' : '480px'}
               pos={'relative'}
               sx={{
-                overflow: 'scroll',
+                overflowY: 'scroll',
               }}
             >
               <Gallery images={images} isLoading={isLoading} />
@@ -170,6 +164,9 @@ const Generator = () => {
                   }
                 : '100%'
             }
+            sx={{
+              overflow: 'scroll',
+            }}
           >
             <Parameters />
           </Box>

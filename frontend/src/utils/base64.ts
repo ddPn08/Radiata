@@ -1,4 +1,4 @@
-export const fileToBase64 = (buffer: ArrayBuffer) => {
+export const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
     let binary = ''
     const bytes = new Uint8Array(buffer)
     const len = bytes.byteLength
