@@ -9,7 +9,6 @@ import {
   Space,
   Stack,
   Text,
-  Progress,
   Box,
   Alert,
   Loader,
@@ -17,46 +16,28 @@ import {
 import { useState } from 'react'
 import NumberSliderInput from '../components/ui/numberSliderInput'
 import { api } from '~/api'
-import { useForm } from '@mantine/form'
 import { BuildRequest } from 'internal:api'
 import { IconInfoCircle } from '@tabler/icons-react'
 import { IMAGE_SIZE_STEP, MAX_IMAGE_SIZE, MIN_IMAGE_SIZE } from '~/utils/static'
-
-interface BuildRequestForm extends Omit<BuildRequest, 'fp16'> {
-  denoising_precision: string
-}
+import { useAtom } from 'jotai'
+import { engineFormAtom } from '~/atoms/engine'
 
 const Engine = () => {
-  const form = useForm<BuildRequestForm>({
-    initialValues: {
-      model_id: '',
-      hf_token: '',
-      denoising_precision: 'float16',
-      opt_image_height: 512,
-      opt_image_width: 512,
-      max_batch_size: 1,
-      onnx_opset: 16,
-      build_static_batch: false,
-      build_dynamic_shape: true,
-      build_preview_features: false,
-      force_engine_build: false,
-      force_onnx_export: false,
-      force_onnx_optimize: false,
-      onnx_minimal_optimization: false,
-    },
-  })
+  const [form, setForm] = useAtom(engineFormAtom)
 
   const [status, setStatus] = useState<Record<string, any> | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<boolean | null>(null)
 
-  const onSubmit = async (req: BuildRequest) => {
-    console.log(req)
-    await buildEngine(req)
+  const onSubmit = async () => {
+    console.log(form)
+    await buildEngine(form)
   }
 
   const buildEngine = async (req: BuildRequest) => {
     try {
       setError(null)
+      setSuccess(null)
       setStatus({
         message: 'loading...',
         progress: 0,
@@ -69,6 +50,7 @@ const Engine = () => {
         const res = await reader.read()
 
         if (res.done) {
+          setSuccess(true)
           finish = true
         }
 
@@ -76,10 +58,12 @@ const Engine = () => {
           setStatus(JSON.parse(new TextDecoder().decode(res.value) || ''))
         } catch (_) {}
       }
+
       setStatus(null)
     } catch (e) {
       setStatus(null)
       setError((e as Error).message)
+      setSuccess(false)
     }
   }
 
@@ -87,53 +71,65 @@ const Engine = () => {
     <Container py={'md'}>
       <Text size={'lg'}>Build TensorRT from diffusers moodel on Hugging Face</Text>
       <form
-        onSubmit={form.onSubmit((values) =>
-          onSubmit({
-            fp16: values.denoising_precision === 'float16',
-            ...values,
-          }),
-        )}
+        onSubmit={(e) => {
+          e.preventDefault()
+          onSubmit()
+        }}
       >
         <Stack my={'sm'}>
-          <Input.Wrapper label={'Model ID'} withAsterisk>
+          <Input.Wrapper label={'Model ID (required)'} withAsterisk>
             <Input
               placeholder="hugging face model id (e.g. CompVis/stablediffusion-v1-4)"
-              {...form.getInputProps('model_id')}
+              defaultValue={form.model_id}
+              onChange={(e) => setForm({ ...form, model_id: e.currentTarget.value })}
             />
           </Input.Wrapper>
 
           <Input.Wrapper label={'Hugging Face Access Token'}>
-            <Input placeholder="hf_********************" {...form.getInputProps('hf_token')} />
+            <Input
+              placeholder="hf_********************"
+              defaultValue={form.hf_token}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  hf_token: e.currentTarget.value,
+                })
+              }
+            />
           </Input.Wrapper>
 
           <NumberSliderInput
             label={'Optimization Image Width'}
-            defaultValue={768}
+            defaultValue={form.opt_image_width}
             min={MIN_IMAGE_SIZE}
             max={MAX_IMAGE_SIZE}
             step={IMAGE_SIZE_STEP}
-            {...form.getInputProps('opt_image_width')}
+            onChange={(value) => setForm({ ...form, opt_image_width: value })}
           />
 
           <NumberSliderInput
             label={'Optimization Image Height'}
-            defaultValue={768}
+            defaultValue={form.opt_image_height}
             min={MIN_IMAGE_SIZE}
             max={MAX_IMAGE_SIZE}
             step={IMAGE_SIZE_STEP}
-            {...form.getInputProps('opt_image_height')}
+            onChange={(value) => setForm({ ...form, opt_image_height: value })}
           />
 
           <Input.Wrapper label={'Denoising precision'}>
-            <NativeSelect data={['float32', 'float16']} {...form.getInputProps('fp16')} />
+            <NativeSelect
+              data={['float32', 'float16']}
+              defaultValue={form.fp16 ? 'float16' : 'float32'}
+              onChange={(e) => setForm({ ...form, fp16: e.currentTarget.value === 'float16' })}
+            />
           </Input.Wrapper>
 
           <Input.Wrapper label={'Max batch size'}>
             <NumberInput
               min={1}
               max={32}
-              defaultValue={1}
-              {...form.getInputProps('max_batch_size')}
+              defaultValue={form.max_batch_size}
+              onChange={(value) => setForm({ ...form, max_batch_size: value })}
             />
           </Input.Wrapper>
 
@@ -146,24 +142,44 @@ const Engine = () => {
               { maxWidth: 'xs', cols: 1, spacing: 'sm' },
             ]}
           >
-            <Checkbox label={'Build static batch'} {...form.getInputProps('build_static_path')} />
+            <Checkbox
+              label={'Build static batch'}
+              defaultChecked={form.build_static_batch}
+              onChange={(e) => setForm({ ...form, build_static_batch: e.currentTarget.checked })}
+            />
             <Checkbox
               label={'Build dynamic shape'}
-              {...form.getInputProps('build_dynamic_shape')}
+              defaultChecked={form.build_dynamic_shape}
+              onChange={(e) => setForm({ ...form, build_dynamic_shape: e.currentTarget.checked })}
             />
             <Checkbox
               label={'Build preview features'}
-              {...form.getInputProps('build_preview_features')}
+              defaultChecked={form.build_preview_features}
+              onChange={(e) =>
+                setForm({ ...form, build_preview_features: e.currentTarget.checked })
+              }
             />
-            <Checkbox label={'Force engine build'} {...form.getInputProps('force_engine_build')} />
-            <Checkbox label={'Force onnx export'} {...form.getInputProps('force_onnx_export')} />
+            <Checkbox
+              label={'Force engine build'}
+              defaultChecked={form.force_engine_build}
+              onChange={(e) => setForm({ ...form, force_engine_build: e.currentTarget.checked })}
+            />
+            <Checkbox
+              label={'Force onnx export'}
+              defaultChecked={form.force_onnx_export}
+              onChange={(e) => setForm({ ...form, force_onnx_export: e.currentTarget.checked })}
+            />
             <Checkbox
               label={'Force onnx optimize'}
-              {...form.getInputProps('force_onnx_optimize')}
+              defaultChecked={form.force_onnx_optimize}
+              onChange={(e) => setForm({ ...form, force_onnx_optimize: e.currentTarget.checked })}
             />
             <Checkbox
               label={'Onnx minimal optimization'}
-              {...form.getInputProps('onnx_minimal_optimization')}
+              defaultChecked={form.onnx_minimal_optimization}
+              onChange={(e) =>
+                setForm({ ...form, onnx_minimal_optimization: e.currentTarget.checked })
+              }
             />
           </SimpleGrid>
 
@@ -171,16 +187,32 @@ const Engine = () => {
 
           {status ? (
             <Box w={'100%'}>
-              <Button w={'100%'} disabled>
-                <Loader />
-              </Button>
-              <Alert title={'Status'}>
-                <Text>{status['message']}</Text>
-                <Progress value={status['progress'] * 100} />
+              <Alert title={'Processing...'}>
+                <Text>
+                  This may take about 10 minutes. Please wait until the process is finished.
+                </Text>
               </Alert>
+              <Button w={'100%'} my={'sm'} disabled>
+                <Loader p={'xs'} />
+              </Button>
             </Box>
           ) : (
             <Button type={'submit'}>Build</Button>
+          )}
+
+          {success && (
+            <Box>
+              <Alert
+                title={'Success!'}
+                color={'green'}
+                withCloseButton={true}
+                onClose={() => {
+                  setSuccess(null)
+                }}
+              >
+                <Text>The model has been built successfully. You can now generate images!</Text>
+              </Alert>
+            </Box>
           )}
         </Stack>
       </form>
