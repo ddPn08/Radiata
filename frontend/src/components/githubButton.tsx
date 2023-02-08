@@ -1,13 +1,15 @@
-import { ActionIcon } from '@mantine/core'
+import { ActionIcon, Center } from '@mantine/core'
 import { IconBrandGithub } from '@tabler/icons-react'
 
 const GithubButton = () => {
   return (
-    <a href={'https://github.com/ddPn08/Lsmith'} target={'_blank'} rel="noreferrer">
-      <ActionIcon>
-        <IconBrandGithub />
-      </ActionIcon>
-    </a>
+    <Center>
+      <a href={'https://github.com/ddPn08/Lsmith'} target={'_blank'} rel="noreferrer">
+        <ActionIcon>
+          <IconBrandGithub />
+        </ActionIcon>
+      </a>
+    </Center>
   )
 }
 
