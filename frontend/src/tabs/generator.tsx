@@ -1,4 +1,14 @@
-import { Box, Button, Divider, Flex, Notification, Stack, Textarea } from '@mantine/core'
+import {
+  Box,
+  Button,
+  Divider,
+  Flex,
+  Notification,
+  Portal,
+  Stack,
+  Text,
+  Textarea,
+} from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
@@ -16,6 +26,7 @@ import { GeneratedImage } from '~/types/generatedImage'
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
   const [images, setImages] = useState<GeneratedImage[]>([])
+  const [performance, setPerformance] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -35,31 +46,39 @@ const Generator = () => {
   }
 
   const onSubmit = async (values: GenerationParamertersForm) => {
-    console.log(values)
+    try {
+      console.log(values)
 
-    const requestBody: GenerationParameters = {
-      ...values,
-      scheduler_id: Scheduler[values.scheduler_id],
-    }
-
-    setIsLoading(true)
-    const res = await api.generateImage({
-      generateImageRequest: requestBody,
-    })
-    setIsLoading(false)
-
-    console.log(res.data)
-
-    if (res.status !== 'success') {
-      if (res.message) {
-        setErrorMessage(res.message)
-      } else {
-        setErrorMessage('Something went wrong')
+      const requestBody: GenerationParameters = {
+        ...values,
+        scheduler_id: Scheduler[values.scheduler_id],
       }
-    }
 
-    const data = parseImages(res.data.images)
-    setImages((imgs) => [...data, ...imgs])
+      setIsLoading(true)
+      const res = await api.generateImage({
+        generateImageRequest: requestBody,
+      })
+      setIsLoading(false)
+
+      console.log(res.data)
+
+      if (res.status !== 'success') {
+        if (res.message) {
+          setErrorMessage(res.message)
+        } else {
+          setErrorMessage('Something went wrong')
+        }
+      }
+
+      const data = parseImages(res.data.images)
+      setImages((imgs) => [...data, ...imgs])
+
+      setPerformance(res.data.performance)
+    } catch (e) {
+      console.error(e)
+      setErrorMessage((e as Error).message)
+      setIsLoading(false)
+    }
   }
 
   const onKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -126,6 +145,8 @@ const Generator = () => {
               Generate
             </Button>
 
+            {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
+
             <Box
               h={isLargeScreen ? '80%' : '480px'}
               sx={{
@@ -154,15 +175,21 @@ const Generator = () => {
       </form>
 
       {errorMessage && (
-        <Notification
-          title={'Error occured'}
-          color={'red'}
-          onClose={() => {
-            setErrorMessage(null)
-          }}
-        >
-          {errorMessage}
-        </Notification>
+        <Portal>
+          <Notification
+            title={'Error occured'}
+            color={'red'}
+            m={'md'}
+            pos={'absolute'}
+            bottom={0}
+            right={0}
+            onClose={() => {
+              setErrorMessage(null)
+            }}
+          >
+            {errorMessage}
+          </Notification>
+        </Portal>
       )}
     </Box>
   )
