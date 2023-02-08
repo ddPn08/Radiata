@@ -45,18 +45,17 @@ docker-compose up --build
 - cuDNN < 8.6.0
 - TensorRT 8.5.x
 
-1. Follow the instructions on [this](https://github.com/NVIDIA/TensorRT/tree/main/demo/Diffusion#build-tensorrt-plugins-library) page to build TensorRT OSS and get `libnvinfer_plugin.so`.
-2. Clone Lsmith repository
+1. Clone Lsmith repository
 ```sh
 git clone https://github.com/ddPn08/Lsmith.git
 cd Lsmith
 git submodule update --init --recursive
 ```
-3. Enter the repository directory.
+2. Enter the repository directory.
 ```sh
 cd Lsmith
 ```
-5. Enter frontend directory and build frontend
+3. Enter frontend directory and build frontend
 ```sh
 cd frontend
 pnpm i
