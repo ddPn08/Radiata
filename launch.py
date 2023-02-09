@@ -139,7 +139,7 @@ def prepare_environment(args: List[str]):
 
     args, reinstall_torch = extract_arg(args, "--reinstall-torch")
     args, reinstall_tensorrt = extract_arg(args, "--reinstall-tensorrt")
-    args, disable_build_frontend = extract_arg(args, "--disable-build-frontend")
+    args, disable_build_frontend = extract_arg(args, "--skip-build-frontend")
 
     if reinstall_torch or not is_installed("torch"):
         run(
