@@ -1,126 +1,72 @@
-import { css, styled, useTheme } from 'decorock'
-import { Component, createEffect, createSignal, For, on, Show } from 'solid-js'
+import { Box, Portal, SimpleGrid, Skeleton } from '@mantine/core'
+import { useState } from 'react'
 
-import { createUrl } from '~/api'
+import GalleryImage from './galleryImage'
+import OverlayPreview from './overlayPreview'
 
-const Container = styled.div`
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  border-radius: 1rem;
-`
+import { GeneratedImage } from '~/types/generatedImage'
 
-const Inner = styled.div`
-  display: flex;
-  width: 100%;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  padding: 1rem;
-  aspect-ratio: 1/1;
-  background-color: ${(p) => p.theme.colors.secondary.darken(0.5)};
-  gap: 1rem;
-  overflow-y: auto;
-`
-
-const Full = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  background-color: ${(p) => p.theme.colors.secondary.darken(0.5)};
-
-  img {
-    object-fit: contain;
-  }
-`
-
-const StyledItem = styled.div`
-  display: inline-block;
-  overflow: hidden;
-  width: 200px;
-  height: 200px;
-  border-radius: 1rem;
-  cursor: pointer;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  &:hover {
-    outline: solid 1px ${(p) => p.theme.colors.primary};
-  }
-`
-
-const ImageItem: Component<{ src: string; info: Record<string, string>; onClick: () => void }> = (
-  props,
-) => {
-  return (
-    <StyledItem onClick={props.onClick}>
-      <img src={props.src} alt="" />
-    </StyledItem>
-  )
+interface Props {
+  images: GeneratedImage[]
+  isLoading: boolean
 }
 
-export const Gallery: Component<{
-  images: [string, Record<string, string>][]
-  category: 'txt2img' | 'img2img'
-}> = (props) => {
-  const theme = useTheme()
-  const [selected, setSelected] = createSignal<[string, Record<string, string>] | null>(null)
-
-  createEffect(
-    on(
-      () => props.images,
-      () => setSelected(null),
-    ),
-  )
+const Gallery = ({ images, isLoading }: Props) => {
+  const [showOverlay, setShowOverlay] = useState(false)
+  const [initialIndex, setInitialIndex] = useState(0)
 
   return (
-    <Container>
-      <Inner>
-        <For each={props.images}>
-          {([src, info]) => (
-            <ImageItem
-              src={createUrl(`/api/images/${props.category}/${src}`)}
-              info={info}
-              onClick={() => setSelected([src, info])}
-            />
-          )}
-        </For>
-      </Inner>
-      <Show when={selected()} keyed>
-        {([src]) => (
-          <Full>
-            <div
-              class={css`
-                width: 100%;
-                height: 100%;
-                padding: 1rem;
-
-                img {
-                  width: 100%;
-                  height: 100%;
-
-                  &:hover {
-                    outline: solid 1px ${theme.colors.primary};
-                  }
-                }
-              `}
-            >
-              <img
-                src={createUrl(`/api/images/${props.category}/${src}`)}
-                onClick={() => setSelected(null)}
-              />
-            </div>
-          </Full>
+    <>
+      <Box>
+        {isLoading && (
+          <Skeleton
+            h={{
+              xs: 300,
+              sm: 400,
+              md: 300,
+            }}
+            my={'sm'}
+          />
         )}
-      </Show>
-    </Container>
+        <SimpleGrid
+          cols={3}
+          breakpoints={[
+            { maxWidth: 'xs', cols: 2 },
+            { maxWidth: 'sm', cols: 2 },
+            { minWidth: 'sm', cols: 2 },
+            { minWidth: 'md', cols: 2 },
+            { minWidth: 'lg', cols: 3 },
+            { minWidth: 'xl', cols: 4 },
+          ]}
+        >
+          {images.map((image, i) => {
+            return (
+              <GalleryImage
+                key={image.url}
+                image={image}
+                onClick={() => {
+                  setInitialIndex(i)
+                  setShowOverlay(true)
+                }}
+              />
+            )
+          })}
+        </SimpleGrid>
+      </Box>
+
+      {showOverlay && (
+        <Portal>
+          <OverlayPreview
+            images={images}
+            initialIndex={initialIndex}
+            onClose={() => {
+              setShowOverlay(false)
+            }}
+          />
+        </Portal>
+      )}
+    </>
   )
 }
+
+export default Gallery

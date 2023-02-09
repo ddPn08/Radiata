@@ -1,65 +1,69 @@
-import { css } from 'decorock'
-import { createSignal } from 'solid-js'
+import { MantineProvider, Box, Flex } from '@mantine/core'
+import { IconEngine, IconPhotoEdit } from '@tabler/icons-react'
+import { useAtomValue } from 'jotai'
+import { useState } from 'react'
 
-import { Header } from './components/header'
-import { Tabs, TabPanel } from './components/ui/tabs'
-import { ToastProvider } from './components/ui/toast'
-import { ThemeProvider } from './styles'
-import { Engine } from './tabs/engine'
-import { Img2Img } from './tabs/img2img'
-import { Txt2Img } from './tabs/txt2img'
+import { themeAtom } from './atoms/theme'
+import Tabs from './components/tabs'
+import Engine from './tabs/engine'
+import Generator from './tabs/generator'
+import { Tab } from './types/tab'
 
-export const App = () => {
-  return (
-    <ThemeProvider>
-      <ToastProvider>
-        <Index />
-      </ToastProvider>
-    </ThemeProvider>
-  )
+const TABS: Tab[] = [
+  {
+    id: 'generator',
+    label: 'Generator',
+    icon: IconPhotoEdit,
+  },
+  {
+    id: 'engine',
+    label: 'Engine',
+    icon: IconEngine,
+  },
+]
+
+const PAGES: Record<string, JSX.Element> = {
+  generator: <Generator />,
+  engine: <Engine />,
 }
 
-const PAGES = {
-  txt2img: Txt2Img,
-  img2img: Img2Img,
-  engine: Engine,
-}
+const App = () => {
+  const theme = useAtomValue(themeAtom)
 
-const Index = () => {
-  const [current, setCurrent] = createSignal('txt2img')
+  const [currentTab, setCurrentTab] = useState(TABS[0].id)
 
   return (
-    <div
-      class={css`
-        display: grid;
-        height: 100vh;
-        grid-template-columns: 100%;
-        grid-template-rows: 75px 1fr;
-        overflow-y: auto;
-      `}
+    <MantineProvider
+      theme={{
+        colorScheme: theme,
+      }}
+      withGlobalStyles
+      withNormalizeCSS
     >
-      <Header />
-      <Tabs
-        tab={current()}
-        onChange={setCurrent}
-        tabs={PAGES}
-        vertical
-        component={([label, Comp], isSelected) => {
+      <Flex h={'100vh'}>
+        <Tabs
+          current={currentTab}
+          tabs={TABS}
+          onChange={(id) => {
+            setCurrentTab(id)
+          }}
+        />
+        {Object.keys(PAGES).map((key) => {
           return (
-            <TabPanel
-              class={css`
-                padding: 1rem;
-                overflow-y: auto;
-                transition: 0.2s;
-              `}
-              show={isSelected()}
-              unmount={label !== 'txt2img'}
+            <Box
+              key={key}
+              sx={{
+                display: currentTab === key ? 'block' : 'none',
+              }}
+              w={'100%'}
             >
-              <Comp />
-            </TabPanel>
+              {PAGES[key]}
+            </Box>
           )
-        }}
-      />
-    </div>
+        })}
+      </Flex>
+    </MantineProvider>
   )
 }
+
+export default App

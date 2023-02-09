@@ -2,20 +2,25 @@
 module.exports = {
   env: {
     browser: true,
-    node: true,
+    es2021: true,
   },
   extends: [
-    'plugin:solid/recommended',
+    'plugin:react/recommended',
     'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
     'plugin:import/recommended',
     'plugin:import/typescript',
+    'plugin:@typescript-eslint/recommended',
     'prettier',
   ],
-  plugins: ['unused-imports', 'solid'],
+  overrides: [],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  plugins: ['unused-imports', 'react', '@typescript-eslint'],
   rules: {
     'no-empty': 'off',
-    'solid/reactivity': 'off',
     '@typescript-eslint/ban-types': 'off',
     '@typescript-eslint/no-var-requires': 'off',
     '@typescript-eslint/no-empty-interface': 'off',
@@ -46,5 +51,7 @@ module.exports = {
         'newlines-between': 'always',
       },
     ],
+    'react/jsx-uses-react': 'off',
+    'react/react-in-jsx-scope': 'off',
   },
 }

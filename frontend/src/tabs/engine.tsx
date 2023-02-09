@@ -1,228 +1,234 @@
-import { css, styled, useTheme } from 'decorock'
-import type { BuildRequest } from 'internal:api'
-import { createSignal, Show } from 'solid-js'
-import { createStore } from 'solid-js/store'
+import {
+  Button,
+  Checkbox,
+  Container,
+  Input,
+  NativeSelect,
+  NumberInput,
+  SimpleGrid,
+  Space,
+  Stack,
+  Text,
+  Box,
+  Alert,
+  Loader,
+} from '@mantine/core'
+import { IconInfoCircle } from '@tabler/icons-react'
+import { BuildRequest } from 'internal:api'
+import { useAtom } from 'jotai'
+import { useState } from 'react'
+
+import NumberSliderInput from '../components/ui/numberSliderInput'
 
 import { api } from '~/api'
-import { Button } from '~/components/ui/button'
-import { CheckBox } from '~/components/ui/checkbox'
-import { Input } from '~/components/ui/input'
-import { Select } from '~/components/ui/select'
-import { WithSlider } from '~/components/ui/slider'
-import { HStack, VStack } from '~/components/ui/stack'
+import { engineFormAtom } from '~/atoms/engine'
+import { IMAGE_SIZE_STEP, MAX_IMAGE_SIZE, MIN_IMAGE_SIZE } from '~/utils/static'
 
-const Container = styled.div`
-  display: flex;
-  height: 100%;
-  justify-content: center;
-`
 
-const Setting = styled.div`
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  margin-bottom: 1rem;
-  gap: 0.5rem;
+const Engine = () => {
+  const [form, setForm] = useAtom(engineFormAtom)
 
-  & > div {
-    width: 100%;
+  const [status, setStatus] = useState<Record<string, any> | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<boolean | null>(null)
+
+  const onSubmit = async () => {
+    console.log(form)
+    await buildEngine(form)
   }
-`
 
-export const Engine = () => {
-  const theme = useTheme()
-  const [req, setReq] = createStore({
-    model_id: '',
-    hf_token: '',
-    fp16: false,
-    opt_image_height: 512,
-    opt_image_width: 512,
-    max_batch_size: 1,
-    onnx_opset: 16,
-    build_static_batch: false,
-    build_dynamic_shape: true,
-    build_preview_features: false,
-    force_engine_build: false,
-    force_onnx_export: false,
-    force_onnx_optimize: false,
-    onnx_minimal_optimization: false,
-  } as BuildRequest)
-  const [status, setStatus] = createSignal<Record<string, any> | null>(null)
+  const buildEngine = async (req: BuildRequest) => {
+    try {
+      setError(null)
+      setSuccess(null)
+      setStatus({
+        message: 'loading...',
+        progress: 0,
+      })
+      const { raw } = await api.buildEngineRaw({ buildRequest: req })
+      const reader = raw.body?.getReader()
+      if (!reader) return
+      let finish = false
+      while (!finish) {
+        const res = await reader.read()
+
+        if (res.done) {
+          setSuccess(true)
+          finish = true
+        }
+
+        try {
+          setStatus(JSON.parse(new TextDecoder().decode(res.value) || ''))
+        } catch (_) {}
+      }
+
+      setStatus(null)
+    } catch (e) {
+      setStatus(null)
+      setError((e as Error).message)
+      setSuccess(false)
+    }
+  }
 
   return (
-    <Container>
-      <VStack
-        class={css`
-          width: 60%;
-          ${theme.media.breakpoints.md} {
-            width: 100%;
-          }
-
-          progress {
-            width: 100%;
-          }
-        `}
+    <Container py={'md'}>
+      <Text size={'lg'}>Build TensorRT from diffusers moodel on Hugging Face</Text>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          onSubmit()
+        }}
       >
-        <Show when={status()} keyed>
-          {({ message, progress }) => (
-            <div
-              class={css`
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                padding: 0.25rem;
-                border-radius: 0.5rem;
-                background-color: ${theme.colors.secondary.darken(0.25)};
-                font-family: 'Roboto Mono', 'Noto Sans JP', monospace;
-                font-size: 0.9rem;
-              `}
-            >
-              <div>
-                {message} - {progress * 100}%
-              </div>
-              <div>This can take tens of minutes.</div>
-            </div>
+        <Stack my={'sm'}>
+          <Input.Wrapper label={'Model ID (required)'} withAsterisk>
+            <Input
+              placeholder="hugging face model id (e.g. CompVis/stablediffusion-v1-4)"
+              defaultValue={form.model_id}
+              onChange={(e) => setForm({ ...form, model_id: e.currentTarget.value })}
+            />
+          </Input.Wrapper>
+
+          <Input.Wrapper label={'Hugging Face Access Token'}>
+            <Input
+              placeholder="hf_********************"
+              defaultValue={form.hf_token}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  hf_token: e.currentTarget.value,
+                })
+              }
+            />
+          </Input.Wrapper>
+
+          <NumberSliderInput
+            label={'Optimization Image Width'}
+            defaultValue={form.opt_image_width}
+            min={MIN_IMAGE_SIZE}
+            max={MAX_IMAGE_SIZE}
+            step={IMAGE_SIZE_STEP}
+            onChange={(value) => setForm({ ...form, opt_image_width: value })}
+          />
+
+          <NumberSliderInput
+            label={'Optimization Image Height'}
+            defaultValue={form.opt_image_height}
+            min={MIN_IMAGE_SIZE}
+            max={MAX_IMAGE_SIZE}
+            step={IMAGE_SIZE_STEP}
+            onChange={(value) => setForm({ ...form, opt_image_height: value })}
+          />
+
+          <Input.Wrapper label={'Denoising precision'}>
+            <NativeSelect
+              data={['float32', 'float16']}
+              defaultValue={form.fp16 ? 'float16' : 'float32'}
+              onChange={(e) => setForm({ ...form, fp16: e.currentTarget.value === 'float16' })}
+            />
+          </Input.Wrapper>
+
+          <Input.Wrapper label={'Max batch size'}>
+            <NumberInput
+              min={1}
+              max={32}
+              defaultValue={form.max_batch_size}
+              onChange={(value) => setForm({ ...form, max_batch_size: value })}
+            />
+          </Input.Wrapper>
+
+          <SimpleGrid
+            cols={4}
+            spacing="lg"
+            breakpoints={[
+              { maxWidth: 'md', cols: 3, spacing: 'md' },
+              { maxWidth: 'sm', cols: 2, spacing: 'sm' },
+              { maxWidth: 'xs', cols: 1, spacing: 'sm' },
+            ]}
+          >
+            <Checkbox
+              label={'Build static batch'}
+              defaultChecked={form.build_static_batch}
+              onChange={(e) => setForm({ ...form, build_static_batch: e.currentTarget.checked })}
+            />
+            <Checkbox
+              label={'Build dynamic shape'}
+              defaultChecked={form.build_dynamic_shape}
+              onChange={(e) => setForm({ ...form, build_dynamic_shape: e.currentTarget.checked })}
+            />
+            <Checkbox
+              label={'Build preview features'}
+              defaultChecked={form.build_preview_features}
+              onChange={(e) =>
+                setForm({ ...form, build_preview_features: e.currentTarget.checked })
+              }
+            />
+            <Checkbox
+              label={'Force engine build'}
+              defaultChecked={form.force_engine_build}
+              onChange={(e) => setForm({ ...form, force_engine_build: e.currentTarget.checked })}
+            />
+            <Checkbox
+              label={'Force onnx export'}
+              defaultChecked={form.force_onnx_export}
+              onChange={(e) => setForm({ ...form, force_onnx_export: e.currentTarget.checked })}
+            />
+            <Checkbox
+              label={'Force onnx optimize'}
+              defaultChecked={form.force_onnx_optimize}
+              onChange={(e) => setForm({ ...form, force_onnx_optimize: e.currentTarget.checked })}
+            />
+            <Checkbox
+              label={'Onnx minimal optimization'}
+              defaultChecked={form.onnx_minimal_optimization}
+              onChange={(e) =>
+                setForm({ ...form, onnx_minimal_optimization: e.currentTarget.checked })
+              }
+            />
+          </SimpleGrid>
+
+          <Space h={'md'} />
+
+          {status ? (
+            <Box w={'100%'}>
+              <Alert title={'Processing...'}>
+                <Text>
+                  This may take about 10 minutes. Please wait until the process is finished.
+                </Text>
+              </Alert>
+              <Button w={'100%'} my={'sm'} disabled>
+                <Loader p={'xs'} />
+              </Button>
+            </Box>
+          ) : (
+            <Button type={'submit'}>Build</Button>
           )}
-        </Show>
-        <Button
-          task={async () => {
-            const { raw } = await api.buildEngineRaw({ buildRequest: { ...req } })
-            const reader = raw.body?.getReader()
-            if (!reader) return
-            let done = true
-            while (done) {
-              const res = await reader.read()
-              done = !res.done
-              try {
-                setStatus(JSON.parse(new TextDecoder().decode(res.value) || ''))
-              } catch (_) {}
-            }
-            setStatus(null)
-          }}
-        >
-          Build
-        </Button>
-        <Setting>
-          <div>Model ID</div>
-          <Input
-            placeholder="huggingface model id (ex: CompVis/stable-diffusion-v1-4)"
-            value={req.model_id || ''}
-            onChange={(e) => setReq('model_id', e.currentTarget.value)}
-          />
-        </Setting>
 
-        <Setting>
-          <div>HuggingFace Access Token</div>
-          <Input
-            placeholder="hf_**********************************"
-            value={req.hf_token || ''}
-            onChange={(e) => setReq('hf_token', e.currentTarget.value)}
-          />
-        </Setting>
+          {success && (
+            <Box>
+              <Alert
+                title={'Success!'}
+                color={'green'}
+                withCloseButton={true}
+                onClose={() => {
+                  setSuccess(null)
+                }}
+              >
+                <Text>The model has been built successfully. You can now generate images!</Text>
+              </Alert>
+            </Box>
+          )}
+        </Stack>
+      </form>
 
-        <Setting>
-          <WithSlider
-            label="Optimization Image Height"
-            max={1024}
-            min={256}
-            value={req.opt_image_height || 512}
-            step={8}
-            onChange={(v) => setReq('opt_image_height', parseInt(v))}
-          />
-        </Setting>
-
-        <Setting>
-          <WithSlider
-            label="Optimization Image Width"
-            max={1024}
-            min={256}
-            value={req.opt_image_width || 512}
-            step={8}
-            onChange={(v) => setReq('opt_image_width', parseInt(v))}
-          />
-        </Setting>
-
-        <HStack>
-          <Setting>
-            <div>Denoising precision</div>
-            <Select
-              options={[
-                { label: 'float32', value: 'fp32' },
-                { label: 'float16', value: 'fp16' },
-              ]}
-              value={req.fp16 ? 'fp16' : 'fp32'}
-              onChange={(v) => setReq('fp16', v.value === 'fp16')}
-            />
-          </Setting>
-          <Setting>
-            <div>Max batch size</div>
-            <Input
-              type="number"
-              value={req.max_batch_size || 1}
-              onInput={(e) => setReq('max_batch_size', parseInt(e.currentTarget.value))}
-            />
-          </Setting>
-          <Setting>
-            <div>Max batch size</div>
-            <Input
-              type="number"
-              value={req.max_batch_size || 1}
-              onInput={(e) => setReq('max_batch_size', parseInt(e.currentTarget.value))}
-            />
-          </Setting>
-        </HStack>
-        <HStack
-          class={css`
-            flex-wrap: wrap;
-            gap: 1.5rem;
-          `}
-        >
-          <CheckBox
-            checked={req.build_static_batch || false}
-            onChange={(e) => setReq('build_static_batch', e.currentTarget.checked)}
-          >
-            Build static batch
-          </CheckBox>
-          <CheckBox
-            checked={req.build_dynamic_shape || false}
-            onChange={(e) => setReq('build_dynamic_shape', e.currentTarget.checked)}
-          >
-            Build dynamic shape
-          </CheckBox>
-          <CheckBox
-            checked={req.build_preview_features || false}
-            onChange={(e) => setReq('build_preview_features', e.currentTarget.checked)}
-          >
-            Build preview features
-          </CheckBox>
-          <CheckBox
-            checked={req.force_engine_build || false}
-            onChange={(e) => setReq('force_engine_build', e.currentTarget.checked)}
-          >
-            Force engine build
-          </CheckBox>
-          <CheckBox
-            checked={req.force_onnx_export || false}
-            onChange={(e) => setReq('force_onnx_export', e.currentTarget.checked)}
-          >
-            Force onnx export
-          </CheckBox>
-          <CheckBox
-            checked={req.force_onnx_optimize || false}
-            onChange={(e) => setReq('force_onnx_optimize', e.currentTarget.checked)}
-          >
-            Force onnx optimize
-          </CheckBox>
-          <CheckBox
-            checked={req.onnx_minimal_optimization || false}
-            onChange={(e) => setReq('onnx_minimal_optimization', e.currentTarget.checked)}
-          >
-            Onnx minimal optimization
-          </CheckBox>
-        </HStack>
-      </VStack>
+      {error && (
+        <Box>
+          <Alert icon={<IconInfoCircle />} title={'Something went wrong...'} color={'red'}>
+            {error}
+          </Alert>
+        </Box>
+      )}
     </Container>
   )
 }
+
+export default Engine
