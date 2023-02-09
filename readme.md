@@ -42,10 +42,10 @@ Data such as models and output images are saved in the `docker-data` directory.
 
 There are two types of Dockerfile.
 
-|||
-|-|-|
-|Dockerfile.full|Build the TensorRT plugin. The build can take tens of minutes.|
-|Dockerfile.lite|Download the pre-built TensorRT plugin from Github Releases. Build times are significantly reduced.|
+|                 |                                                                                                     |
+| --------------- | --------------------------------------------------------------------------------------------------- |
+| Dockerfile.full | Build the TensorRT plugin. The build can take tens of minutes.                                      |
+| Dockerfile.lite | Download the pre-built TensorRT plugin from Github Releases. Build times are significantly reduced. |
 
 You can change the Dockerfile to use by changing the value of `services.lsmith.build.dockerfile` in docker-compose.yml.
 By default it uses `Dockerfile.lite`.
@@ -129,7 +129,7 @@ Access tokens can be obtained or created from [this page](https://huggingface.co
 
 ## Generate images
 1. Select the model in the header dropdown.
-2. Click on the "txt2img" tab
+2. Click on the "Generate" tab
 3. Click "Generate" button.
 
 ![](./docs/images/readme-usage-screenshot-02.png)
