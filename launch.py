@@ -139,7 +139,7 @@ def prepare_environment(args: List[str]):
 
     args, reinstall_torch = extract_arg(args, "--reinstall-torch")
     args, reinstall_tensorrt = extract_arg(args, "--reinstall-tensorrt")
-    args, build_frontend = extract_arg(args, "--build-frontend")
+    args, disable_build_frontend = extract_arg(args, "--disable-build-frontend")
 
     if reinstall_torch or not is_installed("torch"):
         run(
@@ -161,7 +161,7 @@ def prepare_environment(args: List[str]):
         errdesc=f"Couldn't install requirements",
     )
 
-    if build_frontend:
+    if not disable_build_frontend:
         build.build_frontend()
 
 
