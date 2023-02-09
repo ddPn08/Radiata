@@ -5,6 +5,7 @@
 ---
 
 - [Benchmark](#benchmark)
+- [Screenshots](#screenshots)
 - [Installation](#installation)
   - [Docker (All platform, Recommended) | Easy](#docker-all-platform-recommended--easy)
     - [Customization](#customization)
@@ -20,6 +21,15 @@
 
 # Benchmark
 ![benchmark](./docs/images/readme-benchmark.png)
+
+# Screenshots
+- Batch generation
+
+![lemons](./docs/images/readme-sample-screenshot-01.png)
+
+- img2img support
+
+![img2img](./docs/images/readme-sample-screenshot-img2img-01.png)
 
 # Installation
 
