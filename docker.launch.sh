@@ -1,1 +1,0 @@
-LD_PRELOAD=/app/libnvinfer_plugin.so.8 /usr/bin/python3.10 -u /app/launch.py --host 0.0.0.0 $@

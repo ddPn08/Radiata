@@ -1,0 +1,30 @@
+FROM node:18.14.0-alpine3.17 as frontend
+
+RUN apk update && apk add git && npm i -g pnpm
+
+COPY . /Lsmith
+
+WORKDIR /Lsmith/frontend
+
+RUN pnpm i && pnpm build
+
+
+FROM nvidia/cuda:11.8.0-runtime-ubuntu20.04 as main
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt upgrade -y \
+    && apt install software-properties-common -y \
+    && add-apt-repository --yes ppa:deadsnakes/ppa
+
+RUN apt update && apt install curl python3.10 python3.10-venv git-core tensorrt=8.5.3.1-1+cuda11.8 -y
+
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.10
+
+COPY . /app
+
+WORKDIR /app
+
+COPY --from=frontend /Lsmith/frontend/dist /app/dist
+
+ENTRYPOINT [ "/usr/bin/python3.10", "-u", "/app/launch.py" ]

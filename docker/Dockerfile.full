@@ -27,13 +27,11 @@ RUN mkdir -p build && cd build \
 
 FROM node:18.14.0-alpine3.17 as frontend
 
-COPY . /Lsmith
-
 RUN apk update && apk add git && npm i -g pnpm
 
-WORKDIR /Lsmith/frontend
+COPY . /Lsmith
 
-ENV VITE_API_BASE_PATH=""
+WORKDIR /Lsmith/frontend
 
 RUN pnpm i && pnpm build
 
@@ -53,8 +51,6 @@ RUN curl https://bootstrap.pypa.io/get-pip.py | python3.10
 COPY . /app
 
 WORKDIR /app
-
-RUN git submodule update --init --recursive
 
 COPY --from=tensorrt /TensorRT/build/out/libnvinfer_plugin.so.8 /app/lib/trt/lib/libnvinfer_plugin.so
 COPY --from=frontend /Lsmith/frontend/dist /app/dist

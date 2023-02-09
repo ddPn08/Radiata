@@ -6,7 +6,8 @@
 
 - [Benchmark](#benchmark)
 - [Installation](#installation)
-  - [Docker (All platform) | Easy](#docker-all-platform--easy)
+  - [Docker (All platform, Recommended) | Easy](#docker-all-platform-recommended--easy)
+    - [Customization](#customization)
   - [Linux | Difficult](#linux--difficult)
     - [requirements](#requirements)
   - [Windows | Difficult](#windows--difficult)
@@ -22,7 +23,7 @@
 
 # Installation
 
-## Docker (All platform) | Easy
+## Docker (All platform, Recommended) | Easy
 
 1. Clone repository
 ```sh
@@ -35,6 +36,20 @@ git submodule update --init --recursive
 docker-compose up --build
 ```
 
+Data such as models and output images are saved in the `docker-data` directory.
+
+### Customization
+
+There are two types of Dockerfile.
+
+|||
+|-|-|
+|Dockerfile.full|Build the TensorRT plugin. The build can take tens of minutes.|
+|Dockerfile.lite|Download the pre-built TensorRT plugin from Github Releases. Build times are significantly reduced.|
+
+You can change the Dockerfile to use by changing the value of `services.lsmith.build.dockerfile` in docker-compose.yml.
+By default it uses `Dockerfile.lite`.
+
 ## Linux | Difficult
 ### requirements
 - node.js (recommended version is 18)
@@ -45,18 +60,17 @@ docker-compose up --build
 - cuDNN < 8.6.0
 - TensorRT 8.5.x
 
-1. Follow the instructions on [this](https://github.com/NVIDIA/TensorRT/tree/main/demo/Diffusion#build-tensorrt-plugins-library) page to build TensorRT OSS and get `libnvinfer_plugin.so`.
-2. Clone Lsmith repository
+1. Clone Lsmith repository
 ```sh
 git clone https://github.com/ddPn08/Lsmith.git
 cd Lsmith
 git submodule update --init --recursive
 ```
-3. Enter the repository directory.
+2. Enter the repository directory.
 ```sh
 cd Lsmith
 ```
-5. Enter frontend directory and build frontend
+3. Enter frontend directory and build frontend
 ```sh
 cd frontend
 pnpm i
