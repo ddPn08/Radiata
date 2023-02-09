@@ -118,7 +118,7 @@ Once started, access `<ip address>:<port number>` (ex `http://localhost:8000`) t
 First of all, we need to convert our existing diffusers model to the tensorrt engine.
 
 ## Building the TensorRT engine
-1. Click on the "engine" tab
+1. Click on the "Engine" tab
 ![](./docs/images/readme-usage-screenshot-01.png)
 2. Enter Huggingface's Diffusers model ID in `Model ID` (ex: `CompVis/stable-diffusion-v1-4`)
 3. Enter your Huggingface access token in `HuggingFace Access Token` (required for some repositories).
