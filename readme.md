@@ -5,6 +5,7 @@
 ---
 
 - [Benchmark](#benchmark)
+- [Screenshots](#screenshots)
 - [Installation](#installation)
   - [Docker (All platform, Recommended) | Easy](#docker-all-platform-recommended--easy)
     - [Customization](#customization)
@@ -20,6 +21,15 @@
 
 # Benchmark
 ![benchmark](./docs/images/readme-benchmark.png)
+
+# Screenshots
+- Batch generation
+
+![lemons](./docs/images/readme-sample-screenshot-01.png)
+
+- img2img support
+
+![img2img](./docs/images/readme-sample-screenshot-img2img-01.png)
 
 # Installation
 
@@ -42,10 +52,10 @@ Data such as models and output images are saved in the `docker-data` directory.
 
 There are two types of Dockerfile.
 
-|||
-|-|-|
-|Dockerfile.full|Build the TensorRT plugin. The build can take tens of minutes.|
-|Dockerfile.lite|Download the pre-built TensorRT plugin from Github Releases. Build times are significantly reduced.|
+|                 |                                                                                                     |
+| --------------- | --------------------------------------------------------------------------------------------------- |
+| Dockerfile.full | Build the TensorRT plugin. The build can take tens of minutes.                                      |
+| Dockerfile.lite | Download the pre-built TensorRT plugin from Github Releases. Build times are significantly reduced. |
 
 You can change the Dockerfile to use by changing the value of `services.lsmith.build.dockerfile` in docker-compose.yml.
 By default it uses `Dockerfile.lite`.
@@ -118,7 +128,7 @@ Once started, access `<ip address>:<port number>` (ex `http://localhost:8000`) t
 First of all, we need to convert our existing diffusers model to the tensorrt engine.
 
 ## Building the TensorRT engine
-1. Click on the "engine" tab
+1. Click on the "Engine" tab
 ![](./docs/images/readme-usage-screenshot-01.png)
 2. Enter Huggingface's Diffusers model ID in `Model ID` (ex: `CompVis/stable-diffusion-v1-4`)
 3. Enter your Huggingface access token in `HuggingFace Access Token` (required for some repositories).
@@ -129,7 +139,7 @@ Access tokens can be obtained or created from [this page](https://huggingface.co
 
 ## Generate images
 1. Select the model in the header dropdown.
-2. Click on the "txt2img" tab
+2. Click on the "Generate" tab
 3. Click "Generate" button.
 
 ![](./docs/images/readme-usage-screenshot-02.png)
