@@ -8,7 +8,8 @@ __dirname__ = os.path.dirname(__file__)
 def build_frontend():
     frontend_dir = os.path.join(__dirname__, "frontend")
     out_dir = os.path.join(__dirname__, "dist")
-    shutil.rmtree(out_dir)
+    if os.path.exists(shutil.rmtree(out_dir)):
+        shutil.rmtree(out_dir)
     subprocess.run(
         ["pnpm", "i"],
         cwd=frontend_dir,
