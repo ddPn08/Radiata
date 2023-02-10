@@ -8,7 +8,7 @@ tqdm
 # TensorRT Diffusion
 numpy==1.23.1
 colored
-cuda-python
+cuda-python<12
 diffusers==0.12.1
 ftfy
 matplotlib
