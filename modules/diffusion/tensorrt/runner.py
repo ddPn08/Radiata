@@ -13,14 +13,14 @@ from cuda import cudart
 from PIL import Image
 from polygraphy import cuda
 from tqdm import tqdm
-from transformers import CLIPTextModel, CLIPTokenizer
+from transformers import CLIPTokenizer
 
-from lib.diffusers.lpw import LongPromptWeightingPipeline
 from lib.trt.utilities import TRT_LOGGER, Engine
 
 from ..runner import BaseRunner
 from .clip import create_clip_engine
 from .models import CLIP, VAE, UNet
+from .pwp import TensorRTPromptWeightingPipeline
 
 
 def to_image(images):
@@ -173,9 +173,11 @@ class TensorRTDiffusionRunner(BaseRunner):
     ):
         self.stream = cuda.Stream()
         self.tokenizer = CLIPTokenizer.from_pretrained(tokenizer_id)
-        self.lpw = LongPromptWeightingPipeline(
+        self.lpw = TensorRTPromptWeightingPipeline(
             tokenizer=self.tokenizer,
-            text_encoder=CLIPTextModel.from_pretrained(tokenizer_id).to(self.device),
+            text_encoder=self.engines["clip"],
+            stream=self.stream,
+            device=self.device,
         )
 
         for engine in self.engines.values():

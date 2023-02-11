@@ -1,7 +1,7 @@
-from typing import Dict
 import json
 import os
 from datetime import datetime
+from typing import Dict
 
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
