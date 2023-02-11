@@ -24,7 +24,6 @@ import { api } from '~/api'
 import { engineFormAtom } from '~/atoms/engine'
 import { IMAGE_SIZE_STEP, MAX_IMAGE_SIZE, MIN_IMAGE_SIZE } from '~/utils/static'
 
-
 const Engine = () => {
   const [form, setForm] = useAtom(engineFormAtom)
 
@@ -32,10 +31,7 @@ const Engine = () => {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean | null>(null)
 
-  const onSubmit = async () => {
-    console.log(form)
-    await buildEngine(form)
-  }
+  const onSubmit = () => buildEngine(form)
 
   const buildEngine = async (req: BuildRequest) => {
     try {

@@ -177,6 +177,8 @@ class EngineBuilder:
             "denoising_prec": "fp16" if self.fp16 else "fp32",
             "opt_image_height": self.opt_image_height,
             "opt_image_width": self.opt_image_width,
+            "onnx_opset": self.onnx_opset,
+            "build_static_batch": self.build_static_batch,
             "build_dynamic_shape": self.build_dynamic_shape,
         }
         txt = json.dumps(meta)

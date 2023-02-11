@@ -10,6 +10,7 @@ export interface GenerationParameters {
     scheduler_id: string
     scale: number
     batch_count: number
+    batch_size: number
     steps: number
     seed: number
     strength: number
@@ -29,6 +30,7 @@ export const generationParametersAtom = atom<GenerationParamertersForm>({
     scheduler_id: 'Euler A',
     scale: 7.0,
     batch_count: 1,
+    batch_size: 1,
     steps: 50,
     seed: -1,
     strength: 0.7,

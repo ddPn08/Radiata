@@ -160,7 +160,6 @@ class TensorRTPromptWeightingPipeline:
         self,
         prompt: Union[str, List[str]],
         negative_prompt: Optional[Union[str, List[str]]] = "",
-        guidance_scale: float = 7.5,
         batch_size: Optional[int] = 1,
         num_images_per_prompt: Optional[int] = 1,
         **kwargs,
@@ -210,9 +209,9 @@ class TensorRTPromptWeightingPipeline:
             {"input_ids": text_input_ids_inp}, self.stream
         )["text_embeddings"]
 
-        bs_embed, seq_len, _ = text_embeddings.shape
+        seq_len = text_embeddings.shape[1]
         text_embeddings = text_embeddings.repeat(1, num_images_per_prompt, 1)
-        text_embeddings = text_embeddings.view(bs_embed * 1, seq_len, -1)
+        text_embeddings = text_embeddings.view(batch_size * num_images_per_prompt, seq_len, -1)
 
         max_length = text_input_ids.shape[-1]
 
@@ -226,7 +225,7 @@ class TensorRTPromptWeightingPipeline:
         )["text_embeddings"]
 
         seq_len = uncond_embeddings.shape[1]
-        uncond_embeddings = uncond_embeddings.repeat(1, 1, 1)
+        uncond_embeddings = uncond_embeddings.repeat(1, num_images_per_prompt, 1)
         uncond_embeddings = uncond_embeddings.view(
             batch_size * num_images_per_prompt, seq_len, -1
         )

@@ -72,6 +72,19 @@ const Parameters = () => {
         }}
       />
 
+      <NumberSliderInput
+        label={'Batch Size'}
+        defaultValue={parameters.batch_size}
+        min={1}
+        max={50}
+        step={1}
+        onChange={(e) => {
+          if (e) {
+            setParameters((p) => ({ ...p, batch_size: e }))
+          }
+        }}
+      />
+
       <Divider />
 
       <ImageParameter />

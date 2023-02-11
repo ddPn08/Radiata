@@ -173,7 +173,7 @@ class TensorRTDiffusionRunner(BaseRunner):
     ):
         self.stream = cuda.Stream()
         self.tokenizer = CLIPTokenizer.from_pretrained(tokenizer_id)
-        self.lpw = TensorRTPromptWeightingPipeline(
+        self.pwp = TensorRTPromptWeightingPipeline(
             tokenizer=self.tokenizer,
             text_encoder=self.engines["clip"],
             stream=self.stream,
@@ -190,7 +190,7 @@ class TensorRTDiffusionRunner(BaseRunner):
         self.stream.free()
         del self.stream
         del self.tokenizer
-        del self.lpw.text_encoder
+        del self.pwp.text_encoder
         torch.cuda.empty_cache()
         gc.collect()
 
@@ -214,7 +214,6 @@ class TensorRTDiffusionRunner(BaseRunner):
         img: Optional[Image.Image] = None,
     ):
         self.wait_loading()
-        batch_size = 1
 
         if self.scheduler_id != scheduler_id:
             Scheduler = get_scheduler(scheduler_id)
@@ -266,11 +265,12 @@ class TensorRTDiffusionRunner(BaseRunner):
             ):
                 cudart.cudaEventRecord(events["clip-start"], 0)
 
-                text_embeddings = self.lpw(
+                text_embeddings = self.pwp(
                     prompt=prompt,
                     negative_prompt=negative_prompt,
                     guidance_scale=scale,
-                    num_images_per_prompt=1,
+                    num_images_per_prompt=batch_count,
+                    batch_size=batch_size,
                     max_embeddings_multiples=1,
                 )
                 if self.fp16:

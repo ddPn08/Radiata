@@ -48,8 +48,6 @@ const Generator = () => {
 
   const onSubmit = async (values: GenerationParamertersForm) => {
     try {
-      console.log(values)
-
       const requestBody: GenerationParameters = {
         ...values,
         scheduler_id: Scheduler[values.scheduler_id],
@@ -59,13 +57,10 @@ const Generator = () => {
       setErrorMessage(null)
       setPerformance(null)
 
-      console.log(requestBody)
       const res = await api.generateImage({
         generateImageRequest: requestBody,
       })
       setIsLoading(false)
-
-      console.log(res.data)
 
       if (res.status !== 'success') {
         if (res.message) {
