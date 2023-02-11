@@ -8,7 +8,7 @@ import SeedParameter from './parameters/seedParameter'
 
 import { generationParametersAtom } from '~/atoms/generationParameters'
 import NumberSliderInput from '~/components/ui/numberSliderInput'
-import { schedulerNames } from '~/types/generate'
+import { schedulerNames, SchedulerName } from '~/types/generate'
 
 const Parameters = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
@@ -23,6 +23,11 @@ const Parameters = () => {
         label={'Sampler'}
         data={schedulerNames}
         defaultValue={parameters.scheduler_id}
+        onChange={(e) => {
+          if (e.target.value) {
+            setParameters({ ...parameters, scheduler_id: e.target.value as SchedulerName })
+          }
+        }}
       />
 
       <SeedParameter />
