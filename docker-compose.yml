@@ -10,7 +10,7 @@ services:
       - ./docker-data/models:/app/models
       - ./docker-data/outputs:/app/outputs
     environment:
-      - COMMANDLINE_ARGS=--skip-build-frontend
+      - COMMANDLINE_ARGS=
       - UVICORN_ARGS=--host 0.0.0.0
     deploy:
       resources:
