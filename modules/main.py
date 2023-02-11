@@ -1,6 +1,7 @@
 import tensorrt
 import importlib
 import os
+import mimetypes
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,10 +13,8 @@ from .api.api_router import api
 from .frontend import frontend
 from .shared import ROOT_DIR
 
-
 def custom_generate_unique_id(route: APIRoute):
     return route.name
-
 
 app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
 allowed_hosts = config.get("allow_hosts")
@@ -26,6 +25,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+mimetypes.init()
+mimetypes.add_type("application/javascript", ".js")
 
 app.include_router(api)
 app.include_router(frontend)
