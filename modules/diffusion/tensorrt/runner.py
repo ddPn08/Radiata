@@ -269,7 +269,6 @@ class TensorRTDiffusionRunner(BaseRunner):
                     prompt=prompt,
                     negative_prompt=negative_prompt,
                     guidance_scale=scale,
-                    num_images_per_prompt=batch_count,
                     batch_size=batch_size,
                     max_embeddings_multiples=1,
                 )
