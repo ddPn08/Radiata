@@ -10,7 +10,7 @@ api = APIRouter(prefix="/api", tags=["main"])
 
 def initialize():
     for route in os.listdir(os.path.join(__dirname__, "routes")):
-        module_name = "modules.api.routes." + route.replace(".py", "")
+        module_name = "modules.http.routes." + route.replace(".py", "")
         importlib.import_module(module_name)
 
 

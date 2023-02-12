@@ -1,28 +1,7 @@
+import { ImageGenerationOptions } from 'internal:api'
 import { atom } from 'jotai'
 
-import { SchedulerName } from '~/types/generate'
-
-export interface GenerationParameters {
-    prompt: string
-    negative_prompt: string
-    image_height: number
-    image_width: number
-    scheduler_id: string
-    scale: number
-    batch_count: number
-    batch_size: number
-    steps: number
-    seed: number
-    strength: number
-    img: string | undefined
-}
-
-export interface GenerationParamertersForm extends GenerationParameters {
-    scheduler_id: SchedulerName
-}
-
-// value for frontend
-export const generationParametersAtom = atom<GenerationParamertersForm>({
+export const generationParametersAtom = atom<ImageGenerationOptions>({
     prompt: '',
     negative_prompt: '',
     image_height: 768,

@@ -13,12 +13,12 @@
  */
 
 import { exists, mapValues } from '../runtime';
-import type { GenerateImageResponseData } from './GenerateImageResponseData';
+import type { ImageGenerationResult } from './ImageGenerationResult';
 import {
-    GenerateImageResponseDataFromJSON,
-    GenerateImageResponseDataFromJSONTyped,
-    GenerateImageResponseDataToJSON,
-} from './GenerateImageResponseData';
+    ImageGenerationResultFromJSON,
+    ImageGenerationResultFromJSONTyped,
+    ImageGenerationResultToJSON,
+} from './ImageGenerationResult';
 
 /**
  * 
@@ -40,10 +40,10 @@ export interface GenerateImageResponseModel {
     message?: string;
     /**
      * 
-     * @type {GenerateImageResponseData}
+     * @type {ImageGenerationResult}
      * @memberof GenerateImageResponseModel
      */
-    data: GenerateImageResponseData;
+    data: ImageGenerationResult;
 }
 
 /**
@@ -69,7 +69,7 @@ export function GenerateImageResponseModelFromJSONTyped(json: any, ignoreDiscrim
         
         'status': json['status'],
         'message': !exists(json, 'message') ? undefined : json['message'],
-        'data': GenerateImageResponseDataFromJSON(json['data']),
+        'data': ImageGenerationResultFromJSON(json['data']),
     };
 }
 
@@ -84,7 +84,7 @@ export function GenerateImageResponseModelToJSON(value?: GenerateImageResponseMo
         
         'status': value.status,
         'message': value.message,
-        'data': GenerateImageResponseDataToJSON(value.data),
+        'data': ImageGenerationResultToJSON(value.data),
     };
 }
 

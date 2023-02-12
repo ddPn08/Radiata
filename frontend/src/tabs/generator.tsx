@@ -10,47 +10,30 @@ import {
   Textarea,
 } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
+import { ImageGenerationOptions, ImageInformation } from 'internal:api'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
 
-import { api, createUrl } from '~/api'
-import {
-  GenerationParamertersForm,
-  GenerationParameters,
-  generationParametersAtom,
-} from '~/atoms/generationParameters'
-import Gallery from '~/components/gallery'
+import { api } from '~/api'
+import { generationParametersAtom } from '~/atoms/generationParameters'
+import Gallery from '~/components/gallery/gallery'
 import Parameters from '~/components/parameters'
 import { Scheduler } from '~/types/generate'
-import { GeneratedImage } from '~/types/generatedImage'
 
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
-  const [images, setImages] = useState<GeneratedImage[]>([])
+  const [images, setImages] = useState<[string, ImageInformation][]>([])
   const [performance, setPerformance] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const isLargeScreen = useMediaQuery('(min-width: 992px)', true)
 
-  const parseImages = (images: any): GeneratedImage[] => {
-    const data: GeneratedImage[] = []
-
-    Object.entries(images).forEach(([key, value]: [string, any]) => {
-      data.push({
-        url: createUrl(`/api/images/${value.info.img2img ? 'img2img' : 'txt2img'}/${key}`),
-        info: value.info,
-      })
-    })
-
-    return data
-  }
-
-  const onSubmit = async (values: GenerationParamertersForm) => {
+  const onSubmit = async (values: ImageGenerationOptions) => {
     try {
-      const requestBody: GenerationParameters = {
+      const requestBody: ImageGenerationOptions = {
         ...values,
-        scheduler_id: Scheduler[values.scheduler_id],
+        scheduler_id: Scheduler[values.scheduler_id as keyof typeof Scheduler],
       }
 
       setIsLoading(true)
@@ -58,7 +41,7 @@ const Generator = () => {
       setPerformance(null)
 
       const res = await api.generateImage({
-        generateImageRequest: requestBody,
+        imageGenerationOptions: requestBody,
       })
       setIsLoading(false)
 
@@ -70,8 +53,7 @@ const Generator = () => {
         }
       }
 
-      const data = parseImages(res.data.images)
-      setImages((imgs) => [...data, ...imgs])
+      setImages((imgs) => [...Object.entries(res.data.images), ...imgs])
 
       setPerformance(res.data.performance)
     } catch (e) {

@@ -5,9 +5,10 @@ from modules import config
 from .engine import build_engine
 from .models import CLIP
 
+model_id = "openai/clip-vit-large-patch14"
+
 
 def create_clip_engine():
-    model_id = "openai/clip-vit-large-patch14"
     model_data = CLIP(
         model_id,
         device="cuda",

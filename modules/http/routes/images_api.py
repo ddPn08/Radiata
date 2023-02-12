@@ -1,15 +1,14 @@
-import base64
 import io
 from typing import Optional
 
 from fastapi import Response
-from PIL import Image
 from pydantic import BaseModel
 
+from api.generation import ImageGenerationOptions, ImageGenerationResult
 from modules import images, runners
-from modules.api.models.base import BaseResponseModel
 
 from ..api_router import api
+from ..models.base import BaseResponseModel
 
 
 class GenerateImageRequest(BaseModel):
@@ -27,36 +26,16 @@ class GenerateImageRequest(BaseModel):
     img: Optional[str] = None
 
 
-class GenerateImageResponseData(BaseModel):
-    images: dict
-    performance: float
-
-
 class GenerateImageResponseModel(BaseResponseModel):
-    data: GenerateImageResponseData
+    data: ImageGenerationResult
 
 
 @api.post("/images/generate", response_model=GenerateImageResponseModel)
-def generate_image(req: GenerateImageRequest):
-    if req.img is not None:
-        req.img = Image.open(io.BytesIO(base64.b64decode(req.img)))
-    images, performance = runners.generate(
-        prompt=req.prompt,
-        negative_prompt=req.negative_prompt,
-        batch_size=req.batch_size,
-        batch_count=req.batch_count,
-        scheduler_id=req.scheduler_id,
-        steps=req.steps,
-        scale=req.scale,
-        seed=None if req.seed == -1 else req.seed,
-        image_height=req.image_height,
-        image_width=req.image_width,
-        strength=req.strength,
-        img=req.img,
-    )
+def generate_image(req: ImageGenerationOptions):
+    result = runners.generate(req)
     return GenerateImageResponseModel(
         status="success",
-        data=GenerateImageResponseData(images=images, performance=performance),
+        data=result,
     )
 
 

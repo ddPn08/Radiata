@@ -1,22 +1,19 @@
 import { Carousel } from '@mantine/carousel'
 import { Box, Center, CloseButton, Flex, Table, Text } from '@mantine/core'
+import { ImageInformation } from 'internal:api'
 import { useState } from 'react'
 
-import { GeneratedImage } from '~/types/generatedImage'
-
 interface Props {
-  images: GeneratedImage[]
+  images: [string, ImageInformation][]
   initialIndex: number
   onClose: () => void
 }
 
 const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex)
-  const [currentInfo, setCurrentInfo] = useState(images[initialIndex].info)
+  const [currentInfo, setCurrentInfo] = useState(images[initialIndex][1])
 
   const onSlideChange = (index: number) => {
-    setCurrentIndex(index)
-    setCurrentInfo(images[index].info)
+    setCurrentInfo(images[index][1])
   }
 
   return (
@@ -57,12 +54,12 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
           onSlideChange={onSlideChange}
           loop
         >
-          {images.map((image) => {
+          {images.map(([image]) => {
             return (
-              <Carousel.Slide key={image.url}>
+              <Carousel.Slide key={image}>
                 <Center h={'100%'}>
                   <img
-                    src={image.url}
+                    src={`data:image/png;base64,${image}`}
                     style={{
                       maxHeight: '100%',
                       maxWidth: '100%',

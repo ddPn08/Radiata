@@ -1,7 +1,6 @@
 import tensorrt
-import importlib
-import os
 import mimetypes
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,12 +8,14 @@ from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
 
 from . import config, runners
-from .api.api_router import api
-from .frontend import frontend
-from .shared import ROOT_DIR
+from .http.api_router import api
+from .http.frontend_router import frontend
+from .plugin import plugin_loader
+
 
 def custom_generate_unique_id(route: APIRoute):
     return route.name
+
 
 app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
 allowed_hosts = config.get("allow_hosts")
@@ -45,10 +46,4 @@ def check_model_dir():
 config.init()
 
 runners.set_default_model()
-
-for route in os.listdir(os.path.join(ROOT_DIR, "modules", "api")):
-    if not route.endswith(".py"):
-        continue
-    filepath = os.path.join("modules", "api", route)
-    module_name = filepath.replace(os.sep, ".").replace(".py", "")
-    importlib.import_module(module_name)
+plugin_loader.load_plugins()

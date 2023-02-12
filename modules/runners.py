@@ -2,7 +2,8 @@ import glob
 import json
 import os
 
-from modules import config
+from api.generation import ImageGenerationOptions
+from modules import config, utils
 
 from .diffusion.tensorrt.runner import TensorRTDiffusionRunner
 from .images import save_image
@@ -32,7 +33,7 @@ def set_runner(
 
     try:
         current = TensorRTDiffusionRunner(
-            os.path.join(config.get("model_dir"), model_dir)
+            os.path.join(config.get("model_dir"), model_dir).replace("/", os.sep)
         )
         current.activate(tokenizer_id)
         config.set("model", model_dir)
@@ -54,14 +55,13 @@ def get_runners():
     ]
 
 
-def generate(**kwargs):
-    results, all_perf = current.infer(**kwargs)
-    all = {}
+def generate(options: ImageGenerationOptions):
+    result = current.infer(options)
 
-    for images, info, perf in results:
-        for image in images:
-            all[save_image(image, info)] = {"info": info, "perf": perf}
-    return all, all_perf
+    for img, info in result.images.items():
+        save_image(utils.b642img(img), info)
+
+    return result
 
 
 def set_default_model():

@@ -3,9 +3,9 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from modules import runners
-from modules.api.models.base import BaseResponseModel
 
 from ..api_router import api
+from ..models.base import BaseResponseModel
 
 
 class ModelListResponseModel(BaseResponseModel):

@@ -5,10 +5,11 @@ apis/index.ts
 index.ts
 models/BaseResponseModel.ts
 models/BuildRequest.ts
-models/GenerateImageRequest.ts
-models/GenerateImageResponseData.ts
 models/GenerateImageResponseModel.ts
 models/HTTPValidationError.ts
+models/ImageGenerationOptions.ts
+models/ImageGenerationResult.ts
+models/ImageInformation.ts
 models/LocationInner.ts
 models/ModelCurrentResponseModel.ts
 models/ModelListResponseModel.ts

@@ -1,20 +1,21 @@
 import { ActionIcon, Box, Image } from '@mantine/core'
 import { IconDownload } from '@tabler/icons-react'
+import { ImageInformation } from 'internal:api'
 
-import { GeneratedImage } from '~/types/generatedImage'
-import { downloadFile } from '~/utils/download'
+import { downloadB64 } from '~/utils/download'
 
 interface Props {
-  image: GeneratedImage
+  image: string
+  info: ImageInformation
   onClick: () => void
 }
 
-const GalleryImage = ({ image, onClick }: Props) => {
+const GalleryImage = ({ image, info, onClick }: Props) => {
   return (
-    <Box key={image.url} pos={'relative'}>
+    <Box key={image} pos={'relative'}>
       <Image
-        src={image.url}
-        alt={image.info.prompt}
+        src={`data:image/png;base64,${image}`}
+        alt={info.prompt}
         sx={{
           cursor: 'pointer',
         }}
@@ -31,7 +32,7 @@ const GalleryImage = ({ image, onClick }: Props) => {
         right={0}
         bottom={0}
         onClick={() => {
-          downloadFile(image.url)
+          downloadB64(image, `${info.seed}.png`, 'image/png')
         }}
       >
         <IconDownload size={16} />

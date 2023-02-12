@@ -211,7 +211,9 @@ class TensorRTPromptWeightingPipeline:
 
         seq_len = text_embeddings.shape[1]
         text_embeddings = text_embeddings.repeat(1, num_images_per_prompt, 1)
-        text_embeddings = text_embeddings.view(batch_size * num_images_per_prompt, seq_len, -1)
+        text_embeddings = text_embeddings.view(
+            batch_size * num_images_per_prompt, seq_len, -1
+        )
 
         max_length = text_input_ids.shape[-1]
 

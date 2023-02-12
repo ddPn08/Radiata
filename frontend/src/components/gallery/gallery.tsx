@@ -1,13 +1,12 @@
 import { Box, Portal, SimpleGrid, Skeleton } from '@mantine/core'
+import { ImageInformation } from 'internal:api'
 import { useState } from 'react'
 
 import GalleryImage from './galleryImage'
 import OverlayPreview from './overlayPreview'
 
-import { GeneratedImage } from '~/types/generatedImage'
-
 interface Props {
-  images: GeneratedImage[]
+  images: [string, ImageInformation][]
   isLoading: boolean
 }
 
@@ -39,11 +38,12 @@ const Gallery = ({ images, isLoading }: Props) => {
             { minWidth: 'xl', cols: 4 },
           ]}
         >
-          {images.map((image, i) => {
+          {images.map(([image, info], i) => {
             return (
               <GalleryImage
-                key={image.url}
+                key={i}
                 image={image}
+                info={info}
                 onClick={() => {
                   setInitialIndex(i)
                   setShowOverlay(true)
