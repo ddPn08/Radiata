@@ -26,6 +26,7 @@ import { GeneratedImage } from '~/types/generatedImage'
 
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
+  const [loadingParameters, setLoadingParameters] = useState<GenerationParamertersForm>(parameters)
   const [images, setImages] = useState<GeneratedImage[]>([])
   const [performance, setPerformance] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -56,6 +57,7 @@ const Generator = () => {
       setIsLoading(true)
       setErrorMessage(null)
       setPerformance(null)
+      setLoadingParameters(parameters)
 
       const res = await api.generateImage({
         generateImageRequest: requestBody,
@@ -134,7 +136,7 @@ const Generator = () => {
             >
               <Text>{parameters.img ? 'Generate (img2img mode)' : 'Generate'}</Text>
             </Button>
-            <Box h="25px">
+            <Box mih="25px">
               {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
             </Box>
             <Box
@@ -144,7 +146,7 @@ const Generator = () => {
                 overflowY: 'auto',
               }}
             >
-              <Gallery images={images} isLoading={isLoading} />
+              <Gallery images={images} isLoading={isLoading} parameters={loadingParameters} />
             </Box>
           </Stack>
 
