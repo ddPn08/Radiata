@@ -7,7 +7,7 @@ import { themeAtom } from './atoms/theme'
 import Tabs from './components/tabs'
 import Engine from './tabs/engine'
 import Generator from './tabs/generator'
-import { Tab } from './types/tab'
+import type { Tab } from './types/tab'
 
 const TABS: Tab[] = [
   {
@@ -30,12 +30,12 @@ const PAGES: Record<string, JSX.Element> = {
 const App = () => {
   const theme = useAtomValue(themeAtom)
 
-  const [currentTab, setCurrentTab] = useState(TABS[0].id)
+  const [currentTab, setCurrentTab] = useState(TABS[0]!.id)
 
   return (
     <MantineProvider
       theme={{
-        colorScheme: theme,
+        colorScheme: theme!,
       }}
       withGlobalStyles
       withNormalizeCSS

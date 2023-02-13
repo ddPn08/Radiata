@@ -1,13 +1,13 @@
 import { Configuration, MainApi } from 'internal:api'
 
-const BASE_PATH = (import.meta.env['VITE_API_BASE_PATH'] as string) || ''
+const BASE_PATH = (process.env['REACT_APP_API_BASE_PATH'] as string) || ''
 
 const config = {
-  basePath: BASE_PATH,
+    basePath: BASE_PATH,
 }
 
 if (!BASE_PATH.startsWith('http')) {
-  config.basePath = `${window.location.origin}${BASE_PATH}`
+    config.basePath = `${window.location.origin}${BASE_PATH}`
 }
 
 export const api = new MainApi(new Configuration(config))

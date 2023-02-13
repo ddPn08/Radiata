@@ -1,52 +1,6 @@
 {
-  "name": "Lsmith",
+  "name": "lsmith",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "openapi-gen-client": "openapi-generator-cli generate -i http://127.0.0.1:8000/openapi.json -g typescript-fetch -o ./modules/api -c ./spec-config.json",
-    "eslint": "eslint src/**/*.{ts,tsx}",
-    "prettier": "prettier src/**/*.{ts,tsx}",
-    "stylelint": "stylelint src/**/*.{ts,tsx}",
-    "format-all": "pnpm eslint --fix; pnpm stylelint --fix; pnpm prettier --write"
-  },
-  "dependencies": {
-    "@emotion/react": "^11.10.5",
-    "@mantine/carousel": "^5.10.3",
-    "@mantine/core": "^5.10.3",
-    "@mantine/dropzone": "^5.10.3",
-    "@mantine/form": "^5.10.3",
-    "@mantine/hooks": "^5.10.3",
-    "@mantine/notifications": "^5.10.3",
-    "@tabler/icons-react": "^2.2.0",
-    "embla-carousel-react": "^7.0.9",
-    "jotai": "^2.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@iconify-json/material-symbols": "^1.1.27",
-    "@openapitools/openapi-generator-cli": "^2.5.2",
-    "@types/react": "^18.0.27",
-    "@types/react-dom": "^18.0.10",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
-    "@vitejs/plugin-react-swc": "^3.0.0",
-    "eslint": "^8.33.0",
-    "eslint-config-prettier": "^8.6.0",
-    "eslint-import-resolver-typescript": "^3.5.3",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-react": "^7.32.2",
-    "eslint-plugin-unused-imports": "^2.0.0",
-    "prettier": "^2.8.3",
-    "stylelint": "^14.16.1",
-    "stylelint-config-idiomatic-order": "^9.0.0",
-    "stylelint-config-prettier": "^9.0.4",
-    "stylelint-config-standard": "^29.0.0",
-    "typescript": "^4.9.3",
-    "vite": "^4.1.0"
-  }
+  "type": "module"
 }
