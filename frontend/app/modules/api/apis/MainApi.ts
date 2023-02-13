@@ -16,7 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   BaseResponseModel,
-  BuildRequest,
+  BuildEngineOptions,
   GenerateImageResponseModel,
   HTTPValidationError,
   ImageGenerationOptions,
@@ -27,8 +27,8 @@ import type {
 import {
     BaseResponseModelFromJSON,
     BaseResponseModelToJSON,
-    BuildRequestFromJSON,
-    BuildRequestToJSON,
+    BuildEngineOptionsFromJSON,
+    BuildEngineOptionsToJSON,
     GenerateImageResponseModelFromJSON,
     GenerateImageResponseModelToJSON,
     HTTPValidationErrorFromJSON,
@@ -44,7 +44,7 @@ import {
 } from '../models';
 
 export interface BuildEngineRequest {
-    buildRequest: BuildRequest;
+    buildEngineOptions: BuildEngineOptions;
 }
 
 export interface GenerateImageRequest {
@@ -69,8 +69,8 @@ export class MainApi extends runtime.BaseAPI {
      * Build Engine
      */
     async buildEngineRaw(requestParameters: BuildEngineRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
-        if (requestParameters.buildRequest === null || requestParameters.buildRequest === undefined) {
-            throw new runtime.RequiredError('buildRequest','Required parameter requestParameters.buildRequest was null or undefined when calling buildEngine.');
+        if (requestParameters.buildEngineOptions === null || requestParameters.buildEngineOptions === undefined) {
+            throw new runtime.RequiredError('buildEngineOptions','Required parameter requestParameters.buildEngineOptions was null or undefined when calling buildEngine.');
         }
 
         const queryParameters: any = {};
@@ -84,7 +84,7 @@ export class MainApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: BuildRequestToJSON(requestParameters.buildRequest),
+            body: BuildEngineOptionsToJSON(requestParameters.buildEngineOptions),
         }, initOverrides);
 
         return new runtime.TextApiResponse(response) as any;

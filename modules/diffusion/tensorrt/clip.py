@@ -1,4 +1,5 @@
 import os
+from api.tensorrt import BuildEngineOptions
 
 from modules import config
 
@@ -24,5 +25,6 @@ def create_clip_engine():
         os.path.join(model_dir, "engine"),
         os.path.join(model_dir, "onnx"),
         model_data,
+        BuildEngineOptions(model_id=model_id),
     )
     return engine

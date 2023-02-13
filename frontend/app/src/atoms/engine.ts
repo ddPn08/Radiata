@@ -1,7 +1,7 @@
-import { BuildRequest } from 'internal:api'
+import type { BuildEngineOptions } from 'internal:api'
 import { atom } from 'jotai'
 
-export const engineFormAtom = atom<BuildRequest>({
+const OPTIONS: Required<BuildEngineOptions> = {
     model_id: '',
     hf_token: '',
     fp16: false,
@@ -16,4 +16,9 @@ export const engineFormAtom = atom<BuildRequest>({
     force_onnx_export: false,
     force_onnx_optimize: false,
     onnx_minimal_optimization: false,
-})
+    min_latent_resolution: 256,
+    max_latent_resolution: 1024,
+    verbose: false,
+}
+
+export const engineFormAtom = atom(OPTIONS)

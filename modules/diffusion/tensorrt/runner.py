@@ -172,6 +172,10 @@ class TensorRTDiffusionRunner(BaseRunner):
         }
         self.en_vae = self.models["vae"].get_model()
 
+        for model in self.models.values():
+            model.min_latent_shape = self.meta["min_latent_resolution"] // 8
+            model.max_latent_shape = self.meta["max_latent_resolution"] // 8
+
     def activate(
         self,
         tokenizer_id="openai/clip-vit-large-patch14",

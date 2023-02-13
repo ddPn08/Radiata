@@ -4,6 +4,7 @@ import os
 
 import onnx
 import torch
+from api.tensorrt import BuildEngineOptions
 
 from lib.trt.utilities import Engine
 from modules import config
@@ -20,35 +21,28 @@ def build_engine(
     engine_dir: str,
     onnx_dir: str,
     model_data,
-    opt_image_height: int = 512,
-    opt_image_width: int = 512,
-    onnx_opset: int = 16,
-    force_engine_build: bool = False,
-    force_onnx_export: bool = False,
-    force_onnx_optimize: bool = False,
-    onnx_minimal_optimization: bool = False,
-    build_static_batch: bool = False,
-    build_dynamic_shape: bool = False,
-    build_preview_features: bool = False,
+    opts: BuildEngineOptions,
 ):
+    model_data.min_latent_shape = opts.min_latent_resolution // 8
+    model_data.max_latent_shape = opts.max_latent_resolution // 8
     engine = Engine(model_name, engine_dir)
-    if force_engine_build or not os.path.exists(engine.engine_path):
+    if opts.force_engine_build or not os.path.exists(engine.engine_path):
         onnx_path = get_model_path(model_name, onnx_dir, opt=False)
         onnx_opt_path = get_model_path(model_name, onnx_dir)
         if not os.path.exists(onnx_opt_path):
-            if force_onnx_export or not os.path.exists(onnx_path):
+            if opts.force_onnx_export or not os.path.exists(onnx_path):
                 print(f"Exporting model: {onnx_path}")
                 model = model_data.get_model()
                 with torch.inference_mode(), torch.autocast("cuda"):
                     inputs = model_data.get_sample_input(
-                        1, opt_image_height, opt_image_width
+                        1, opts.opt_image_height, opts.opt_image_width
                     )
                     torch.onnx.export(
                         model,
                         inputs,
                         onnx_path,
                         export_params=True,
-                        opset_version=onnx_opset,
+                        opset_version=opts.onnx_opset,
                         do_constant_folding=True,
                         input_names=model_data.get_input_names(),
                         output_names=model_data.get_output_names(),
@@ -59,11 +53,11 @@ def build_engine(
                 gc.collect()
             else:
                 print(f"Found cached model: {onnx_path}")
-            if force_onnx_optimize or not os.path.exists(onnx_opt_path):
+            if opts.force_onnx_optimize or not os.path.exists(onnx_opt_path):
                 print(f"Generating optimizing model: {onnx_opt_path}")
                 onnx_opt_graph = model_data.optimize(
                     onnx.load(onnx_path),
-                    minimal_optimization=onnx_minimal_optimization,
+                    minimal_optimization=opts.onnx_minimal_optimization,
                 )
                 onnx.save(onnx_opt_graph, onnx_opt_path)
         engine.build(
@@ -71,71 +65,44 @@ def build_engine(
             fp16=True,
             input_profile=model_data.get_input_profile(
                 1,
-                opt_image_height,
-                opt_image_width,
-                static_batch=build_static_batch,
-                static_shape=not build_dynamic_shape,
+                opts.opt_image_height,
+                opts.opt_image_width,
+                static_batch=opts.build_static_batch,
+                static_shape=not opts.build_dynamic_shape,
             ),
-            enable_preview=build_preview_features,
+            enable_preview=opts.build_preview_features,
         )
 
     return engine
 
 
 class EngineBuilder:
-    def __init__(
-        self,
-        model_id: str,
-        hf_token="",
-        fp16=False,
-        verbose=False,
-        opt_image_height=512,
-        opt_image_width=512,
-        max_batch_size=1,
-        onnx_opset=16,
-        build_static_batch=False,
-        build_dynamic_shape=True,
-        build_preview_features=False,
-        force_engine_build=False,
-        force_onnx_export=False,
-        force_onnx_optimize=False,
-        onnx_minimal_optimization=False,
-    ):
+    def __init__(self, opts: BuildEngineOptions):
         self.device = "cuda"
-        self.hf_token = hf_token
-        self.fp16 = fp16
-        self.verbose = verbose
-        self.opt_image_height = opt_image_height
-        self.opt_image_width = opt_image_width
-        self.onnx_opset = onnx_opset
-        self.build_static_batch = build_static_batch
-        self.build_dynamic_shape = build_dynamic_shape
-        self.build_preview_features = build_preview_features
-        self.force_engine_build = force_engine_build
-        self.force_onnx_export = force_onnx_export
-        self.force_onnx_optimize = force_onnx_optimize
-        self.onnx_minimal_optimization = onnx_minimal_optimization
+        self.opts = opts
         self.models = {
             "unet": UNet(
-                model_id,
-                hf_token=hf_token,
-                fp16=fp16,
+                opts.model_id,
+                hf_token=opts.hf_token,
+                fp16=opts.fp16,
                 device=self.device,
-                verbose=verbose,
-                max_batch_size=max_batch_size,
+                verbose=opts.verbose,
+                max_batch_size=opts.max_batch_size,
             ),
             "vae": VAE(
-                model_id,
-                hf_token=hf_token,
+                opts.model_id,
+                hf_token=opts.hf_token,
                 device=self.device,
-                verbose=verbose,
-                max_batch_size=max_batch_size,
+                verbose=opts.verbose,
+                max_batch_size=opts.max_batch_size,
             ),
         }
 
         self.model_dir = os.path.join(
             config.get("model_dir"),
-            os.path.basename(model_id) if os.path.isabs(model_id) else model_id,
+            os.path.join("__local__", os.path.basename(opts.model_id))
+            if os.path.isabs(opts.model_id)
+            else opts.model_id,
         )
 
     def build(self, generator=False, on_end=lambda: ()):
@@ -152,20 +119,7 @@ class EngineBuilder:
                     }
                 )
             engine = build_engine(
-                model_name,
-                engine_dir,
-                onnx_dir,
-                model_data,
-                self.opt_image_height,
-                self.opt_image_width,
-                self.onnx_opset,
-                self.force_engine_build,
-                self.force_onnx_export,
-                self.force_onnx_optimize,
-                self.onnx_minimal_optimization,
-                self.build_static_batch,
-                self.build_dynamic_shape,
-                self.build_preview_features,
+                model_name, engine_dir, onnx_dir, model_data, self.opts
             )
             del model_data
             del engine
@@ -174,12 +128,14 @@ class EngineBuilder:
                 "unet": self.models["unet"].model_id,
                 "vae": self.models["vae"].model_id,
             },
-            "denoising_prec": "fp16" if self.fp16 else "fp32",
-            "opt_image_height": self.opt_image_height,
-            "opt_image_width": self.opt_image_width,
-            "onnx_opset": self.onnx_opset,
-            "build_static_batch": self.build_static_batch,
-            "build_dynamic_shape": self.build_dynamic_shape,
+            "denoising_prec": "fp16" if self.opts.fp16 else "fp32",
+            "opt_image_height": self.opts.opt_image_height,
+            "opt_image_width": self.opts.opt_image_width,
+            "onnx_opset": self.opts.onnx_opset,
+            "build_static_batch": self.opts.build_static_batch,
+            "build_dynamic_shape": self.opts.build_dynamic_shape,
+            "min_latent_resolution": self.opts.min_latent_resolution,
+            "max_latent_resolution": self.opts.max_latent_resolution,
         }
         txt = json.dumps(meta)
         with open(os.path.join(self.model_dir, "model_index.json"), mode="w") as f:

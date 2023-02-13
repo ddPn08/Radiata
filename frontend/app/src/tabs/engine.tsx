@@ -14,7 +14,7 @@ import {
   Loader,
 } from '@mantine/core'
 import { IconInfoCircle } from '@tabler/icons-react'
-import { BuildRequest } from 'internal:api'
+import type { BuildEngineOptions } from 'internal:api'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
 
@@ -33,7 +33,7 @@ const Engine = () => {
 
   const onSubmit = () => buildEngine(form)
 
-  const buildEngine = async (req: BuildRequest) => {
+  const buildEngine = async (req: BuildEngineOptions) => {
     try {
       setError(null)
       setSuccess(null)
@@ -41,7 +41,7 @@ const Engine = () => {
         message: 'loading...',
         progress: 0,
       })
-      const { raw } = await api.buildEngineRaw({ buildRequest: req })
+      const { raw } = await api.buildEngineRaw({ buildEngineOptions: req })
       const reader = raw.body?.getReader()
       if (!reader) return
       let finish = false
@@ -128,7 +128,7 @@ const Engine = () => {
               min={1}
               max={32}
               defaultValue={form.max_batch_size}
-              onChange={(value) => setForm({ ...form, max_batch_size: value })}
+              onChange={(value) => setForm({ ...form, max_batch_size: value || 1 })}
             />
           </Input.Wrapper>
 
@@ -181,6 +181,23 @@ const Engine = () => {
               }
             />
           </SimpleGrid>
+
+          {form.build_dynamic_shape && (
+            <>
+              <Input.Wrapper label={'Min latent resolution'}>
+                <NumberInput
+                  defaultValue={form.min_latent_resolution}
+                  onChange={(value) => setForm({ ...form, min_latent_resolution: value || 256 })}
+                />
+              </Input.Wrapper>
+              <Input.Wrapper label={'Max latent resolution'}>
+                <NumberInput
+                  defaultValue={form.max_latent_resolution}
+                  onChange={(value) => setForm({ ...form, max_latent_resolution: value || 1024 })}
+                />
+              </Input.Wrapper>
+            </>
+          )}
 
           <Space h={'md'} />
 
