@@ -134,9 +134,9 @@ const Generator = () => {
             >
               <Text>{parameters.img ? 'Generate (img2img mode)' : 'Generate'}</Text>
             </Button>
-
-            {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
-
+            <Box h="25px">
+              {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
+            </Box>
             <Box
               mah={isLargeScreen ? '80%' : '480px'}
               pos={'relative'}
