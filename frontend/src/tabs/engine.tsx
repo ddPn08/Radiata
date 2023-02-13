@@ -67,7 +67,13 @@ const Engine = () => {
   }
 
   return (
-    <Container py={'md'}>
+    <Container
+      py={'md'}
+      h={'100%'}
+      sx={{
+        overflowY: 'auto',
+      }}
+    >
       <Text size={'lg'}>Build TensorRT from diffusers moodel on Hugging Face</Text>
       <form
         onSubmit={(e) => {

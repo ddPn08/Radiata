@@ -93,7 +93,7 @@ const Generator = () => {
       <form
         style={{
           height: '100%',
-          overflow: isLargeScreen ? 'hidden' : 'scroll',
+          overflow: isLargeScreen ? 'hidden' : 'auto',
         }}
         onSubmit={(e) => {
           e.preventDefault()
@@ -141,7 +141,7 @@ const Generator = () => {
               mah={isLargeScreen ? '80%' : '480px'}
               pos={'relative'}
               sx={{
-                overflowY: 'scroll',
+                overflowY: 'auto',
               }}
             >
               <Gallery images={images} isLoading={isLoading} />
@@ -160,7 +160,7 @@ const Generator = () => {
                 : '100%'
             }
             sx={{
-              overflow: 'scroll',
+              overflow: isLargeScreen ? 'auto' : 'visible',
             }}
           >
             <Parameters />
