@@ -92,7 +92,7 @@ const Engine = () => {
             <Input.Wrapper label={'Sub Folder'}>
               <Input
                 placeholder=""
-                defaultValue={form.hf_token}
+                defaultValue={form.subfolder}
                 onChange={(e) =>
                   setForm({
                     ...form,
