@@ -1,4 +1,4 @@
-## <div><img src="images/readme-top.png" /></div>
+![](./images/readme-top.png)
 
 ---
 
@@ -8,7 +8,7 @@
 
 # Benchmark
 
-![benchmark](images/readme-benchmark.png)
+![benchmark](./images/readme-benchmark.png)
 
 ---
 
@@ -16,11 +16,11 @@
 
 - Batch generation
 
-![lemons](images/readme-sample-screenshot-01.png)
+![lemons](./images/readme-sample-screenshot-01.png)
 
 - img2img support
 
-![img2img](images/readme-sample-screenshot-img2img-01.png)
+![img2img](./images/readme-sample-screenshot-img2img-01.png)
 
 ---
 
