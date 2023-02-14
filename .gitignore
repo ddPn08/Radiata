@@ -1,9 +1,16 @@
+# Python
 __pycache__
 /venv
-/tmp
 dist
 
+# Project specific
 /config.json
 /outputs
 /models
 /docker-data
+/tmp
+
+# Docs
+/docs/.vitepress/dist
+/docs/.vitepress/cache
+node_modules
