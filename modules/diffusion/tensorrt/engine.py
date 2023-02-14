@@ -86,6 +86,7 @@ class EngineBuilder:
     def __init__(
         self,
         model_id: str,
+        subfolder: str="",
         hf_token="",
         fp16=False,
         verbose=False,
@@ -102,6 +103,8 @@ class EngineBuilder:
         onnx_minimal_optimization=False,
     ):
         self.device = "cuda"
+        self.model_id = model_id
+        self.subfolder = subfolder
         self.hf_token = hf_token
         self.fp16 = fp16
         self.verbose = verbose
@@ -118,6 +121,7 @@ class EngineBuilder:
         self.models = {
             "unet": UNet(
                 model_id,
+                subfolder=subfolder,
                 hf_token=hf_token,
                 fp16=fp16,
                 device=self.device,
@@ -126,6 +130,7 @@ class EngineBuilder:
             ),
             "vae": VAE(
                 model_id,
+                subfolder=subfolder,
                 hf_token=hf_token,
                 device=self.device,
                 verbose=verbose,
@@ -136,6 +141,7 @@ class EngineBuilder:
         self.model_dir = os.path.join(
             config.get("model_dir"),
             os.path.basename(model_id) if os.path.isabs(model_id) else model_id,
+            subfolder,
         )
 
     def build(self, generator=False, on_end=lambda: ()):
@@ -180,6 +186,8 @@ class EngineBuilder:
             "onnx_opset": self.onnx_opset,
             "build_static_batch": self.build_static_batch,
             "build_dynamic_shape": self.build_dynamic_shape,
+            "model_id":self.model_id,
+            "subfolder":self.subfolder,
         }
         txt = json.dumps(meta)
         with open(os.path.join(self.model_dir, "model_index.json"), mode="w") as f:

@@ -1,4 +1,5 @@
 import torch
+import os
 from transformers import CLIPTextModel
 
 from lib.trt import models
@@ -33,6 +34,7 @@ class UNet(models.UNet):
     def __init__(
         self,
         model_id: str,
+        subfolder:str ="",
         hf_token="",
         text_maxlen=77,
         embedding_dim=768,
@@ -45,13 +47,17 @@ class UNet(models.UNet):
             hf_token, text_maxlen, embedding_dim, fp16, device, verbose, max_batch_size
         )
         self.model_id = model_id
+        self.subfolder = subfolder
 
     def get_model(self):
         model_opts = (
             {"revision": "fp16", "torch_dtype": torch.float16} if self.fp16 else {}
         )
         return UNet2DConditionModel.from_pretrained(
-            self.model_id, subfolder="unet", use_auth_token=self.hf_token, **model_opts
+            self.model_id,
+            subfolder=os.path.join(self.subfolder, "unet").replace(os.sep, "/"),
+            use_auth_token=self.hf_token,
+            **model_opts,
         ).to(self.device)
 
 
@@ -59,6 +65,7 @@ class VAE(models.VAE):
     def __init__(
         self,
         model_id: str,
+        subfolder:str ="",
         hf_token="",
         text_maxlen=77,
         embedding_dim=768,
@@ -71,11 +78,12 @@ class VAE(models.VAE):
             hf_token, text_maxlen, embedding_dim, fp16, device, verbose, max_batch_size
         )
         self.model_id = model_id
+        self.subfolder = subfolder
 
     def get_model(self):
         vae = AutoencoderKL.from_pretrained(
             self.model_id,
-            subfolder="vae",
+            subfolder=os.path.join(self.subfolder, "vae").replace(os.sep, "/"),
             use_auth_token=self.hf_token,
         ).to(self.device)
         vae.forward = vae.decode

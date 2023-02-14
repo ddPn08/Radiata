@@ -161,9 +161,9 @@ class TensorRTDiffusionRunner(BaseRunner):
                 "openai/clip-vit-large-patch14", fp16=self.fp16, device=self.device
             ),
             "unet": UNet(
-                self.meta["models"]["unet"], fp16=self.fp16, device=self.device
+                self.meta["models"]["unet"], subfolder=self.meta["subfolder"], fp16=self.fp16, device=self.device
             ),
-            "vae": VAE(self.meta["models"]["vae"], fp16=self.fp16, device=self.device),
+            "vae": VAE(self.meta["models"]["vae"], subfolder=self.meta["subfolder"], fp16=self.fp16, device=self.device),
         }
         self.en_vae = self.models["vae"].get_model()
 

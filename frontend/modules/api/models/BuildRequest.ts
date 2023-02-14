@@ -30,6 +30,12 @@ export interface BuildRequest {
      * @type {string}
      * @memberof BuildRequest
      */
+    subfolder?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof BuildRequest
+     */
     hf_token?: string;
     /**
      * 
@@ -132,6 +138,7 @@ export function BuildRequestFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return {
         
         'model_id': json['model_id'],
+        'subfolder': !exists(json, 'subfolder') ? undefined : json['subfolder'],
         'hf_token': !exists(json, 'hf_token') ? undefined : json['hf_token'],
         'fp16': !exists(json, 'fp16') ? undefined : json['fp16'],
         'verbose': !exists(json, 'verbose') ? undefined : json['verbose'],
@@ -159,6 +166,7 @@ export function BuildRequestToJSON(value?: BuildRequest | null): any {
     return {
         
         'model_id': value.model_id,
+        'subfolder': value.subfolder,
         'hf_token': value.hf_token,
         'fp16': value.fp16,
         'verbose': value.verbose,
