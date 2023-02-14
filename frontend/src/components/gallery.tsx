@@ -1,33 +1,25 @@
-import { Box, Portal, SimpleGrid, Skeleton } from '@mantine/core'
+import { Box, Portal, SimpleGrid, Skeleton, AspectRatio } from '@mantine/core'
 import { useState } from 'react'
 
 import GalleryImage from './galleryImage'
 import OverlayPreview from './overlayPreview'
 
+import { GenerationParamertersForm } from '~/atoms/generationParameters'
 import { GeneratedImage } from '~/types/generatedImage'
 
 interface Props {
   images: GeneratedImage[]
   isLoading: boolean
+  parameters: GenerationParamertersForm
 }
 
-const Gallery = ({ images, isLoading }: Props) => {
+const Gallery = ({ images, isLoading, parameters }: Props) => {
   const [showOverlay, setShowOverlay] = useState(false)
   const [initialIndex, setInitialIndex] = useState(0)
 
   return (
     <>
       <Box>
-        {isLoading && (
-          <Skeleton
-            h={{
-              xs: 300,
-              sm: 400,
-              md: 300,
-            }}
-            my={'sm'}
-          />
-        )}
         <SimpleGrid
           cols={3}
           breakpoints={[
@@ -39,6 +31,14 @@ const Gallery = ({ images, isLoading }: Props) => {
             { minWidth: 'xl', cols: 4 },
           ]}
         >
+          {isLoading &&
+            [...Array(parameters.batch_count)].map((_, key) => {
+              return (
+                <AspectRatio key={key} ratio={parameters.image_width / parameters.image_height}>
+                  <Skeleton />
+                </AspectRatio>
+              )
+            })}
           {images.map((image, i) => {
             return (
               <GalleryImage
