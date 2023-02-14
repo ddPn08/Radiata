@@ -22,6 +22,7 @@ import type {
   ImageGenerationOptions,
   ModelCurrentResponseModel,
   ModelListResponseModel,
+  PluginListResponseModel,
   SetRunnerRequest,
 } from '../models';
 import {
@@ -39,6 +40,8 @@ import {
     ModelCurrentResponseModelToJSON,
     ModelListResponseModelFromJSON,
     ModelListResponseModelToJSON,
+    PluginListResponseModelFromJSON,
+    PluginListResponseModelToJSON,
     SetRunnerRequestFromJSON,
     SetRunnerRequestToJSON,
 } from '../models';
@@ -51,9 +54,8 @@ export interface GenerateImageRequest {
     imageGenerationOptions: ImageGenerationOptions;
 }
 
-export interface GetImageRequest {
-    category: string;
-    filename: string;
+export interface PluginRequest {
+    pluginName: string;
 }
 
 export interface SetRunnerOperationRequest {
@@ -158,40 +160,6 @@ export class MainApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get Image
-     */
-    async getImageRaw(requestParameters: GetImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
-        if (requestParameters.category === null || requestParameters.category === undefined) {
-            throw new runtime.RequiredError('category','Required parameter requestParameters.category was null or undefined when calling getImage.');
-        }
-
-        if (requestParameters.filename === null || requestParameters.filename === undefined) {
-            throw new runtime.RequiredError('filename','Required parameter requestParameters.filename was null or undefined when calling getImage.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/api/images/{category}/{filename}`.replace(`{${"category"}}`, encodeURIComponent(String(requestParameters.category))).replace(`{${"filename"}}`, encodeURIComponent(String(requestParameters.filename))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.TextApiResponse(response) as any;
-    }
-
-    /**
-     * Get Image
-     */
-    async getImage(requestParameters: GetImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
-        const response = await this.getImageRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * Get Runners
      */
     async getRunnersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ModelListResponseModel>> {
@@ -214,6 +182,62 @@ export class MainApi extends runtime.BaseAPI {
      */
     async getRunners(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModelListResponseModel> {
         const response = await this.getRunnersRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Plugin
+     */
+    async pluginRaw(requestParameters: PluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginListResponseModel>> {
+        if (requestParameters.pluginName === null || requestParameters.pluginName === undefined) {
+            throw new runtime.RequiredError('pluginName','Required parameter requestParameters.pluginName was null or undefined when calling plugin.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/plugins/js/{plugin_name}`.replace(`{${"plugin_name"}}`, encodeURIComponent(String(requestParameters.pluginName))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PluginListResponseModelFromJSON(jsonValue));
+    }
+
+    /**
+     * Plugin
+     */
+    async plugin(requestParameters: PluginRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginListResponseModel> {
+        const response = await this.pluginRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Plugin List
+     */
+    async pluginListRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PluginListResponseModel>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/plugins/list`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PluginListResponseModelFromJSON(jsonValue));
+    }
+
+    /**
+     * Plugin List
+     */
+    async pluginList(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PluginListResponseModel> {
+        const response = await this.pluginListRaw(initOverrides);
         return await response.value();
     }
 

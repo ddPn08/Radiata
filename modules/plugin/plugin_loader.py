@@ -1,8 +1,20 @@
 import importlib
 import os
+from typing import List
+from pydantic import BaseModel
 
 from modules import shared
 from modules.plugin.plugin_meta import PluginMetaData
+
+
+class PluginData(BaseModel):
+    meta: PluginMetaData
+    module: str
+    dir: str
+    js: bool
+
+
+plugins: List[PluginData] = []
 
 
 def load_plugins():
@@ -17,5 +29,12 @@ def load_plugins():
         main_module = f"plugins.{dir}.{meta.main}"
         try:
             importlib.import_module(main_module, meta.name)
+            data = PluginData(
+                meta=meta,
+                module=main_module,
+                dir=fullpath,
+                js=os.path.exists(os.path.join(fullpath, "main.js")),
+            )
+            plugins.append(data)
         except Exception as e:
             print(f"Failed to load plugin: {meta.name}", e)

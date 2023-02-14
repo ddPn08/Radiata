@@ -1,14 +1,14 @@
-import { Box, Center, createStyles, Flex, MediaQuery, Navbar, Stack } from '@mantine/core'
+import { Box, Center, createStyles, Flex, MediaQuery, Navbar, Space, Stack } from '@mantine/core'
+import { IconEngine, IconPhotoEdit } from '@tabler/icons-react'
+import React, { useState } from 'react'
 
 import GithubButton from './githubButton'
 import ThemeToggle from './themeToggle'
-import { Tab } from '../types/tab'
+import type { Tab } from '../types/tab'
 
-interface Props {
-  current?: string | number | undefined
-  onChange?: (tab: string) => void
-  tabs: Tab[]
-}
+import { plugins } from '~/plugin/pluginLoader'
+import Engine from '~/tabs/engine'
+import Generator from '~/tabs/generator'
 
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef('icon')
@@ -35,7 +35,6 @@ const useStyles = createStyles((theme, _params, getRef) => {
         },
       },
     },
-
     linkActive: {
       '&, &:hover': {
         backgroundColor: theme.fn.variant({ variant: 'light', color: theme.primaryColor })
@@ -49,35 +48,128 @@ const useStyles = createStyles((theme, _params, getRef) => {
   }
 })
 
-const Tabs = ({ current, onChange, tabs }: Props) => {
-  const { classes, cx } = useStyles()
+const TABS: Tab[] = [
+  {
+    id: 'generator',
+    label: 'Generator',
+    icon: IconPhotoEdit,
+    component: Generator,
+  },
+  {
+    id: 'engine',
+    label: 'Engine',
+    icon: IconEngine,
+    component: Engine,
+  },
+]
 
-  const largeLinks = tabs.map((item) => (
+const LargeLink: React.FC<{
+  item: Tab
+  selected: boolean
+  onClick: React.ComponentProps<'div'>['onClick']
+}> = ({ item, selected, onClick }) => {
+  const { classes, cx } = useStyles()
+  return (
     <Box
-      className={cx(classes.link, { [classes.linkActive]: item.id === current })}
+      className={cx(classes['link'], { [classes['linkActive']!]: selected })}
       key={item.id}
-      onClick={(event) => {
-        event.preventDefault()
-        onChange && onChange(item.id)
-      }}
+      onClick={onClick}
     >
       <item.icon />
       <span>{item.label}</span>
     </Box>
-  ))
-
-  const smallLinks = tabs.map((item) => (
+  )
+}
+const SmallLink: React.FC<{
+  item: Tab
+  selected: boolean
+  onClick: React.ComponentProps<'div'>['onClick']
+}> = ({ item, selected, onClick }) => {
+  const { classes, cx } = useStyles()
+  return (
     <Center
-      className={cx(classes.link, { [classes.linkActive]: item.id === current })}
+      className={cx(classes['link'], { [classes['linkActive']!]: selected })}
       key={item.id}
-      onClick={(event) => {
-        event.preventDefault()
-        onChange && onChange(item.id)
-      }}
+      onClick={onClick}
     >
       <item.icon />
     </Center>
-  ))
+  )
+}
+
+const Tabs = () => {
+  const [current, setCurrent] = useState(TABS[0]!.id)
+
+  const largeLinks = (
+    <>
+      {TABS.map((item) => (
+        <LargeLink
+          key={item.id}
+          item={item}
+          selected={item.id === current}
+          onClick={(event) => {
+            event.preventDefault()
+            setCurrent(item.id)
+          }}
+        />
+      ))}
+      {plugins.map((plugin) => (
+        <React.Fragment key={plugin.meta.name}>
+          <Space h={'md'} />
+          <Center>{plugin.meta.name}</Center>
+          <Space h={'sm'} />
+          {plugin.data.tabs.map((tab) => {
+            const id = `${plugin.meta.name}-${tab.id}`
+            return (
+              <LargeLink
+                key={id}
+                item={tab as Tab}
+                selected={id === current}
+                onClick={(event) => {
+                  event.preventDefault()
+                  setCurrent(id)
+                }}
+              />
+            )
+          })}
+        </React.Fragment>
+      ))}
+    </>
+  )
+
+  const smallLinks = (
+    <>
+      {TABS.map((item) => (
+        <SmallLink
+          key={item.id}
+          item={item}
+          selected={item.id === current}
+          onClick={(event) => {
+            event.preventDefault()
+            setCurrent(item.id)
+          }}
+        />
+      ))}
+      {plugins.map((plugin) => (
+        <React.Fragment key={plugin.meta.name}>
+          {plugin.data.tabs.map((tab) => {
+            const id = `${plugin.meta.name}-${tab.id}`
+            return (
+              <SmallLink
+                key={id}
+                item={tab as Tab}
+                selected={id === current}
+                onClick={(event) => {
+                  event.preventDefault()
+                  setCurrent(id)
+                }}
+              />
+            )
+          })}
+        </React.Fragment>
+      ))}
+    </>
+  )
 
   return (
     <>
@@ -118,6 +210,36 @@ const Tabs = ({ current, onChange, tabs }: Props) => {
           </Navbar.Section>
         </Navbar>
       </MediaQuery>
+
+      {TABS.map((v) => (
+        <Box
+          key={v.id}
+          sx={{
+            display: current === v.id ? 'block' : 'none',
+          }}
+          w={'100%'}
+        >
+          {React.createElement(v.component)}
+        </Box>
+      ))}
+      {plugins.map((plugin) => (
+        <React.Fragment key={plugin.meta.name}>
+          {plugin.data.tabs.map((tab) => {
+            const id = `${plugin.meta.name}-${tab.id}`
+            return (
+              <Box
+                key={id}
+                sx={{
+                  display: current === id ? 'block' : 'none',
+                }}
+                w={'100%'}
+              >
+                {React.createElement(tab.component)}
+              </Box>
+            )
+          })}
+        </React.Fragment>
+      ))}
     </>
   )
 }

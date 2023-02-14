@@ -10,5 +10,8 @@ export * from './ImageInformation';
 export * from './LocationInner';
 export * from './ModelCurrentResponseModel';
 export * from './ModelListResponseModel';
+export * from './PluginData';
+export * from './PluginListResponseModel';
+export * from './PluginMetaData';
 export * from './SetRunnerRequest';
 export * from './ValidationError';

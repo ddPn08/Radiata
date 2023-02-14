@@ -14,6 +14,9 @@ models/ImageInformation.ts
 models/LocationInner.ts
 models/ModelCurrentResponseModel.ts
 models/ModelListResponseModel.ts
+models/PluginData.ts
+models/PluginListResponseModel.ts
+models/PluginMetaData.ts
 models/SetRunnerRequest.ts
 models/ValidationError.ts
 models/index.ts

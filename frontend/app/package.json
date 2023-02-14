@@ -1,19 +1,17 @@
 {
-  "name": "lsmith-app",
+  "name": "@lsmith/app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "index.html",
   "scripts": {
     "build": "node ./scripts/build.js",
     "dev": "cross-env NODE_ENV='development' pnpm build --watch",
-    "openapi-gen-client": "openapi-generator-cli generate -i http://127.0.0.1:8000/openapi.json -g typescript-fetch -o ./modules/api -c ./spec-config.json",
-    "eslint": "eslint src/**/*.{ts,tsx}",
-    "prettier": "prettier src/**/*.{ts,tsx}",
-    "stylelint": "stylelint src/**/*.{ts,tsx}",
-    "format-all": "pnpm eslint --fix; pnpm stylelint --fix; pnpm prettier --write"
+    "openapi-gen-client": "openapi-generator-cli generate -i http://127.0.0.1:8000/openapi.json -g typescript-fetch -o ./modules/api -c ./spec-config.json"
   },
   "dependencies": {
     "@emotion/react": "^11.10.5",
+    "@lsmith/api": "workspace:^0.1.1",
     "@mantine/carousel": "^5.10.3",
     "@mantine/core": "^5.10.3",
     "@mantine/dropzone": "^5.10.3",
@@ -29,28 +27,12 @@
   "devDependencies": {
     "@iconify-json/material-symbols": "^1.1.27",
     "@openapitools/openapi-generator-cli": "^2.5.2",
-    "@stylelint/postcss-css-in-js": "^0.38.0",
     "@types/node": "^18.13.0",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
-    "@vitejs/plugin-react-swc": "^3.0.0",
     "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
     "esbuild": "^0.17.7",
-    "eslint": "^8.33.0",
-    "eslint-config-prettier": "^8.6.0",
-    "eslint-import-resolver-typescript": "^3.5.3",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-react": "^7.32.2",
-    "eslint-plugin-unused-imports": "^2.0.0",
-    "postcss-syntax": "^0.36.2",
-    "prettier": "^2.8.3",
-    "stylelint": "^14.16.1",
-    "stylelint-config-idiomatic-order": "^9.0.0",
-    "stylelint-config-prettier": "^9.0.4",
-    "stylelint-config-standard": "^29.0.0",
     "typescript": "^4.9.3"
   }
 }

@@ -1,11 +1,9 @@
-import io
 from typing import Optional
 
-from fastapi import Response
 from pydantic import BaseModel
 
 from api.generation import ImageGenerationOptions, ImageGenerationResult
-from modules import images, runners
+from modules import runners
 
 from ..api_router import api
 from ..models.base import BaseResponseModel
@@ -37,11 +35,3 @@ def generate_image(req: ImageGenerationOptions):
         status="success",
         data=result,
     )
-
-
-@api.get("/images/{category}/{filename}")
-def get_image(category: str, filename: str):
-    byteio = io.BytesIO()
-    img = images.get_image(category, filename)
-    img.save(byteio, format="PNG")
-    return Response(content=byteio.getvalue(), media_type="image/png")

@@ -19,6 +19,7 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
+  ignorePatterns: ['**/node_modules/**/*'],
   plugins: ['unused-imports', 'react', '@typescript-eslint'],
   rules: {
     'no-empty': 'off',
