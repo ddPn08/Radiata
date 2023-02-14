@@ -115,7 +115,7 @@ def install_tensorrt(tensorrt_linux_command: str):
             if key in file and file.endswith(".whl"):
                 filepath = os.path.join(python_dir, file)
                 print("Installing tensorrt")
-                run(f'{python} -m pip install "{filepath}"')
+                run(f'"{python}" -m pip install "{filepath}"')
                 return
         raise RuntimeError("Failed to install tensorrt.")
     else:
@@ -156,7 +156,7 @@ def prepare_environment(args: List[str]):
         install_tensorrt(tensorrt_linux_command)
 
     run(
-        f"{python} -m pip install -r {requirements_file}",
+        f'"{python}" -m pip install -r {requirements_file}',
         desc=f"Installing requirements",
         errdesc=f"Couldn't install requirements",
     )

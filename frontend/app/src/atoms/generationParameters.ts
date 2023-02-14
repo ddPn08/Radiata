@@ -1,4 +1,4 @@
-import { ImageGenerationOptions } from 'internal:api'
+import type { ImageGenerationOptions } from 'internal:api'
 import { atom } from 'jotai'
 
 export const generationParametersAtom = atom<ImageGenerationOptions>({
@@ -13,5 +13,4 @@ export const generationParametersAtom = atom<ImageGenerationOptions>({
     steps: 50,
     seed: -1,
     strength: 0.7,
-    img: undefined,
 })

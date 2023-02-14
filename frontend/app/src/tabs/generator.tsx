@@ -10,7 +10,7 @@ import {
   Textarea,
 } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
-import { ImageGenerationOptions, ImageInformation } from 'internal:api'
+import type { ImageGenerationOptions, ImageInformation } from 'internal:api'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
 
@@ -23,6 +23,7 @@ import { Scheduler } from '~/types/generate'
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
   const [images, setImages] = useState<[string, ImageInformation][]>([])
+  const [loadingParameters, setLoadingParameters] = useState<ImageGenerationOptions>(parameters)
   const [performance, setPerformance] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -39,6 +40,7 @@ const Generator = () => {
       setIsLoading(true)
       setErrorMessage(null)
       setPerformance(null)
+      setLoadingParameters(parameters)
 
       const res = await api.generateImage({
         imageGenerationOptions: requestBody,
@@ -75,7 +77,7 @@ const Generator = () => {
       <form
         style={{
           height: '100%',
-          overflow: isLargeScreen ? 'hidden' : 'scroll',
+          overflow: isLargeScreen ? 'hidden' : 'auto',
         }}
         onSubmit={(e) => {
           e.preventDefault()
@@ -116,17 +118,17 @@ const Generator = () => {
             >
               <Text>{parameters.img ? 'Generate (img2img mode)' : 'Generate'}</Text>
             </Button>
-
-            {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
-
+            <Box mih="25px">
+              {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
+            </Box>
             <Box
               mah={isLargeScreen ? '80%' : '480px'}
               pos={'relative'}
               sx={{
-                overflowY: 'scroll',
+                overflowY: 'auto',
               }}
             >
-              <Gallery images={images} isLoading={isLoading} />
+              <Gallery images={images} isLoading={isLoading} parameters={loadingParameters} />
             </Box>
           </Stack>
 
@@ -142,7 +144,7 @@ const Generator = () => {
                 : '100%'
             }
             sx={{
-              overflow: 'scroll',
+              overflow: isLargeScreen ? 'auto' : 'visible',
             }}
           >
             <Parameters />

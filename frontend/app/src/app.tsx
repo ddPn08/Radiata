@@ -15,7 +15,12 @@ const App = () => {
       withGlobalStyles
       withNormalizeCSS
     >
-      <Flex h={'100vh'}>
+      <Flex
+        h={'100svh'}
+        sx={{
+          overflowY: 'hidden',
+        }}
+      >
         <Tabs />
       </Flex>
     </MantineProvider>
