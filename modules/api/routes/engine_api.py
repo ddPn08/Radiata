@@ -11,6 +11,7 @@ from ..api_router import api
 
 class BuildRequest(BaseModel):
     model_id: str
+    subfolder:str = ""
     hf_token: str = ""
     fp16: bool = False
     verbose: bool = False
@@ -49,6 +50,7 @@ async def build_engine(req: BuildRequest):
 
     builder = EngineBuilder(
         model_id=req.model_id,
+        subfolder=req.subfolder,
         hf_token=req.hf_token,
         fp16=req.fp16,
         verbose=req.verbose,

@@ -89,6 +89,18 @@ const Engine = () => {
                 onChange={(e) => setForm({ ...form, model_id: e.currentTarget.value })}
               />
             </Input.Wrapper>
+            <Input.Wrapper label={'Sub Folder'}>
+              <Input
+                placeholder=""
+                defaultValue={form.hf_token}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    subfolder: e.currentTarget.value,
+                  })
+                }
+              />
+            </Input.Wrapper>
 
             <Input.Wrapper label={'Hugging Face Access Token'}>
               <Input
