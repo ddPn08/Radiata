@@ -1,5 +1,5 @@
 import { MantineProvider, Box, Flex } from '@mantine/core'
-import { IconEngine, IconPhotoEdit } from '@tabler/icons-react'
+import { IconEngine, IconPhotoEdit, IconPhotoSearch } from '@tabler/icons-react'
 import { useAtomValue } from 'jotai'
 import { useState } from 'react'
 
@@ -7,7 +7,8 @@ import { themeAtom } from './atoms/theme'
 import Tabs from './components/tabs'
 import Engine from './tabs/engine'
 import Generator from './tabs/generator'
-import { Tab } from './types/tab'
+import ImagesBrowser from './tabs/imagesBrowser'
+import { Tab, TabType } from './types/tab'
 
 const TABS: Tab[] = [
   {
@@ -20,11 +21,17 @@ const TABS: Tab[] = [
     label: 'Engine',
     icon: IconEngine,
   },
+  {
+    id: 'imagesBrowser',
+    label: 'Images Browser',
+    icon: IconPhotoSearch,
+  },
 ]
 
-const PAGES: Record<string, JSX.Element> = {
+const PAGES: Record<TabType, JSX.Element> = {
   generator: <Generator />,
   engine: <Engine />,
+  imagesBrowser: <ImagesBrowser />,
 }
 
 const App = () => {
@@ -50,7 +57,7 @@ const App = () => {
           current={currentTab}
           tabs={TABS}
           onChange={(id) => {
-            setCurrentTab(id)
+            setCurrentTab(id as TabType)
           }}
         />
         {Object.keys(PAGES).map((key) => {
@@ -62,7 +69,7 @@ const App = () => {
               }}
               w={'100%'}
             >
-              {PAGES[key]}
+              {PAGES[key as TabType]}
             </Box>
           )
         })}

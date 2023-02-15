@@ -51,7 +51,7 @@ const BetterNumInput = (
 
         if (min && max) {
           if ((max - min) / step !== Math.floor((max - min) / step)) {
-            console.warn('Step must be a factor of max-min')
+            console.warn('Must be a factor of max-min')
             return
           }
         }

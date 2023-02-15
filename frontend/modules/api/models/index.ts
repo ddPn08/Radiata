@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './BaseResponseModel';
 export * from './BuildRequest';
+export * from './FileListResponseModel';
 export * from './GenerateImageRequest';
 export * from './GenerateImageResponseData';
 export * from './GenerateImageResponseModel';

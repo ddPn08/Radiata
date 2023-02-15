@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   BaseResponseModel,
   BuildRequest,
+  FileListResponseModel,
   GenerateImageRequest,
   GenerateImageResponseModel,
   HTTPValidationError,
@@ -29,6 +30,8 @@ import {
     BaseResponseModelToJSON,
     BuildRequestFromJSON,
     BuildRequestToJSON,
+    FileListResponseModelFromJSON,
+    FileListResponseModelToJSON,
     GenerateImageRequestFromJSON,
     GenerateImageRequestToJSON,
     GenerateImageResponseModelFromJSON,
@@ -49,6 +52,11 @@ export interface BuildEngineRequest {
 
 export interface GenerateImageOperationRequest {
     generateImageRequest: GenerateImageRequest;
+}
+
+export interface GetAllImageFilesRequest {
+    category: string;
+    page: number;
 }
 
 export interface GetImageRequest {
@@ -128,6 +136,40 @@ export class MainApi extends runtime.BaseAPI {
      */
     async generateImage(requestParameters: GenerateImageOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GenerateImageResponseModel> {
         const response = await this.generateImageRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Get All Image Files
+     */
+    async getAllImageFilesRaw(requestParameters: GetAllImageFilesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FileListResponseModel>> {
+        if (requestParameters.category === null || requestParameters.category === undefined) {
+            throw new runtime.RequiredError('category','Required parameter requestParameters.category was null or undefined when calling getAllImageFiles.');
+        }
+
+        if (requestParameters.page === null || requestParameters.page === undefined) {
+            throw new runtime.RequiredError('page','Required parameter requestParameters.page was null or undefined when calling getAllImageFiles.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/images/browser/{category}/{page}`.replace(`{${"category"}}`, encodeURIComponent(String(requestParameters.category))).replace(`{${"page"}}`, encodeURIComponent(String(requestParameters.page))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FileListResponseModelFromJSON(jsonValue));
+    }
+
+    /**
+     * Get All Image Files
+     */
+    async getAllImageFiles(requestParameters: GetAllImageFilesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FileListResponseModel> {
+        const response = await this.getAllImageFilesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

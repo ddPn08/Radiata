@@ -2,7 +2,7 @@ import base64
 import io
 from typing import Optional
 
-from fastapi import Response
+from fastapi.responses import FileResponse
 from PIL import Image
 from pydantic import BaseModel
 
@@ -62,7 +62,4 @@ def generate_image(req: GenerateImageRequest):
 
 @api.get("/images/{category}/{filename}")
 def get_image(category: str, filename: str):
-    byteio = io.BytesIO()
-    img = images.get_image(category, filename)
-    img.save(byteio, format="PNG")
-    return Response(content=byteio.getvalue(), media_type="image/png")
+    return FileResponse(images.get_image_filepath(category,filename))

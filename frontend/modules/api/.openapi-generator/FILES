@@ -5,6 +5,7 @@ apis/index.ts
 index.ts
 models/BaseResponseModel.ts
 models/BuildRequest.ts
+models/FileListResponseModel.ts
 models/GenerateImageRequest.ts
 models/GenerateImageResponseData.ts
 models/GenerateImageResponseModel.ts

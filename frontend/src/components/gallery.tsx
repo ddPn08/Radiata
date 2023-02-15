@@ -10,7 +10,7 @@ import { GeneratedImage } from '~/types/generatedImage'
 interface Props {
   images: GeneratedImage[]
   isLoading: boolean
-  parameters: GenerationParamertersForm
+  parameters: GenerationParamertersForm | null
 }
 
 const Gallery = ({ images, isLoading, parameters }: Props) => {
@@ -32,6 +32,7 @@ const Gallery = ({ images, isLoading, parameters }: Props) => {
           ]}
         >
           {isLoading &&
+            parameters != null &&
             [...Array(parameters.batch_count)].map((_, key) => {
               return (
                 <AspectRatio key={key} ratio={parameters.image_width / parameters.image_height}>
