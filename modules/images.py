@@ -1,5 +1,6 @@
 import json
 import os
+import glob
 from datetime import datetime
 from typing import Dict
 
@@ -39,3 +40,11 @@ def get_image(category: str, filename: str):
     filepath = os.path.join(dir, filename)
     img = Image.open(filepath)
     return img
+
+def get_all_image_files(category: str):
+    dir = config.get(f"images/{category}/save_dir")
+    files = glob.glob(os.path.join(dir, "**/*"), recursive=True)
+    files = sorted([f.replace(os.sep, "/") for f in files if os.path.isfile(f)], key=os.path.getmtime)
+    return [os.path.relpath(f, dir) for f in files]
+
+
