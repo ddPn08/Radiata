@@ -68,7 +68,10 @@ const ImagesBrowser = () => {
 
   useEffect(() => {
     fetchImage(page, category)
-  }, [page, category])
+  }, [page])
+  useEffect(() => {
+    fetchImage(page, category)
+  }, [category])
 
   return (
     <>
