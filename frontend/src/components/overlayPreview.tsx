@@ -120,31 +120,36 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
         onClose={() => setOpened(false)}
         position={'right'}
         zIndex={1001}
-        sx={{
-          overflow: 'auto',
-        }}
+        withCloseButton={false}
       >
-        <Text size={'lg'} weight={'bold'} p={'md'}>
-          Information
-        </Text>
-        <Table horizontalSpacing={'md'} verticalSpacing={'sm'} fontSize={'md'}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(currentInfo).map(([key, value]) => {
-              return (
-                <tr key={key}>
-                  <td>{key}</td>
-                  <td>{value == null || String(value) == '' ? 'none' : String(value)}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </Table>
+        <Box
+          h={'100svh'}
+          sx={{
+            overflow: 'auto',
+          }}
+        >
+          <Text size={'lg'} weight={'bold'} p={'md'}>
+            Information
+          </Text>
+          <Table horizontalSpacing={'md'} verticalSpacing={'sm'} fontSize={'md'}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(currentInfo).map(([key, value]) => {
+                return (
+                  <tr key={key}>
+                    <td>{key}</td>
+                    <td>{value == null || String(value) == '' ? 'none' : String(value)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </Table>
+        </Box>
       </Drawer>
 
       <CloseButton
