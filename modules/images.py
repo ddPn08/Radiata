@@ -16,9 +16,8 @@ def get_category(info: Dict):
 
 
 def save_image(img: Image.Image, info: Dict):
-    parameters = info
     metadata = PngInfo()
-    metadata.add_text("parameters", json.dumps(parameters))
+    metadata.add_text("parameters", json.dumps(info))
     dir = config.get(f"images/{get_category(info)}/save_dir")
     basename: str = config.get(f"images/{get_category(info)}/save_name")
     filename = basename.format(
