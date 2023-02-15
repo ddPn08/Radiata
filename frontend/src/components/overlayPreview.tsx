@@ -74,7 +74,14 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
             )
           })}
         </Carousel>
-        <Box h={'100%'} w={'480px'} bg={'dark'}>
+        <Box
+          h={'100%'}
+          w={'480px'}
+          bg={'dark'}
+          sx={{
+            overflow: 'auto',
+          }}
+        >
           <Text size={'lg'} weight={'bold'} p={'md'}>
             Information
           </Text>
@@ -90,7 +97,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
                 return (
                   <tr key={key}>
                     <td>{key}</td>
-                    <td>{String(value) == '' ? 'none' : String(value)}</td>
+                    <td>{value == null || String(value) == '' ? 'none' : String(value)}</td>
                   </tr>
                 )
               })}
