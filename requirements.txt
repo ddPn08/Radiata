@@ -19,3 +19,6 @@ onnxruntime==1.13.1
 polygraphy==0.43.1
 scipy
 transformers==4.24.0
+
+# Pre-commit
+pre-commit
