@@ -43,7 +43,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
         }
       }}
     >
-      <Flex h={'100vh'} w={'100%'}>
+      <Flex h={'100%'} w={'100%'}>
         <Carousel
           w={'100%'}
           my={'auto'}

@@ -8,6 +8,7 @@ import {
   ActionIcon,
   NativeSelect,
 } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { IconRotateClockwise } from '@tabler/icons-react'
 import { GetAllImageFilesRequest } from 'modules/api/apis/MainApi'
 import { useEffect, useState } from 'react'
@@ -24,6 +25,8 @@ const ImagesBrowser = () => {
   const [category, setCategory] = useState<categoryType>('txt2img')
   const [images, setImages] = useState<GeneratedImage[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const isLargeScreen = useMediaQuery('(min-width: 470px)', true)
   const count = 20
 
   const parseImages = (images: any, category: categoryType): GeneratedImage[] => {
@@ -68,9 +71,9 @@ const ImagesBrowser = () => {
   }, [page, category])
 
   return (
-    <Flex h={'100%'} gap={'sm'} direction={'column'}>
+    <>
       <Container py={'md'} w={'100%'}>
-        <Flex gap={'sm'} align={'end'}>
+        <Flex gap={'sm'} direction={isLargeScreen ? 'row' : 'column'}>
           <Input.Wrapper label={'Category'}>
             <NativeSelect
               data={categoryList.map((e) => e)}
@@ -81,20 +84,27 @@ const ImagesBrowser = () => {
               }}
             />
           </Input.Wrapper>
+
           <Input.Wrapper label="Page">
-            <BetterNumInput
-              defaultValue={1}
-              value={page + 1}
-              min={1}
-              max={pageLength}
-              step={1}
-              onChange={(e) => e == undefined || setPage(e - 1)}
-              w={'100%'}
-            />
+            <Flex w={'100%'} align={'center'} gap={'sm'} direction="row">
+              <BetterNumInput
+                defaultValue={1}
+                value={page + 1}
+                min={1}
+                max={pageLength}
+                step={1}
+                onChange={(e) => e == undefined || setPage(e - 1)}
+                w={'100%'}
+              />
+              <ActionIcon
+                variant={'outline'}
+                color={'blue'}
+                onClick={() => fetchImage(page, category)}
+              >
+                <IconRotateClockwise size={16} />
+              </ActionIcon>
+            </Flex>
           </Input.Wrapper>
-          <ActionIcon variant={'outline'} color={'blue'} onClick={() => fetchImage(page, category)}>
-            <IconRotateClockwise size={16} />
-          </ActionIcon>
         </Flex>
       </Container>
       <Box
@@ -126,7 +136,7 @@ const ImagesBrowser = () => {
           </Notification>
         </Portal>
       )}
-    </Flex>
+    </>
   )
 }
 
