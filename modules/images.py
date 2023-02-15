@@ -35,9 +35,7 @@ def save_image(img: Image.Image, info: Dict):
 
 def get_image_filepath(category: str, filename: str):
     dir = config.get(f"images/{category}/save_dir")
-    filepath = os.path.join(dir, filename)
-    img = Image.open(filepath)
-    return img
+    return os.path.join(dir, filename)
 
 def get_image(category: str, filename: str):
     return Image.open(get_image_filepath(category,filename))
