@@ -380,8 +380,12 @@ class TensorRTDiffusionRunner(BaseRunner):
                         {
                             "prompt": prompt,
                             "negative_prompt": negative_prompt,
+                            "model": self.meta["model_id"],
+                            "subfolder": self.meta["subfolder"],
                             "steps": steps,
+                            "scheduler": scheduler_id,
                             "scale": scale,
+                            "fp16": self.fp16,
                             "seed": manual_seed,
                             "height": image_height,
                             "width": image_width,
