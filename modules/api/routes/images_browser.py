@@ -1,4 +1,5 @@
 from typing import List
+import json
 
 from modules import images
 from modules.api.models.base import BaseResponseModel
@@ -15,7 +16,5 @@ def get_all_image_files(category: str, page: int):
     count = 20
     files = images.get_all_image_files(category)
     data = files[page*count:page*count+count]
-    info = {
-        "prompt":"",
-    }
-    return FileListResponseModel(status="success", length=len(files), data={d:{"info":info} for d in data})
+    data = {d:{"info":json.loads(images.get_image(category, d).text.get("parameters","{}"))} for d in data}
+    return FileListResponseModel(status="success", length=len(files), data=data)
