@@ -3,6 +3,7 @@ import { atom } from 'jotai'
 
 export const engineFormAtom = atom<BuildRequest>({
     model_id: '',
+    subfolder: '',
     hf_token: '',
     fp16: false,
     opt_image_height: 512,
