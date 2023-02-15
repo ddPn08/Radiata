@@ -40,13 +40,16 @@ def get_image(category: str, filename: str):
     return Image.open(get_image_filepath(category,filename))
 
 def get_image_parameter(img: Image.Image):
+    text = img.text
+    parameters = text.pop("parameters", None)
     try:
-        return json.loads(img.text.get("parameters"))
+        text.update(json.loads(parameters))
     except:
-        return {"parameters":img.text.get("parameters")}
+        text.update({"parameters":parameters})
+    return text
 
 def get_all_image_files(category: str):
     dir = config.get(f"images/{category}/save_dir")
-    files = glob.glob(os.path.join(dir, "**/*"), recursive=True)
+    files = glob.glob(os.path.join(dir, "*"))
     files = sorted([f.replace(os.sep, "/") for f in files if os.path.isfile(f)], key=os.path.getmtime)
     return [os.path.relpath(f, dir) for f in files]
