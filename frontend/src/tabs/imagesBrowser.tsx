@@ -68,9 +68,9 @@ const ImagesBrowser = () => {
   }, [page, category])
 
   return (
-    <Box h={'100%'}>
-      <Container py={'md'}>
-        <Flex w={'100%'} maw={'400px'} gap={'sm'} align={'end'}>
+    <Flex h={'100%'} gap={'sm'} direction={'column'}>
+      <Container py={'md'} w={'100%'}>
+        <Flex gap={'sm'} align={'end'}>
           <Input.Wrapper label={'Category'}>
             <NativeSelect
               data={categoryList.map((e) => e)}
@@ -126,7 +126,7 @@ const ImagesBrowser = () => {
           </Notification>
         </Portal>
       )}
-    </Box>
+    </Flex>
   )
 }
 
