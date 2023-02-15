@@ -75,52 +75,54 @@ const ImagesBrowser = () => {
 
   return (
     <>
-      <Container py={'md'} w={'100%'}>
-        <Flex gap={'sm'} direction={isLargeScreen ? 'row' : 'column'}>
-          <Input.Wrapper label={'Category'}>
-            <NativeSelect
-              data={categoryList.map((e) => e)}
-              value={category}
-              w={'100%'}
-              onChange={(e) => {
-                setCategory(e.currentTarget.value as categoryType)
-              }}
-            />
-          </Input.Wrapper>
-
-          <Input.Wrapper label="Page">
-            <Flex w={'100%'} align={'center'} gap={'sm'} direction="row">
-              <BetterNumInput
-                defaultValue={1}
-                value={page + 1}
-                min={1}
-                max={pageLength}
-                step={1}
-                onChange={(e) => e == undefined || setPage(e - 1)}
+      <Flex h={'100%'} direction="column">
+        <Container py={'md'} w={'100%'}>
+          <Flex gap={'sm'} direction={isLargeScreen ? 'row' : 'column'}>
+            <Input.Wrapper label={'Category'}>
+              <NativeSelect
+                data={categoryList.map((e) => e)}
+                value={category}
                 w={'100%'}
+                onChange={(e) => {
+                  setCategory(e.currentTarget.value as categoryType)
+                }}
               />
-              <ActionIcon
-                variant={'outline'}
-                color={'blue'}
-                onClick={() => fetchImage(page, category)}
-              >
-                <IconRotateClockwise size={16} />
-              </ActionIcon>
-            </Flex>
-          </Input.Wrapper>
-        </Flex>
-      </Container>
-      <Box
-        h="100%"
-        w="100%"
-        sx={{
-          overflowY: 'auto',
-        }}
-      >
-        <Container py={'md'}>
-          <Gallery images={images} isLoading={false} parameters={null} />
+            </Input.Wrapper>
+
+            <Input.Wrapper label="Page">
+              <Flex w={'100%'} align={'center'} gap={'sm'} direction="row">
+                <BetterNumInput
+                  defaultValue={1}
+                  value={page + 1}
+                  min={1}
+                  max={pageLength}
+                  step={1}
+                  onChange={(e) => e == undefined || setPage(e - 1)}
+                  w={'100%'}
+                />
+                <ActionIcon
+                  variant={'outline'}
+                  color={'blue'}
+                  onClick={() => fetchImage(page, category)}
+                >
+                  <IconRotateClockwise size={16} />
+                </ActionIcon>
+              </Flex>
+            </Input.Wrapper>
+          </Flex>
         </Container>
-      </Box>
+        <Box
+          h="100%"
+          w="100%"
+          sx={{
+            overflowY: 'auto',
+          }}
+        >
+          <Container py={'md'}>
+            <Gallery images={images} isLoading={false} parameters={null} />
+          </Container>
+        </Box>
+      </Flex>
 
       {errorMessage && (
         <Portal>
