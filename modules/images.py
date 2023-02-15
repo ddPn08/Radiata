@@ -39,6 +39,12 @@ def get_image_filepath(category: str, filename: str):
 def get_image(category: str, filename: str):
     return Image.open(get_image_filepath(category,filename))
 
+def get_image_parameter(img: Image.Image):
+    try:
+        return json.loads(img.text.get("parameters"))
+    except:
+        return {"parameters":img.text.get("parameters")}
+
 def get_all_image_files(category: str):
     dir = config.get(f"images/{category}/save_dir")
     files = glob.glob(os.path.join(dir, "**/*"), recursive=True)
