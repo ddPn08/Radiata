@@ -392,7 +392,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                         "steps": steps,
                         "scheduler": scheduler_id,
                         "scale": scale,
-                        "fp16": self.fp16,
+                        "denoising_prec": self.meta["denoising_prec"],
                         "seed": manual_seed,
                         "height": image_height,
                         "width": image_width,

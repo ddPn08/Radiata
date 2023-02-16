@@ -33,7 +33,7 @@ const Gallery = ({ images, isLoading, parameters }: Props) => {
         >
           {isLoading &&
             parameters != null &&
-            [...Array(parameters.batch_count)].map((_, key) => {
+            [...Array(parameters.batch_count * parameters.batch_size)].map((_, key) => {
               return (
                 <AspectRatio key={key} ratio={parameters.image_width / parameters.image_height}>
                   <Skeleton />

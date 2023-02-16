@@ -1,5 +1,6 @@
-import { Carousel } from '@mantine/carousel'
-import { Box, Center, CloseButton, Flex, Table, Text } from '@mantine/core'
+import { Carousel, Embla, useAnimationOffsetEffect } from '@mantine/carousel'
+import { Box, Center, CloseButton, Flex, Table, Text, Drawer } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { useState } from 'react'
 
 import { GeneratedImage } from '~/types/generatedImage'
@@ -11,11 +12,15 @@ interface Props {
 }
 
 const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [currentInfo, setCurrentInfo] = useState(images[initialIndex].info)
+  const [opened, setOpened] = useState(false)
+  const [embla, setEmbla] = useState<Embla | null>(null)
+
+  const TRANSITION_DURATION = 200
+  useAnimationOffsetEffect(embla, TRANSITION_DURATION)
+  const isLargeScreen = useMediaQuery('(min-width: 992px)', true)
 
   const onSlideChange = (index: number) => {
-    setCurrentIndex(index)
     setCurrentInfo(images[index].info)
   }
 
@@ -43,7 +48,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
         }
       }}
     >
-      <Flex h={'100vh'} w={'100%'}>
+      <Flex h={'100%'} w={'100%'}>
         <Carousel
           w={'100%'}
           my={'auto'}
@@ -55,6 +60,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
             overflowY: 'hidden',
           }}
           onSlideChange={onSlideChange}
+          getEmblaApi={setEmbla}
           loop
         >
           {images.map((image) => {
@@ -68,6 +74,9 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
                       maxWidth: '100%',
                       objectFit: 'contain',
                     }}
+                    onClick={() => {
+                      isLargeScreen || setOpened(true)
+                    }}
                   />
                 </Center>
               </Carousel.Slide>
@@ -78,6 +87,43 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
           h={'100%'}
           w={'480px'}
           bg={'dark'}
+          sx={{
+            overflow: 'auto',
+            display: isLargeScreen ? 'block' : 'none',
+          }}
+        >
+          <Text size={'lg'} weight={'bold'} p={'md'}>
+            Information
+          </Text>
+          <Table horizontalSpacing={'md'} verticalSpacing={'sm'} fontSize={'md'}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(currentInfo).map(([key, value]) => {
+                return (
+                  <tr key={key}>
+                    <td>{key}</td>
+                    <td>{value == null || String(value) == '' ? 'none' : String(value)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </Table>
+        </Box>
+      </Flex>
+      <Drawer
+        opened={opened}
+        onClose={() => setOpened(false)}
+        position={'right'}
+        zIndex={1001}
+        withCloseButton={false}
+      >
+        <Box
+          h={'100svh'}
           sx={{
             overflow: 'auto',
           }}
@@ -104,7 +150,8 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
             </tbody>
           </Table>
         </Box>
-      </Flex>
+      </Drawer>
+
       <CloseButton
         variant={'filled'}
         title={'Close previews'}
