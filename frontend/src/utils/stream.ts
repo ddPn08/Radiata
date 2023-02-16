@@ -5,7 +5,6 @@ export const streamGenerator = async function* (body: ReadableStream<Uint8Array>
         const res = await reader.read()
         if (res.done) return
         try {
-            console.log(new TextDecoder().decode(res.value))
             const text = new TextDecoder().decode(res.value).split('\n')
             yield JSON.parse(text[text.length - 2])
         } catch (e) {
