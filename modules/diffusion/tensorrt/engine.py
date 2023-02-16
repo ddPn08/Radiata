@@ -156,7 +156,7 @@ class EngineBuilder:
                         "message": f"Building {model_name}...",
                         "progress": i / len(self.models.keys()),
                     }
-                )
+                ) + '\n'
             engine = build_engine(
                 model_name,
                 engine_dir,

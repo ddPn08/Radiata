@@ -71,7 +71,7 @@ def generate(**kwargs):
 def generator(**kwargs):
     for data in current.infer(generator=True,**kwargs):
         if data["type"] == "progress":
-            yield json.dumps(data)
+            yield json.dumps(data) + '\n'
         elif data["type"] == "result":
             images, info, perf = data["result"]
             yield json.dumps({
@@ -80,7 +80,7 @@ def generator(**kwargs):
                 "perf":perf,
                 "performance":data["performance"],
                 "path":[save_image(image, info) for image in images]
-            })
+            }) + '\n'
 
 
 
