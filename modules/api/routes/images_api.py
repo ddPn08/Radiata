@@ -2,7 +2,7 @@ import base64
 import io
 from typing import Optional
 
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from PIL import Image
 from pydantic import BaseModel
 
@@ -57,6 +57,28 @@ def generate_image(req: GenerateImageRequest):
     return GenerateImageResponseModel(
         status="success",
         data=GenerateImageResponseData(images=images, performance=performance),
+    )
+
+
+@api.post("/images/generator", response_model=GenerateImageResponseModel)
+def generator_image(req: GenerateImageRequest):
+    if req.img is not None:
+        req.img = Image.open(io.BytesIO(base64.b64decode(req.img)))
+    return StreamingResponse(
+        runners.generator(
+            prompt=req.prompt,
+            negative_prompt=req.negative_prompt,
+            batch_size=req.batch_size,
+            batch_count=req.batch_count,
+            scheduler_id=req.scheduler_id,
+            steps=req.steps,
+            scale=req.scale,
+            seed=None if req.seed == -1 else req.seed,
+            image_height=req.image_height,
+            image_width=req.image_width,
+            strength=req.strength,
+            img=req.img,
+        )
     )
 
 

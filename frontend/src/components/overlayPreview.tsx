@@ -97,7 +97,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
                 return (
                   <tr key={key}>
                     <td>{key}</td>
-                    <td>{value == null || String(value) == '' ? 'none' : String(value)}</td>
+                    <td>{!value && String(value) == '' ? 'none' : String(value)}</td>
                   </tr>
                 )
               })}

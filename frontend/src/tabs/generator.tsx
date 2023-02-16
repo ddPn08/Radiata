@@ -8,6 +8,7 @@ import {
   Stack,
   Text,
   Textarea,
+  Progress,
 } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { useAtom } from 'jotai'
@@ -22,7 +23,12 @@ import {
 import Gallery from '~/components/gallery'
 import Parameters from '~/components/parameters'
 import { Scheduler } from '~/types/generate'
-import { GeneratedImage } from '~/types/generatedImage'
+import {
+  GeneratedImage,
+  GeneratorImageProgress,
+  GeneratorImageResult,
+} from '~/types/generatedImage'
+import { streamGenerator } from '~/utils/stream'
 
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
@@ -31,20 +37,20 @@ const Generator = () => {
   const [performance, setPerformance] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [progress, setProgress] = useState<number | null>(null)
 
   const isLargeScreen = useMediaQuery('(min-width: 992px)', true)
 
-  const parseImages = (images: any): GeneratedImage[] => {
-    const data: GeneratedImage[] = []
-
-    Object.entries(images).forEach(([key, value]: [string, any]) => {
-      data.push({
-        url: createUrl(`/api/images/${value.info.img2img ? 'img2img' : 'txt2img'}/${key}`),
-        info: value.info,
-      })
+  const parseImages = (
+    images: string[],
+    info: { [key: string]: string | number | boolean },
+  ): GeneratedImage[] => {
+    return Object.entries(images).map(([_, value]: [string, any]) => {
+      return {
+        url: createUrl(`/api/images/${info.img2img ? 'img2img' : 'txt2img'}/${value}`),
+        info: info,
+      }
     })
-
-    return data
   }
 
   const onSubmit = async (values: GenerationParamertersForm) => {
@@ -59,23 +65,25 @@ const Generator = () => {
       setPerformance(null)
       setLoadingParameters(parameters)
 
-      const res = await api.generateImage({
+      const { raw } = await api.generatorImageRaw({
         generateImageRequest: requestBody,
       })
-      setIsLoading(false)
-
-      if (res.status !== 'success') {
-        if (res.message) {
-          setErrorMessage(res.message)
-        } else {
-          setErrorMessage('Something went wrong')
+      if (raw.body != null) {
+        for await (const stream of streamGenerator(raw.body)) {
+          if (stream.type == 'progress') {
+            const data = stream as GeneratorImageProgress
+            data.progress && setProgress(data.progress)
+            data.performance && setPerformance(data.performance)
+          } else if (stream.type == 'result') {
+            const data = stream as GeneratorImageResult
+            setImages((imgs) => [...parseImages(data.path, data.info), ...imgs])
+            data.performance && setPerformance(data.performance)
+            setProgress(null)
+          }
         }
       }
 
-      const data = parseImages(res.data.images)
-      setImages((imgs) => [...data, ...imgs])
-
-      setPerformance(res.data.performance)
+      setIsLoading(false)
     } catch (e) {
       console.error(e)
       setErrorMessage((e as Error).message)
@@ -136,8 +144,9 @@ const Generator = () => {
             >
               <Text>{parameters.img ? 'Generate (img2img mode)' : 'Generate'}</Text>
             </Button>
-            <Box mih="25px">
+            <Box mih="32px">
               {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
+              {progress && <Progress sections={[{ value: progress * 100, color: 'blue' }]} />}
             </Box>
             <Box
               mah={isLargeScreen ? '80%' : '480px'}
