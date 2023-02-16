@@ -32,6 +32,7 @@ import { streamGenerator } from '~/utils/stream'
 
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
+  const [loadingParameters, setLoadingParameters] = useState<GenerationParamertersForm>(parameters)
   const [loadingCount, setLoadingCount] = useState<number>(0)
   const [images, setImages] = useState<GeneratedImage[]>([])
   const [performance, setPerformance] = useState<number | null>(null)
@@ -60,6 +61,7 @@ const Generator = () => {
       }
 
       setLoadingCount(parameters.batch_count * parameters.batch_size)
+      setLoadingParameters(parameters)
       setErrorMessage(null)
       setPerformance(null)
 
@@ -155,7 +157,7 @@ const Generator = () => {
               <Gallery
                 images={images}
                 loadingCount={loadingCount}
-                ratio={parameters.image_width / parameters.image_height}
+                ratio={loadingParameters.image_width / loadingParameters.image_height}
               />
             </Box>
           </Stack>
