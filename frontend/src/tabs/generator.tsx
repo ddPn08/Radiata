@@ -32,10 +32,9 @@ import { streamGenerator } from '~/utils/stream'
 
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
-  const [loadingParameters, setLoadingParameters] = useState<GenerationParamertersForm>(parameters)
+  const [loadingCount, setLoadingCount] = useState<number>(0)
   const [images, setImages] = useState<GeneratedImage[]>([])
   const [performance, setPerformance] = useState<number | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [progress, setProgress] = useState<number | null>(null)
 
@@ -60,10 +59,9 @@ const Generator = () => {
         scheduler_id: Scheduler[values.scheduler_id],
       }
 
-      setIsLoading(true)
+      setLoadingCount(parameters.batch_count * parameters.batch_size)
       setErrorMessage(null)
       setPerformance(null)
-      setLoadingParameters(parameters)
 
       const { raw } = await api.generatorImageRaw({
         generateImageRequest: requestBody,
@@ -77,18 +75,17 @@ const Generator = () => {
           } else if (stream.type == 'result') {
             const data = stream as GeneratorImageResult
             setImages((imgs) => [...parseImages(data.path, data.info), ...imgs])
+            setLoadingCount((i) => i - data.path.length)
             data.performance && setPerformance(data.performance)
-            setProgress(null)
           }
         }
       }
-
-      setIsLoading(false)
     } catch (e) {
       console.error(e)
       setErrorMessage((e as Error).message)
-      setIsLoading(false)
     }
+    setProgress(null)
+    setLoadingCount(0)
   }
 
   const onKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -137,9 +134,9 @@ const Generator = () => {
             <Button
               mih={'36px'}
               type={'submit'}
-              disabled={isLoading}
+              disabled={loadingCount > 0}
               sx={{
-                cursor: isLoading ? 'not-allowed' : 'pointer',
+                cursor: loadingCount > 0 ? 'not-allowed' : 'pointer',
               }}
             >
               <Text>{parameters.img ? 'Generate (img2img mode)' : 'Generate'}</Text>
@@ -155,7 +152,11 @@ const Generator = () => {
                 overflowY: 'auto',
               }}
             >
-              <Gallery images={images} isLoading={isLoading} parameters={loadingParameters} />
+              <Gallery
+                images={images}
+                loadingCount={loadingCount}
+                ratio={parameters.image_width / parameters.image_height}
+              />
             </Box>
           </Stack>
 

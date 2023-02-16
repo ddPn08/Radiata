@@ -119,7 +119,7 @@ const ImagesBrowser = () => {
           }}
         >
           <Container py={'md'}>
-            <Gallery images={images} isLoading={false} parameters={null} />
+            <Gallery images={images} />
           </Container>
         </Box>
       </Flex>
