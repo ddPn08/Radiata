@@ -212,6 +212,7 @@ class TensorRTDiffusionRunner(BaseRunner):
         seed=None,
         strength: Optional[float] = None,
         img: Optional[Image.Image] = None,
+        generator:bool=False,
     ):
         self.wait_loading()
 
@@ -258,7 +259,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                     events[stage + "-" + marker] = cudart.cudaEventCreate()[1]
 
             manual_seed = seed + i
-            generator = torch.Generator(device="cuda").manual_seed(manual_seed)
+            torch_generator = torch.Generator(device="cuda").manual_seed(manual_seed)
 
             with torch.inference_mode(), torch.autocast("cuda"), trt.Runtime(
                 TRT_LOGGER
@@ -294,13 +295,20 @@ class TensorRTDiffusionRunner(BaseRunner):
                     width=image_width,
                     dtype=torch.float32,
                     device=self.device,
-                    generator=generator,
+                    generator=torch_generator,
                 )
 
                 torch.cuda.synchronize()
 
                 cudart.cudaEventRecord(events["denoise-start"], 0)
-                for _, timestep in enumerate(tqdm(timesteps)):
+                for ii, timestep in enumerate(tqdm(timesteps)):
+                    if generator:
+                        yield {
+                            "type":"progress",
+                            "progress": (i*len(timesteps) + ii)/(batch_count*len(timesteps)),
+                            "performance": time.perf_counter() - e2e_tic
+                        }
+
                     latent_model_input = torch.cat([latents] * 2)
                     latent_model_input = self.scheduler.scale_model_input(
                         latent_model_input, timestep
@@ -350,7 +358,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                             model_output=noise_pred,
                             timestep=timestep,
                             sample=latents,
-                            generator=generator,
+                            generator=torch_generator,
                         ).prev_sample
 
                 latents = 1.0 / 0.18215 * latents
@@ -374,35 +382,36 @@ class TensorRTDiffusionRunner(BaseRunner):
                     events["vae-start"], events["vae-stop"]
                 )[1]
 
-                results.append(
-                    (
-                        to_image(images),
-                        {
-                            "prompt": prompt,
-                            "negative_prompt": negative_prompt,
-                            "model": self.meta["model_id"],
-                            "subfolder": self.meta["subfolder"],
-                            "steps": steps,
-                            "scheduler": scheduler_id,
-                            "scale": scale,
-                            "fp16": self.fp16,
-                            "seed": manual_seed,
-                            "height": image_height,
-                            "width": image_width,
-                            "img2img": img is not None,
-                        },
-                        {
-                            "clip": clip_perf_time,
-                            "denoise": denoise_perf_time,
-                            "vae": vae_perf_time,
-                        },
-                    )
+                result = (
+                    to_image(images),
+                    {
+                        "prompt": prompt,
+                        "negative_prompt": negative_prompt,
+                        "model": self.meta["model_id"],
+                        "subfolder": self.meta["subfolder"],
+                        "steps": steps,
+                        "scheduler": scheduler_id,
+                        "scale": scale,
+                        "denoising_prec": self.meta["denoising_prec"],
+                        "seed": manual_seed,
+                        "height": image_height,
+                        "width": image_width,
+                        "img2img": img is not None,
+                    },
+                    {
+                        "clip": clip_perf_time,
+                        "denoise": denoise_perf_time,
+                        "vae": vae_perf_time,
+                    },
                 )
+                if generator:
+                    yield {"type":"result","result": result, "performance": time.perf_counter() - e2e_tic}
+                else:
+                    results.append(result)
+        if not generator:
+            all_perf_time = time.perf_counter() - e2e_tic
+            print(
+                f"all: {all_perf_time}s, clip: {clip_perf_time/1000}s, denoise: {denoise_perf_time/1000}s, vae: {vae_perf_time/1000}s"
+            )
 
-        e2e_toc = time.perf_counter()
-        all_perf_time = e2e_toc - e2e_tic
-        print(
-            f"all: {all_perf_time}s, clip: {clip_perf_time/1000}s, denoise: {denoise_perf_time/1000}s, vae: {vae_perf_time/1000}s"
-        )
-
-        return results, all_perf_time
+            yield results, all_perf_time

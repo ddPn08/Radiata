@@ -57,13 +57,31 @@ def get_runners():
 
 
 def generate(**kwargs):
-    results, all_perf = current.infer(**kwargs)
+    gen = current.infer(**kwargs)
+    results, all_perf = next(gen)
+    gen.close()
     all = {}
 
     for images, info, perf in results:
         for image in images:
             all[save_image(image, info)] = {"info": info, "perf": perf}
     return all, all_perf
+
+
+def generator(**kwargs):
+    for data in current.infer(generator=True,**kwargs):
+        if data["type"] == "progress":
+            yield json.dumps(data)
+        elif data["type"] == "result":
+            images, info, perf = data["result"]
+            yield json.dumps({
+                "type":"result",
+                "info":info,
+                "perf":perf,
+                "performance":data["performance"],
+                "path":[save_image(image, info) for image in images]
+            })
+
 
 
 def set_default_model():

@@ -8,6 +8,7 @@ import {
   Stack,
   Text,
   Textarea,
+  Progress,
 } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { useAtom } from 'jotai'
@@ -22,29 +23,34 @@ import {
 import Gallery from '~/components/gallery'
 import Parameters from '~/components/parameters'
 import { Scheduler } from '~/types/generate'
-import { GeneratedImage } from '~/types/generatedImage'
+import {
+  GeneratedImage,
+  GeneratorImageProgress,
+  GeneratorImageResult,
+} from '~/types/generatedImage'
+import { streamGenerator } from '~/utils/stream'
 
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
   const [loadingParameters, setLoadingParameters] = useState<GenerationParamertersForm>(parameters)
+  const [loadingCount, setLoadingCount] = useState<number>(0)
   const [images, setImages] = useState<GeneratedImage[]>([])
   const [performance, setPerformance] = useState<number | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [progress, setProgress] = useState<number | null>(null)
 
   const isLargeScreen = useMediaQuery('(min-width: 992px)', true)
 
-  const parseImages = (images: any): GeneratedImage[] => {
-    const data: GeneratedImage[] = []
-
-    Object.entries(images).forEach(([key, value]: [string, any]) => {
-      data.push({
-        url: createUrl(`/api/images/${value.info.img2img ? 'img2img' : 'txt2img'}/${key}`),
-        info: value.info,
-      })
+  const parseImages = (
+    images: string[],
+    info: { [key: string]: string | number | boolean },
+  ): GeneratedImage[] => {
+    return Object.entries(images).map(([_, value]: [string, any]) => {
+      return {
+        url: createUrl(`/api/images/${info.img2img ? 'img2img' : 'txt2img'}/${value}`),
+        info: info,
+      }
     })
-
-    return data
   }
 
   const onSubmit = async (values: GenerationParamertersForm) => {
@@ -54,33 +60,34 @@ const Generator = () => {
         scheduler_id: Scheduler[values.scheduler_id],
       }
 
-      setIsLoading(true)
+      setLoadingCount(parameters.batch_count * parameters.batch_size)
+      setLoadingParameters(parameters)
       setErrorMessage(null)
       setPerformance(null)
-      setLoadingParameters(parameters)
 
-      const res = await api.generateImage({
+      const { raw } = await api.generatorImageRaw({
         generateImageRequest: requestBody,
       })
-      setIsLoading(false)
-
-      if (res.status !== 'success') {
-        if (res.message) {
-          setErrorMessage(res.message)
-        } else {
-          setErrorMessage('Something went wrong')
+      if (raw.body != null) {
+        for await (const stream of streamGenerator(raw.body)) {
+          if (stream.type == 'progress') {
+            const data = stream as GeneratorImageProgress
+            data.progress && setProgress(data.progress)
+            data.performance && setPerformance(data.performance)
+          } else if (stream.type == 'result') {
+            const data = stream as GeneratorImageResult
+            setImages((imgs) => [...parseImages(data.path, data.info), ...imgs])
+            setLoadingCount((i) => i - data.path.length)
+            data.performance && setPerformance(data.performance)
+          }
         }
       }
-
-      const data = parseImages(res.data.images)
-      setImages((imgs) => [...data, ...imgs])
-
-      setPerformance(res.data.performance)
     } catch (e) {
       console.error(e)
       setErrorMessage((e as Error).message)
-      setIsLoading(false)
     }
+    setProgress(null)
+    setLoadingCount(0)
   }
 
   const onKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -129,15 +136,16 @@ const Generator = () => {
             <Button
               mih={'36px'}
               type={'submit'}
-              disabled={isLoading}
+              disabled={loadingCount > 0}
               sx={{
-                cursor: isLoading ? 'not-allowed' : 'pointer',
+                cursor: loadingCount > 0 ? 'not-allowed' : 'pointer',
               }}
             >
               <Text>{parameters.img ? 'Generate (img2img mode)' : 'Generate'}</Text>
             </Button>
-            <Box mih="25px">
+            <Box mih="32px">
               {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
+              {progress && <Progress sections={[{ value: progress * 100, color: 'blue' }]} />}
             </Box>
             <Box
               mah={isLargeScreen ? '80%' : '480px'}
@@ -146,7 +154,11 @@ const Generator = () => {
                 overflowY: 'auto',
               }}
             >
-              <Gallery images={images} isLoading={isLoading} parameters={loadingParameters} />
+              <Gallery
+                images={images}
+                loadingCount={loadingCount}
+                ratio={loadingParameters.image_width / loadingParameters.image_height}
+              />
             </Box>
           </Stack>
 

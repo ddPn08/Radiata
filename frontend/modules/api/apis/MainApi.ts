@@ -54,6 +54,10 @@ export interface GenerateImageOperationRequest {
     generateImageRequest: GenerateImageRequest;
 }
 
+export interface GeneratorImageRequest {
+    generateImageRequest: GenerateImageRequest;
+}
+
 export interface GetAllImageFilesRequest {
     category: string;
     page: number;
@@ -136,6 +140,39 @@ export class MainApi extends runtime.BaseAPI {
      */
     async generateImage(requestParameters: GenerateImageOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GenerateImageResponseModel> {
         const response = await this.generateImageRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Generator Image
+     */
+    async generatorImageRaw(requestParameters: GeneratorImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GenerateImageResponseModel>> {
+        if (requestParameters.generateImageRequest === null || requestParameters.generateImageRequest === undefined) {
+            throw new runtime.RequiredError('generateImageRequest','Required parameter requestParameters.generateImageRequest was null or undefined when calling generatorImage.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/images/generator`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: GenerateImageRequestToJSON(requestParameters.generateImageRequest),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GenerateImageResponseModelFromJSON(jsonValue));
+    }
+
+    /**
+     * Generator Image
+     */
+    async generatorImage(requestParameters: GeneratorImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GenerateImageResponseModel> {
+        const response = await this.generatorImageRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
