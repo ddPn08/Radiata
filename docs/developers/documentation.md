@@ -31,7 +31,7 @@ Once the change is reviewed and approved it will be merged into the branch and w
 Clone the repository
 
 ```bash
-git clone https://github.com/VoltaML/voltaML-fast-stable-diffusion.git
+git clone https://github.com/ddPn08/Lsmith.git
 ```
 
 Install dependencies
@@ -46,4 +46,4 @@ Run the documentation
 yarn docs:dev
 ```
 
-You should now be able to access the documentation on `http://localhost:5173/voltaML-fast-stable-diffusion/`
+You should now be able to access the documentation on `http://localhost:5173/Lsmith/`
