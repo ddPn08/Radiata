@@ -36,14 +36,14 @@ Re Build Frontend
 
 ```bash
 cd frontend
-pnpm build
+pnpm build --out-dir ../dist
 ```
 
 ### Frontend Only
 
 ```bash
 cd frontend
-pnpm build
+pnpm build --out-dir ../dist
 pnpm vite
 ```
 
