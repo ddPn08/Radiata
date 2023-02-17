@@ -20,6 +20,7 @@ from api.generation import (
     ImageGenerationResult,
     ImageInformation,
 )
+from api.generation.image_generation_result import ImageGenerationProgress
 from lib.trt.utilities import TRT_LOGGER, Engine
 from modules import utils
 
@@ -166,9 +167,17 @@ class TensorRTDiffusionRunner(BaseRunner):
         self.models = {
             "clip": CLIP(clip.model_id, fp16=self.fp16, device=self.device),
             "unet": UNet(
-                self.meta["models"]["unet"], subfolder=self.meta["subfolder"], fp16=self.fp16, device=self.device
+                self.meta["models"]["unet"],
+                subfolder=self.meta["subfolder"],
+                fp16=self.fp16,
+                device=self.device,
             ),
-            "vae": VAE(self.meta["models"]["vae"], subfolder=self.meta["subfolder"], fp16=self.fp16, device=self.device),
+            "vae": VAE(
+                self.meta["models"]["vae"],
+                subfolder=self.meta["subfolder"],
+                fp16=self.fp16,
+                device=self.device,
+            ),
         }
         self.en_vae = self.models["vae"].get_model()
 
@@ -296,7 +305,14 @@ class TensorRTDiffusionRunner(BaseRunner):
 
                 torch.cuda.synchronize()
 
-                for _, timestep in enumerate(tqdm(timesteps)):
+                for ii, timestep in enumerate(tqdm(timesteps)):
+                    if opts.generator:
+                        yield ImageGenerationProgress(
+                            progress=(i * len(timesteps) + ii)
+                            / (opts.batch_count * len(timesteps)),
+                            performance=time.perf_counter() - e2e_tic,
+                        )
+
                     latent_model_input = torch.cat([latents] * 2)
                     latent_model_input = self.scheduler.scale_model_input(
                         latent_model_input, timestep
@@ -374,16 +390,23 @@ class TensorRTDiffusionRunner(BaseRunner):
                     img2img=opts.img is not None,
                     strength=opts.strength,
                 )
+                if opts.generator:
+                    result = ImageGenerationResult(
+                        images={},
+                        performance=time.perf_counter() - e2e_tic,
+                    )
+                    for x in to_image(images):
+                        result.images[utils.img2b64(x)] = info
+                    yield result
+                else:
+                    results.append((to_image(images), info))
+        if not opts.generator:
+            all_perf_time = time.perf_counter() - e2e_tic
 
-                results.append((to_image(images), info))
+            result = ImageGenerationResult(images={}, performance=all_perf_time)
+            for x in results:
+                (images, info) = x
+                for img in images:
+                    result.images[utils.img2b64(img)] = info
 
-        e2e_toc = time.perf_counter()
-        all_perf_time = e2e_toc - e2e_tic
-
-        result = ImageGenerationResult(images={}, performance=all_perf_time)
-        for x in results:
-            (images, info) = x
-            for img in images:
-                result.images[utils.img2b64(img)] = info
-
-        return result
+            yield result

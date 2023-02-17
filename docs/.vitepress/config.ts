@@ -68,5 +68,10 @@ export default defineConfig({
 				],
 			},
 		],
+		algolia: {
+			appId: "H0ENKDAOQE",
+			indexName: "lsmith",
+			apiKey: "292dd349b89a56475ea02a16d4dac69b",
+		},
 	},
 });

@@ -12,6 +12,7 @@ import {
   Box,
   Alert,
   Loader,
+  Progress,
 } from '@mantine/core'
 import { IconInfoCircle } from '@tabler/icons-react'
 import type { BuildEngineOptions } from 'internal:api'
@@ -23,6 +24,7 @@ import NumberSliderInput from '../components/ui/numberSliderInput'
 import { api } from '~/api'
 import { engineFormAtom } from '~/atoms/engine'
 import { IMAGE_SIZE_STEP, MAX_IMAGE_SIZE, MIN_IMAGE_SIZE } from '~/utils/static'
+import { streamGenerator } from '~/utils/stream'
 
 const Engine = () => {
   const [form, setForm] = useAtom(engineFormAtom)
@@ -42,22 +44,11 @@ const Engine = () => {
         progress: 0,
       })
       const { raw } = await api.buildEngineRaw({ buildEngineOptions: req })
-      const reader = raw.body?.getReader()
-      if (!reader) return
-      let finish = false
-      while (!finish) {
-        const res = await reader.read()
-
-        if (res.done) {
-          setSuccess(true)
-          finish = true
+      if (raw.body != null) {
+        for await (const data of streamGenerator(raw.body)) {
+          setStatus(data)
         }
-
-        try {
-          setStatus(JSON.parse(new TextDecoder().decode(res.value) || ''))
-        } catch (_) {}
       }
-
       setStatus(null)
     } catch (e) {
       setStatus(null)
@@ -225,6 +216,7 @@ const Engine = () => {
                   <Text>
                     This may take about 10 minutes. Please wait until the process is finished.
                   </Text>
+                  <Progress sections={[{ value: status?.['progress'] * 100, color: 'blue' }]} />
                 </Alert>
                 <Button w={'100%'} my={'sm'} disabled>
                   <Loader p={'xs'} />

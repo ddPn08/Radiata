@@ -1,5 +1,5 @@
 import { Box, Portal, SimpleGrid, Skeleton, AspectRatio } from '@mantine/core'
-import type { ImageGenerationOptions, ImageInformation } from 'internal:api'
+import type { ImageInformation } from 'internal:api'
 import { useState } from 'react'
 
 import GalleryImage from './galleryImage'
@@ -7,11 +7,11 @@ import OverlayPreview from './overlayPreview'
 
 interface Props {
   images: [string, ImageInformation][]
-  isLoading: boolean
-  parameters: ImageGenerationOptions | null
+  loadingCount?: number | null
+  ratio?: number | null
 }
 
-const Gallery = ({ images, isLoading, parameters }: Props) => {
+const Gallery = ({ images, loadingCount, ratio }: Props) => {
   const [showOverlay, setShowOverlay] = useState(false)
   const [initialIndex, setInitialIndex] = useState(0)
 
@@ -29,14 +29,10 @@ const Gallery = ({ images, isLoading, parameters }: Props) => {
             { minWidth: 'xl', cols: 4 },
           ]}
         >
-          {isLoading &&
-            parameters != null &&
-            [...Array(parameters.batch_count)].map((_, key) => {
+          {ratio &&
+            [...Array(loadingCount ?? 0)].map((_, key) => {
               return (
-                <AspectRatio
-                  key={key}
-                  ratio={(parameters.image_width || 512) / (parameters.image_height || 768)}
-                >
+                <AspectRatio key={key} ratio={ratio}>
                   <Skeleton />
                 </AspectRatio>
               )

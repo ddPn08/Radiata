@@ -58,12 +58,23 @@ def get_runners():
 
 
 def generate(options: ImageGenerationOptions):
-    result = current.infer(options)
+    gen = current.infer(options)
+    result = next(gen)
+    gen.close()
 
     for img, info in result.images.items():
         save_image(utils.b642img(img), info)
 
     return result
+
+
+def generator(options: ImageGenerationOptions):
+    options.generator = True
+    for data in current.infer(options):
+        yield data
+        if data.type == "result":
+            for img, info in data.images.items():
+                save_image(utils.b642img(img), info)
 
 
 def set_default_model():

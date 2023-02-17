@@ -1,6 +1,7 @@
-import { Carousel } from '@mantine/carousel'
-import { Box, Center, CloseButton, Flex, Table, Text } from '@mantine/core'
-import { ImageInformation } from 'internal:api'
+import { Carousel, Embla, useAnimationOffsetEffect } from '@mantine/carousel'
+import { Box, Center, CloseButton, Flex, Table, Text, Drawer } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
+import type { ImageInformation } from 'internal:api'
 import { useState } from 'react'
 
 interface Props {
@@ -9,11 +10,22 @@ interface Props {
   onClose: () => void
 }
 
+const imageUrl = (url: string) => {
+  const regex = /^[A-Za-z0-9+/=]+$/
+  return regex.test(url) ? `data:image/png;base64,${url}` : url
+}
+
 const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
-  const [currentInfo, setCurrentInfo] = useState(images[initialIndex][1])
+  const [currentInfo, setCurrentInfo] = useState(images[initialIndex]![1])
+  const [opened, setOpened] = useState(false)
+  const [embla, setEmbla] = useState<Embla | null>(null)
+
+  const TRANSITION_DURATION = 200
+  useAnimationOffsetEffect(embla, TRANSITION_DURATION)
+  const isLargeScreen = useMediaQuery('(min-width: 992px)', true)
 
   const onSlideChange = (index: number) => {
-    setCurrentInfo(images[index][1])
+    setCurrentInfo(images[index]![1])
   }
 
   return (
@@ -40,7 +52,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
         }
       }}
     >
-      <Flex h={'100vh'} w={'100%'}>
+      <Flex h={'100%'} w={'100%'}>
         <Carousel
           w={'100%'}
           my={'auto'}
@@ -52,6 +64,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
             overflowY: 'hidden',
           }}
           onSlideChange={onSlideChange}
+          getEmblaApi={setEmbla}
           loop
         >
           {images.map(([image]) => {
@@ -59,11 +72,14 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
               <Carousel.Slide key={image}>
                 <Center h={'100%'}>
                   <img
-                    src={`data:image/png;base64,${image}`}
+                    src={imageUrl(image)}
                     style={{
                       maxHeight: '100%',
                       maxWidth: '100%',
                       objectFit: 'contain',
+                    }}
+                    onClick={() => {
+                      isLargeScreen || setOpened(true)
                     }}
                   />
                 </Center>
@@ -77,6 +93,7 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
           bg={'dark'}
           sx={{
             overflow: 'auto',
+            display: isLargeScreen ? 'block' : 'none',
           }}
         >
           <Text size={'lg'} weight={'bold'} p={'md'}>
@@ -102,6 +119,43 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
           </Table>
         </Box>
       </Flex>
+      <Drawer
+        opened={opened}
+        onClose={() => setOpened(false)}
+        position={'right'}
+        zIndex={1001}
+        withCloseButton={false}
+      >
+        <Box
+          h={'100svh'}
+          sx={{
+            overflow: 'auto',
+          }}
+        >
+          <Text size={'lg'} weight={'bold'} p={'md'}>
+            Information
+          </Text>
+          <Table horizontalSpacing={'md'} verticalSpacing={'sm'} fontSize={'md'}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(currentInfo).map(([key, value]) => {
+                return (
+                  <tr key={key}>
+                    <td>{key}</td>
+                    <td>{!value && String(value) == '' ? 'none' : String(value)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </Table>
+        </Box>
+      </Drawer>
+
       <CloseButton
         variant={'filled'}
         title={'Close previews'}

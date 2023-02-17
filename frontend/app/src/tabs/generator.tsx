@@ -8,9 +8,15 @@ import {
   Stack,
   Text,
   Textarea,
+  Progress,
 } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
-import type { ImageGenerationOptions, ImageInformation } from 'internal:api'
+import type {
+  ImageGenerationOptions,
+  ImageGenerationProgress,
+  ImageGenerationResult,
+  ImageInformation,
+} from 'internal:api'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
 
@@ -19,14 +25,16 @@ import { generationParametersAtom } from '~/atoms/generationParameters'
 import Gallery from '~/components/gallery/gallery'
 import Parameters from '~/components/parameters'
 import { Scheduler } from '~/types/generate'
+import { streamGenerator } from '~/utils/stream'
 
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
   const [images, setImages] = useState<[string, ImageInformation][]>([])
   const [loadingParameters, setLoadingParameters] = useState<ImageGenerationOptions>(parameters)
+  const [loadingCount, setLoadingCount] = useState<number>(0)
   const [performance, setPerformance] = useState<number | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [progress, setProgress] = useState<number | null>(null)
 
   const isLargeScreen = useMediaQuery('(min-width: 992px)', true)
 
@@ -37,32 +45,34 @@ const Generator = () => {
         scheduler_id: Scheduler[values.scheduler_id as keyof typeof Scheduler],
       }
 
-      setIsLoading(true)
+      setLoadingCount(parameters.batch_count! * parameters.batch_size!)
+      setLoadingParameters(parameters)
       setErrorMessage(null)
       setPerformance(null)
-      setLoadingParameters(parameters)
-
-      const res = await api.generateImage({
+      api.generatorImage
+      const { raw } = await api.generatorImageRaw({
         imageGenerationOptions: requestBody,
       })
-      setIsLoading(false)
-
-      if (res.status !== 'success') {
-        if (res.message) {
-          setErrorMessage(res.message)
-        } else {
-          setErrorMessage('Something went wrong')
+      if (raw.body != null) {
+        for await (const stream of streamGenerator(raw.body)) {
+          if (stream.type === 'progress') {
+            const data = stream as ImageGenerationProgress
+            setProgress(data.progress)
+            setPerformance(data.performance)
+          } else if (stream.type === 'result') {
+            const data = stream as ImageGenerationResult
+            setImages((prev) => [...Object.entries(data.images), ...prev])
+            setLoadingCount((i) => i - Object.keys(data.images).length)
+            data.performance && setPerformance(data.performance)
+          }
         }
       }
-
-      setImages((imgs) => [...Object.entries(res.data.images), ...imgs])
-
-      setPerformance(res.data.performance)
     } catch (e) {
       console.error(e)
       setErrorMessage((e as Error).message)
-      setIsLoading(false)
     }
+    setProgress(null)
+    setLoadingCount(0)
   }
 
   const onKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -111,15 +121,16 @@ const Generator = () => {
             <Button
               mih={'36px'}
               type={'submit'}
-              disabled={isLoading}
+              disabled={loadingCount > 0}
               sx={{
-                cursor: isLoading ? 'not-allowed' : 'pointer',
+                cursor: loadingCount > 0 ? 'not-allowed' : 'pointer',
               }}
             >
               <Text>{parameters.img ? 'Generate (img2img mode)' : 'Generate'}</Text>
             </Button>
-            <Box mih="25px">
+            <Box mih="32px">
               {performance && <Text align="end">Time: {performance.toFixed(2)}s</Text>}
+              {progress && <Progress sections={[{ value: progress * 100, color: 'blue' }]} />}
             </Box>
             <Box
               mah={isLargeScreen ? '80%' : '480px'}
@@ -128,7 +139,11 @@ const Generator = () => {
                 overflowY: 'auto',
               }}
             >
-              <Gallery images={images} isLoading={isLoading} parameters={loadingParameters} />
+              <Gallery
+                images={images}
+                loadingCount={loadingCount}
+                ratio={loadingParameters.image_width! / loadingParameters.image_height!}
+              />
             </Box>
           </Stack>
 

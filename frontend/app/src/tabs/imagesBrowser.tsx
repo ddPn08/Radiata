@@ -8,6 +8,7 @@ import {
   ActionIcon,
   NativeSelect,
 } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { IconRotateClockwise } from '@tabler/icons-react'
 import type { GetAllImageFilesRequest, ImageInformation } from 'internal:api'
 import { useEffect, useState } from 'react'
@@ -23,6 +24,8 @@ const ImagesBrowser = () => {
   const [category, setCategory] = useState<categoryType>('txt2img')
   const [images, setImages] = useState<[string, ImageInformation][]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const isLargeScreen = useMediaQuery('(min-width: 470px)', true)
   const count = 20
 
   const parseImages = (images: any, category: categoryType): [string, ImageInformation][] => {
@@ -61,49 +64,61 @@ const ImagesBrowser = () => {
 
   useEffect(() => {
     fetchImage(page, category)
-  }, [page, category])
+  }, [page])
+  useEffect(() => {
+    fetchImage(page, category)
+  }, [category])
 
   return (
-    <Flex h={'100%'} gap={'sm'} direction={'column'}>
-      <Container py={'md'} w={'100%'}>
-        <Flex gap={'sm'} align={'end'}>
-          <Input.Wrapper label={'Category'}>
-            <NativeSelect
-              data={categoryList.map((e) => e)}
-              value={category}
-              w={'100%'}
-              onChange={(e) => {
-                setCategory(e.currentTarget.value as categoryType)
-              }}
-            />
-          </Input.Wrapper>
-          <Input.Wrapper label="Page">
-            <BetterNumInput
-              defaultValue={1}
-              value={page + 1}
-              min={1}
-              max={pageLength}
-              step={1}
-              onChange={(e) => e == undefined || setPage(e - 1)}
-              w={'100%'}
-            />
-          </Input.Wrapper>
-          <ActionIcon variant={'outline'} color={'blue'} onClick={() => fetchImage(page, category)}>
-            <IconRotateClockwise size={16} />
-          </ActionIcon>
-        </Flex>
-      </Container>
-      <Box
-        h="100%"
-        w="100%"
-        sx={{
-          overflowY: 'auto',
-        }}
-      >
-        <Container py={'md'}>
-          <Gallery images={images} isLoading={false} parameters={null} />
+    <>
+      <Flex h={'100%'} direction="column">
+        <Container py={'md'} w={'100%'}>
+          <Flex gap={'sm'} direction={isLargeScreen ? 'row' : 'column'}>
+            <Input.Wrapper label={'Category'}>
+              <NativeSelect
+                data={categoryList.map((e) => e)}
+                value={category}
+                w={'100%'}
+                onChange={(e) => {
+                  setCategory(e.currentTarget.value as categoryType)
+                }}
+              />
+            </Input.Wrapper>
+
+            <Input.Wrapper label="Page">
+              <Flex w={'100%'} align={'center'} gap={'sm'} direction="row">
+                <BetterNumInput
+                  defaultValue={1}
+                  value={page + 1}
+                  min={1}
+                  max={pageLength}
+                  step={1}
+                  onChange={(e) => e == undefined || setPage(e - 1)}
+                  w={'100%'}
+                />
+                <ActionIcon
+                  variant={'outline'}
+                  color={'blue'}
+                  onClick={() => fetchImage(page, category)}
+                >
+                  <IconRotateClockwise size={16} />
+                </ActionIcon>
+              </Flex>
+            </Input.Wrapper>
+          </Flex>
         </Container>
-      </Box>
+        <Box
+          h="100%"
+          w="100%"
+          sx={{
+            overflowY: 'auto',
+          }}
+        >
+          <Container py={'md'}>
+            <Gallery images={images} />
+          </Container>
+        </Box>
+      </Flex>
 
       {errorMessage && (
         <Portal>
@@ -122,7 +137,7 @@ const ImagesBrowser = () => {
           </Notification>
         </Portal>
       )}
-    </Flex>
+    </>
   )
 }
 
