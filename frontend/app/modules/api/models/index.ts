@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './BaseResponseModel';
 export * from './BuildEngineOptions';
+export * from './FileListResponseModel';
 export * from './GenerateImageResponseModel';
 export * from './HTTPValidationError';
 export * from './ImageGenerationOptions';

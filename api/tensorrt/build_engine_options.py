@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class BuildEngineOptions(BaseModel):
     model_id: str
     hf_token: Optional[str] = None
+    subfolder: Optional[str] = None
     fp16 = False
     verbose = False
     opt_image_height = 512

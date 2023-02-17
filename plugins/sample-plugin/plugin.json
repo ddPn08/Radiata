@@ -1,0 +1,10 @@
+{
+    "main": "main",
+    "name": "sample-plugin",
+    "version": "0.0.1",
+    "author": "ddpn08",
+    "url": "https://github.com/ddpn08",
+    "frontend": {
+        "entryPoint": "./frontend/src/index.tsx"
+    }
+}

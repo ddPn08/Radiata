@@ -1,6 +1,6 @@
 import { ActionIcon, Box, Image } from '@mantine/core'
 import { IconDownload } from '@tabler/icons-react'
-import { ImageInformation } from 'internal:api'
+import type { ImageInformation } from 'internal:api'
 
 import { downloadB64 } from '~/utils/download'
 
@@ -10,11 +10,16 @@ interface Props {
   onClick: () => void
 }
 
+const imageUrl = (url: string) => {
+  const regex = /^[A-Za-z0-9+/=]+$/
+  return regex.test(url) ? `data:image/png;base64,${url}` : url
+}
+
 const GalleryImage = ({ image, info, onClick }: Props) => {
   return (
     <Box key={image} pos={'relative'}>
       <Image
-        src={`data:image/png;base64,${image}`}
+        src={imageUrl(image)}
         alt={info.prompt}
         sx={{
           cursor: 'pointer',

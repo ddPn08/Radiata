@@ -33,6 +33,12 @@ export interface BuildEngineOptions {
     hf_token?: string;
     /**
      * 
+     * @type {string}
+     * @memberof BuildEngineOptions
+     */
+    subfolder?: string;
+    /**
+     * 
      * @type {boolean}
      * @memberof BuildEngineOptions
      */
@@ -145,6 +151,7 @@ export function BuildEngineOptionsFromJSONTyped(json: any, ignoreDiscriminator: 
         
         'model_id': json['model_id'],
         'hf_token': !exists(json, 'hf_token') ? undefined : json['hf_token'],
+        'subfolder': !exists(json, 'subfolder') ? undefined : json['subfolder'],
         'fp16': !exists(json, 'fp16') ? undefined : json['fp16'],
         'verbose': !exists(json, 'verbose') ? undefined : json['verbose'],
         'opt_image_height': !exists(json, 'opt_image_height') ? undefined : json['opt_image_height'],
@@ -174,6 +181,7 @@ export function BuildEngineOptionsToJSON(value?: BuildEngineOptions | null): any
         
         'model_id': value.model_id,
         'hf_token': value.hf_token,
+        'subfolder': value.subfolder,
         'fp16': value.fp16,
         'verbose': value.verbose,
         'opt_image_height': value.opt_image_height,

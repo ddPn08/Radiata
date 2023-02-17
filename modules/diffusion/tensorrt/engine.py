@@ -84,6 +84,7 @@ class EngineBuilder:
             "unet": UNet(
                 opts.model_id,
                 hf_token=opts.hf_token,
+                subfolder=opts.subfolder,
                 fp16=opts.fp16,
                 device=self.device,
                 verbose=opts.verbose,
@@ -92,6 +93,7 @@ class EngineBuilder:
             "vae": VAE(
                 opts.model_id,
                 hf_token=opts.hf_token,
+                subfolder=opts.subfolder,
                 device=self.device,
                 verbose=opts.verbose,
                 max_batch_size=opts.max_batch_size,
@@ -103,6 +105,7 @@ class EngineBuilder:
             os.path.join("__local__", os.path.basename(opts.model_id))
             if os.path.isabs(opts.model_id)
             else opts.model_id,
+            opts.subfolder,
         )
 
     def build(self, generator=False, on_end=lambda: ()):
@@ -136,6 +139,8 @@ class EngineBuilder:
             "build_dynamic_shape": self.opts.build_dynamic_shape,
             "min_latent_resolution": self.opts.min_latent_resolution,
             "max_latent_resolution": self.opts.max_latent_resolution,
+            "model_id": self.opts.model_id,
+            "subfolder": self.opts.subfolder,
         }
         txt = json.dumps(meta)
         with open(os.path.join(self.model_dir, "model_index.json"), mode="w") as f:

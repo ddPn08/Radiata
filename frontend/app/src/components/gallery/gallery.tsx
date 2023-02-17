@@ -8,7 +8,7 @@ import OverlayPreview from './overlayPreview'
 interface Props {
   images: [string, ImageInformation][]
   isLoading: boolean
-  parameters: ImageGenerationOptions
+  parameters: ImageGenerationOptions | null
 }
 
 const Gallery = ({ images, isLoading, parameters }: Props) => {
@@ -30,6 +30,7 @@ const Gallery = ({ images, isLoading, parameters }: Props) => {
           ]}
         >
           {isLoading &&
+            parameters != null &&
             [...Array(parameters.batch_count)].map((_, key) => {
               return (
                 <AspectRatio

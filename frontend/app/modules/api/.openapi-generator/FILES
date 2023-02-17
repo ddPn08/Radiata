@@ -1,4 +1,3 @@
-.openapi-generator-ignore
 apis/ApplicationApi.ts
 apis/DefaultApi.ts
 apis/MainApi.ts
@@ -6,6 +5,7 @@ apis/index.ts
 index.ts
 models/BaseResponseModel.ts
 models/BuildEngineOptions.ts
+models/FileListResponseModel.ts
 models/GenerateImageResponseModel.ts
 models/HTTPValidationError.ts
 models/ImageGenerationOptions.ts
