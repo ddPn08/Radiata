@@ -1,4 +1,3 @@
-from typing import Dict
 import json
 import os
 import glob
@@ -16,15 +15,15 @@ def get_category(info: ImageInformation):
         return "img2img" if info.img2img else "txt2img"
 
 
-def save_image(img: Image.Image, info: Dict):
+def save_image(img: Image.Image, info: ImageInformation):
     metadata = PngInfo()
-    metadata.add_text("parameters", json.dumps(info))
+    metadata.add_text("parameters", info.json())
     dir = config.get(f"images/{get_category(info)}/save_dir")
     basename: str = config.get(f"images/{get_category(info)}/save_name")
     filename = basename.format(
-        seed=info["seed"],
+        seed=info.seed,
         index=len(os.listdir(dir)) + 1 if os.path.exists(dir) else 0,
-        prompt=info["prompt"][:20].replace(" ", "_"),
+        prompt=info.prompt[:20].replace(" ", "_"),
         date=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
     )
     os.makedirs(dir, exist_ok=True)

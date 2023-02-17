@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -16,5 +16,12 @@ class ImageInformation(BaseModel):
 
 
 class ImageGenerationResult(BaseModel):
+    type: Literal["result"] = "result"
     images: Dict[str, ImageInformation]
+    performance: float
+
+
+class ImageGenerationProgress(BaseModel):
+    type: Literal["progress"] = "progress"
+    progress: float
     performance: float

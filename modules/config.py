@@ -31,7 +31,12 @@ opts = {}
 def get_config():
     with open(cmd_opts.config_file, mode="r") as f:
         txt = f.read()
-        return json.loads(txt)
+
+    try:
+        config = json.loads(txt)
+    except:
+        config = DEFAULT_CONFIG
+    return config
 
 
 def save_config():

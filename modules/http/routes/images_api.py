@@ -1,8 +1,13 @@
-from typing import Optional
+from typing import Optional, Union
 
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from api.generation import ImageGenerationOptions, ImageGenerationResult
+from api.generation import (
+    ImageGenerationOptions,
+    ImageGenerationResult,
+    ImageGenerationProgress,
+)
 from modules import runners
 
 from ..api_router import api
@@ -28,6 +33,10 @@ class GenerateImageResponseModel(BaseResponseModel):
     data: ImageGenerationResult
 
 
+class GeneratorImageResponseModel(BaseResponseModel):
+    data: Union[ImageGenerationResult, ImageGenerationProgress]
+
+
 @api.post("/images/generate", response_model=GenerateImageResponseModel)
 def generate_image(req: ImageGenerationOptions):
     result = runners.generate(req)
@@ -35,3 +44,12 @@ def generate_image(req: ImageGenerationOptions):
         status="success",
         data=result,
     )
+
+
+@api.post("/images/generator")
+def generator_image(req: ImageGenerationOptions):
+    def generator():
+        for data in runners.generator(req):
+            yield data.json()
+
+    return StreamingResponse(generator())

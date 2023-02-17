@@ -16,3 +16,4 @@ class ImageGenerationOptions(BaseModel):
     seed: Optional[int] = None
     strength: Optional[float] = None
     img: Optional[str] = None
+    generator: bool = False

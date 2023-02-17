@@ -19,6 +19,7 @@ import type {
   BuildEngineOptions,
   FileListResponseModel,
   GenerateImageResponseModel,
+  GeneratorImageResponseModel,
   HTTPValidationError,
   ImageGenerationOptions,
   ModelCurrentResponseModel,
@@ -35,6 +36,8 @@ import {
     FileListResponseModelToJSON,
     GenerateImageResponseModelFromJSON,
     GenerateImageResponseModelToJSON,
+    GeneratorImageResponseModelFromJSON,
+    GeneratorImageResponseModelToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
     ImageGenerationOptionsFromJSON,
@@ -58,7 +61,7 @@ export interface GenerateImageRequest {
 }
 
 export interface GeneratorImageRequest {
-    generateImageRequest: GenerateImageRequest;
+    imageGenerationOptions: ImageGenerationOptions;
 }
 
 export interface GetAllImageFilesRequest {
@@ -153,9 +156,9 @@ export class MainApi extends runtime.BaseAPI {
     /**
      * Generator Image
      */
-    async generatorImageRaw(requestParameters: GeneratorImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GenerateImageResponseModel>> {
-        if (requestParameters.generateImageRequest === null || requestParameters.generateImageRequest === undefined) {
-            throw new runtime.RequiredError('generateImageRequest','Required parameter requestParameters.generateImageRequest was null or undefined when calling generatorImage.');
+    async generatorImageRaw(requestParameters: GeneratorImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GeneratorImageResponseModel>> {
+        if (requestParameters.imageGenerationOptions === null || requestParameters.imageGenerationOptions === undefined) {
+            throw new runtime.RequiredError('imageGenerationOptions','Required parameter requestParameters.imageGenerationOptions was null or undefined when calling generatorImage.');
         }
 
         const queryParameters: any = {};
@@ -169,16 +172,16 @@ export class MainApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: GenerateImageRequestToJSON(requestParameters.generateImageRequest),
+            body: ImageGenerationOptionsToJSON(requestParameters.imageGenerationOptions),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GenerateImageResponseModelFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => GeneratorImageResponseModelFromJSON(jsonValue));
     }
 
     /**
      * Generator Image
      */
-    async generatorImage(requestParameters: GeneratorImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GenerateImageResponseModel> {
+    async generatorImage(requestParameters: GeneratorImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GeneratorImageResponseModel> {
         const response = await this.generatorImageRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -260,7 +263,7 @@ export class MainApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/images/browser/{category}/{filename}`.replace(`{${"category"}}`, encodeURIComponent(String(requestParameters.category))).replace(`{${"filename"}}`, encodeURIComponent(String(requestParameters.filename))),
+            path: `/api/images/browser/get/{category}/{filename}`.replace(`{${"category"}}`, encodeURIComponent(String(requestParameters.category))).replace(`{${"filename"}}`, encodeURIComponent(String(requestParameters.filename))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,

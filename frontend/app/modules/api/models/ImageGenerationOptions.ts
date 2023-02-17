@@ -91,6 +91,12 @@ export interface ImageGenerationOptions {
      * @memberof ImageGenerationOptions
      */
     img?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ImageGenerationOptions
+     */
+    generator?: boolean;
 }
 
 /**
@@ -125,6 +131,7 @@ export function ImageGenerationOptionsFromJSONTyped(json: any, ignoreDiscriminat
         'seed': !exists(json, 'seed') ? undefined : json['seed'],
         'strength': !exists(json, 'strength') ? undefined : json['strength'],
         'img': !exists(json, 'img') ? undefined : json['img'],
+        'generator': !exists(json, 'generator') ? undefined : json['generator'],
     };
 }
 
@@ -149,6 +156,7 @@ export function ImageGenerationOptionsToJSON(value?: ImageGenerationOptions | nu
         'seed': value.seed,
         'strength': value.strength,
         'img': value.img,
+        'generator': value.generator,
     };
 }
 
