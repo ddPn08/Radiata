@@ -33,7 +33,7 @@
   },
   "scripts": {
     "publish": "pnpm publish --access public",
-    "build": "node scripts/build.js",
+    "build": "node ./scripts/build.js",
     "dev": "node -r esbuild-register cli/index.ts"
   },
   "packageManager": "yarn@3.2.0",
