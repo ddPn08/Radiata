@@ -7,11 +7,11 @@ export const streamGenerator = async function* (body: ReadableStream<Uint8Array>
         if (res.done) return
         try {
             raw += new TextDecoder().decode(res.value)
-            if (raw.endsWith('\n')) {
-                const line = raw.split('\n')
-                yield JSON.parse(line[line.length - 2]!)
-                raw = ''
+            const line = raw.split('\n')
+            for (const text of line.slice(0, -1)) {
+                yield JSON.parse(text)
             }
+            raw = line[line.length - 1]!
         } catch (e) {
             console.error(e)
         }
