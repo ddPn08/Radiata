@@ -6,8 +6,6 @@ This is much more difficult than the Docker installation method. Please use the 
 
 ## Requirements
 
-- `Node.js` >= 18
-- `Pnpm`
 - `Python` >= 3.10
 - `Pip`
 - `CUDA`
@@ -36,15 +34,7 @@ cd Lsmith
 git submodule update --init --recursive
 ```
 
-5. Enter frontend directory and build frontend
-
-```sh
-cd frontend
-pnpm i
-pnpm build --out-dir ../dist
-```
-
-6. Return to the root directory and run the application
+5. Return to the root directory and run the application
 
 ```powershell
 cd ..

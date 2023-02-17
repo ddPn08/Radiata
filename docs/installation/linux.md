@@ -6,8 +6,6 @@ This is much more difficult than the Docker installation method. Please use the 
 
 ## Requirements
 
-- `Node.js` >= 18
-- `Pnpm`
 - `Python` >= 3.10
 - `Pip`
 - `CUDA`
@@ -35,16 +33,8 @@ git submodule update --init --recursive
 cd Lsmith
 ```
 
-4. Enter frontend directory and build frontend
+4. Run launch.sh.
 
 ```sh
-cd frontend
-pnpm i
-pnpm build --out-dir ../dist
-```
-
-5. Run launch.sh with the path to libnvinfer_plugin.so in the LD_PRELOAD variable.
-
-```sh
-bash launch.sh --host 0.0.0.0
+bash launch.sh
 ```
