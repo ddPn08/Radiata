@@ -152,11 +152,7 @@ class TensorRTDiffusionRunner(BaseRunner):
 
         self.scheduler = None
         self.scheduler_id = None
-        self.model_id = (
-            self.meta["model_id"]
-            if "model_id" in self.meta
-            else "CompVis/stable-diffusion-v1-4"
-        )
+        self.model_id = self.meta.get("model_id","CompVis/stable-diffusion-v1-4")
         self.device = torch.device("cuda")
         self.fp16 = self.meta["denoising_prec"] == "fp16"
         self.engines = {
@@ -182,8 +178,8 @@ class TensorRTDiffusionRunner(BaseRunner):
         self.en_vae = self.models["vae"].get_model()
 
         for model in self.models.values():
-            model.min_latent_shape = self.meta["min_latent_resolution"] // 8
-            model.max_latent_shape = self.meta["max_latent_resolution"] // 8
+            model.min_latent_shape = self.meta.get("min_latent_resolution", 256) // 8
+            model.max_latent_shape = self.meta.get("max_latent_resolution", 1024) // 8
 
     def activate(
         self,
