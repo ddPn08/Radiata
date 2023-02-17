@@ -15,13 +15,26 @@ class ImageInformation(BaseModel):
     strength: Optional[float]
 
 
-class ImageGenerationResult(BaseModel):
+class BaseModelStream(BaseModel):
+    def ndjson(self):
+        return self.json() + '\n'
+
+class ImageGenerationResult(BaseModelStream):
+    type: Literal["result"] = "result"
+    images: Dict[str, ImageInformation]
+    performance: float
+
+class ImageGenerationProgress(BaseModelStream):
+    type: Literal["progress"] = "progress"
+    progress: float
+    performance: float
+
+class ImageGenerationResult(BaseModelStream):
     type: Literal["result"] = "result"
     images: Dict[str, ImageInformation]
     performance: float
 
 
-class ImageGenerationProgress(BaseModel):
-    type: Literal["progress"] = "progress"
+class BuildEngineResult(BaseModelStream):
+    message: str
     progress: float
-    performance: float

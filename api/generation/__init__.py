@@ -3,4 +3,5 @@ from .image_generation_result import (
     ImageGenerationResult,
     ImageInformation,
     ImageGenerationProgress,
+    BuildEngineResult,
 )

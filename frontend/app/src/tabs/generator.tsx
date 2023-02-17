@@ -45,7 +45,7 @@ const Generator = () => {
         scheduler_id: Scheduler[values.scheduler_id as keyof typeof Scheduler],
       }
 
-      setLoadingCount(parameters.batch_count! * parameters.batch_size!)
+      setLoadingCount((parameters.batch_count ?? 1) * (parameters.batch_size ?? 1))
       setLoadingParameters(parameters)
       setErrorMessage(null)
       setPerformance(null)
@@ -57,7 +57,7 @@ const Generator = () => {
         for await (const stream of streamGenerator(raw.body)) {
           if (stream.type === 'progress') {
             const data = stream as ImageGenerationProgress
-            setProgress(data.progress)
+            setProgress(data.progress || null)
             setPerformance(data.performance)
           } else if (stream.type === 'result') {
             const data = stream as ImageGenerationResult
