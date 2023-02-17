@@ -52,4 +52,5 @@ def get_all_image_files(category: str):
     dir = config.get(f"images/{category}/save_dir")
     files = glob.glob(os.path.join(dir, "*"))
     files = sorted([f.replace(os.sep, "/") for f in files if os.path.isfile(f)], key=os.path.getmtime)
+    files.reverse()
     return [os.path.relpath(f, dir) for f in files]
