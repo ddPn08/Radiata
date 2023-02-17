@@ -4,10 +4,11 @@
 
 ---
 
+
 - [Benchmark](#benchmark)
 - [Screenshots](#screenshots)
 - [Installation](#installation)
-  - [Docker (All platform, Recommended) | Easy](#docker-all-platform-recommended--easy)
+  - [Docker (All platform) | Easy](#docker-all-platform--easy)
     - [Customization](#customization)
   - [Linux | Difficult](#linux--difficult)
     - [requirements](#requirements)
@@ -35,7 +36,7 @@
 
 # Installation
 
-## Docker (All platform, Recommended) | Easy
+## Docker (All platform) | Easy
 
 1. Clone repository
 
@@ -69,8 +70,6 @@ By default it uses `Dockerfile.lite`.
 
 ### requirements
 
-- node.js (recommended version is 18)
-- pnpm
 - python 3.10
 - pip
 - CUDA
@@ -91,15 +90,7 @@ git submodule update --init --recursive
 cd Lsmith
 ```
 
-3. Enter frontend directory and build frontend
-
-```sh
-cd frontend
-pnpm i
-pnpm build --out-dir ../dist
-```
-
-4. Run launch.sh with the path to libnvinfer_plugin.so in the LD_PRELOAD variable.
+3. Run launch.sh
 
 ```sh
 ex.)
@@ -110,8 +101,6 @@ bash launch.sh --host 0.0.0.0
 
 ### requirements
 
-- node.js (recommended version is 18)
-- pnpm
 - python 3.10
 - pip
 - CUDA
@@ -130,15 +119,7 @@ cd Lsmith
 git submodule update --init --recursive
 ```
 
-5. Enter frontend directory and build frontend
-
-```sh
-cd frontend
-pnpm i
-pnpm build --out-dir ../dist
-```
-
-6. Launch `launch-user.bat`
+5. Launch `launch-user.bat`
 
 <br />
 
