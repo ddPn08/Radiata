@@ -17,7 +17,7 @@ source venv/bin/activate
 ```bash
 # launch-user.sh
 export UVICORN_ARGS="--port 8000 --reload"
-export COMMANDLINE_ARGS="--skip-install --skip-build-frontend"
+export COMMANDLINE_ARGS="--skip-install"
 ```
 
 Windows
@@ -29,22 +29,14 @@ Windows
 ```bash
 # launch-user.bat
 set UVICORN_ARGS=--port 8000 --reload
-set COMMANDLINE_ARGS=--skip-install --skip-build-frontend
+set COMMANDLINE_ARGS=--skip-install
 ```
 
 Re Build Frontend
 
 ```bash
 cd frontend
-pnpm build --out-dir ../dist
-```
-
-### Frontend Only
-
-```bash
-cd frontend
-pnpm build --out-dir ../dist
-pnpm vite
+pnpm build
 ```
 
 ## If the API is changed
@@ -53,5 +45,5 @@ Run with the server running
 
 ```bash
 cd frontend
-pnpm openapi-gen-client
+pnpm --prefix ./app openapi-gen-client
 ```
