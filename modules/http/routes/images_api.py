@@ -50,6 +50,6 @@ def generate_image(req: ImageGenerationOptions):
 def generator_image(req: ImageGenerationOptions):
     def generator():
         for data in runners.generator(req):
-            yield data.json()
+            yield data.ndjson()
 
     return StreamingResponse(generator())

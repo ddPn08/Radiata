@@ -31,6 +31,8 @@ async def build_engine(req: BuildEngineOptions):
 
     builder = EngineBuilder(req)
 
-    return StreamingResponse(
-        builder.build(generator=True, on_end=lambda: runners.set_default_model())
-    )
+    def generator():
+        for data in builder.build(generator=True, on_end=lambda: runners.set_default_model()):
+            yield data.ndjson()
+
+    return StreamingResponse(generator())

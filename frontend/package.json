@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "build": "pnpm --prefix ./api build && pnpm --prefix ./app build",
     "eslint": "eslint **/*.{ts,tsx}",
     "prettier": "prettier **/*.{ts,tsx}",
     "format-all": "pnpm eslint --fix && pnpm prettier --write"

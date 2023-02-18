@@ -1,6 +1,7 @@
 import { Configuration, MainApi } from 'internal:api'
 
-const BASE_PATH = (process.env['REACT_APP_API_BASE_PATH'] as string) || ''
+const BASE_PATH =
+    (typeof process != 'undefined' && (process.env['REACT_APP_API_BASE_PATH'] as string)) || ''
 
 const config = {
     basePath: BASE_PATH,

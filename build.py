@@ -26,7 +26,7 @@ def build_frontend():
         cwd=frontend_dir,
     )
     subprocess.run(
-        [pnpm, "build", "--out-dir", out_dir],
+        [pnpm, "build"],
         cwd=frontend_dir,
     )
 
