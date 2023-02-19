@@ -45,7 +45,7 @@ def build_engine(req: BuildEngineOptions):
             for data in builder.build(generator=True, on_end=lambda: runners.set_default_model()):
                 yield data.ndjson()
         except Exception as e:
-            yield BuildEngineError(message=str(e)).ndjson()
+            yield BuildEngineError(error=type(e).__name__, message=str(e)).ndjson()
             raise e
 
     return StreamingResponse(generator())

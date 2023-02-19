@@ -55,7 +55,7 @@ const Engine = () => {
             setStatus(data)
           } else if (stream.type === 'error') {
             const data = stream as ImageGenerationError
-            throw new Error(data.message)
+            throw new Error(`${data.error}: ${data.message}`)
           }
         }
       }

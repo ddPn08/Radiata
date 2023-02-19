@@ -30,6 +30,12 @@ export interface BuildEngineError {
      * @type {string}
      * @memberof BuildEngineError
      */
+    error: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof BuildEngineError
+     */
     message: string;
 }
 
@@ -48,6 +54,7 @@ export type BuildEngineErrorTypeEnum = typeof BuildEngineErrorTypeEnum[keyof typ
  */
 export function instanceOfBuildEngineError(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "error" in value;
     isInstance = isInstance && "message" in value;
 
     return isInstance;
@@ -64,6 +71,7 @@ export function BuildEngineErrorFromJSONTyped(json: any, ignoreDiscriminator: bo
     return {
         
         'type': !exists(json, 'type') ? undefined : json['type'],
+        'error': json['error'],
         'message': json['message'],
     };
 }
@@ -78,6 +86,7 @@ export function BuildEngineErrorToJSON(value?: BuildEngineError | null): any {
     return {
         
         'type': value.type,
+        'error': value.error,
         'message': value.message,
     };
 }

@@ -50,7 +50,7 @@ def generator_image(req: ImageGenerationOptions):
             for data in runners.generator(req):
                 yield data.ndjson()
         except Exception as e:
-            yield ImageGenerationError(message=str(e)).ndjson()
+            yield ImageGenerationError(error=type(e).__name__, message=str(e)).ndjson()
             raise e
 
     return StreamingResponse(generator())
