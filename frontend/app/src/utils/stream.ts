@@ -4,7 +4,7 @@ export const streamGenerator = async function* (body: ReadableStream<Uint8Array>
     let raw = ''
     while (true) {
         const res = await reader.read()
-        if (res.done) return
+        if (res.done) break
         try {
             raw += new TextDecoder().decode(res.value)
             const line = raw.split('\n')
@@ -15,5 +15,8 @@ export const streamGenerator = async function* (body: ReadableStream<Uint8Array>
         } catch (e) {
             console.error(e)
         }
+    }
+    if (raw.length > 0) {
+        yield JSON.parse(raw)
     }
 }

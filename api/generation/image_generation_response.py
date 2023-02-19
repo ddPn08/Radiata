@@ -1,6 +1,7 @@
 from typing import Dict, Literal, Optional
 
 from pydantic import BaseModel
+from ..base import BaseModelStream
 
 
 class ImageInformation(BaseModel):
@@ -14,27 +15,16 @@ class ImageInformation(BaseModel):
     img2img: bool
     strength: Optional[float]
 
-
-class BaseModelStream(BaseModel):
-    def ndjson(self):
-        return self.json() + '\n'
-
 class ImageGenerationResult(BaseModelStream):
     type: Literal["result"] = "result"
     images: Dict[str, ImageInformation]
     performance: float
+
+class ImageGenerationError(BaseModelStream):
+    type: Literal["error"] = "error"
+    message: str
 
 class ImageGenerationProgress(BaseModelStream):
     type: Literal["progress"] = "progress"
     progress: float
     performance: float
-
-class ImageGenerationResult(BaseModelStream):
-    type: Literal["result"] = "result"
-    images: Dict[str, ImageInformation]
-    performance: float
-
-
-class BuildEngineResult(BaseModelStream):
-    message: str
-    progress: float

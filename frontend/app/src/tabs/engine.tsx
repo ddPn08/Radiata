@@ -15,7 +15,11 @@ import {
   Progress,
 } from '@mantine/core'
 import { IconInfoCircle } from '@tabler/icons-react'
-import type { BuildEngineOptions } from 'internal:api'
+import type {
+  BuildEngineOptions,
+  ImageGenerationProgress,
+  ImageGenerationError,
+} from 'internal:api'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
 
@@ -45,8 +49,14 @@ const Engine = () => {
       })
       const { raw } = await api.buildEngineRaw({ buildEngineOptions: req })
       if (raw.body != null) {
-        for await (const data of streamGenerator(raw.body)) {
-          setStatus(data)
+        for await (const stream of streamGenerator(raw.body)) {
+          if (stream.type === 'progress') {
+            const data = stream as ImageGenerationProgress
+            setStatus(data)
+          } else if (stream.type === 'error') {
+            const data = stream as ImageGenerationError
+            throw new Error(data.message)
+          }
         }
       }
       setStatus(null)

@@ -124,6 +124,9 @@ const ImagesBrowser = () => {
         <Portal>
           <Notification
             title={'Error occured'}
+            sx={{
+              'z-index': 1000000,
+            }}
             color={'red'}
             m={'md'}
             pos={'absolute'}

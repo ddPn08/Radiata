@@ -1,7 +1,16 @@
 import time
 
 from fastapi.responses import StreamingResponse
-from api.tensorrt import BuildEngineOptions
+
+from typing import Optional, Union
+
+from fastapi.responses import StreamingResponse
+
+from api.tensorrt import (
+    BuildEngineOptions,
+    BuildEngineError,
+    BuildEngineProgress,
+)
 
 from modules import runners
 
@@ -19,11 +28,11 @@ def dummy_builder():
         yield b"test"
 
 
-@api.post("/engine/build")
-async def build_engine(req: BuildEngineOptions):
+@api.post("/engine/build", response_model=Union[str, BuildEngineError, BuildEngineProgress])
+def build_engine(req: BuildEngineOptions):
     global build_thread
     if build_thread is not None and build_thread.is_alive():
-        return {"status": "error", "message": "building another model"}
+        return BuildEngineError(message="building another model")
 
     if runners.current is not None:
         runners.current.teardown()
@@ -32,7 +41,11 @@ async def build_engine(req: BuildEngineOptions):
     builder = EngineBuilder(req)
 
     def generator():
-        for data in builder.build(generator=True, on_end=lambda: runners.set_default_model()):
-            yield data.ndjson()
+        try:
+            for data in builder.build(generator=True, on_end=lambda: runners.set_default_model()):
+                yield data.ndjson()
+        except Exception as e:
+            yield BuildEngineError(message=str(e)).ndjson()
+            raise e
 
     return StreamingResponse(generator())

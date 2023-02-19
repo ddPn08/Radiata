@@ -12,6 +12,7 @@ import {
 } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import type {
+  ImageGenerationError,
   ImageGenerationOptions,
   ImageGenerationProgress,
   ImageGenerationResult,
@@ -64,6 +65,9 @@ const Generator = () => {
             setImages((prev) => [...Object.entries(data.images), ...prev])
             setLoadingCount((i) => i - Object.keys(data.images).length)
             data.performance && setPerformance(data.performance)
+          } else if (stream.type === 'error') {
+            const data = stream as ImageGenerationError
+            throw new Error(data.message)
           }
         }
       }
@@ -171,6 +175,9 @@ const Generator = () => {
         <Portal>
           <Notification
             title={'Error occured'}
+            sx={{
+              'z-index': 1000000,
+            }}
             color={'red'}
             m={'md'}
             pos={'absolute'}

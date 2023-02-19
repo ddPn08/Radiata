@@ -4,12 +4,13 @@ apis/MainApi.ts
 apis/index.ts
 index.ts
 models/BaseResponseModel.ts
+models/BuildEngineError.ts
 models/BuildEngineOptions.ts
-models/Data.ts
+models/BuildEngineProgress.ts
 models/FileListResponseModel.ts
 models/GenerateImageResponseModel.ts
-models/GeneratorImageResponseModel.ts
 models/HTTPValidationError.ts
+models/ImageGenerationError.ts
 models/ImageGenerationOptions.ts
 models/ImageGenerationProgress.ts
 models/ImageGenerationResult.ts
@@ -20,6 +21,8 @@ models/ModelListResponseModel.ts
 models/PluginData.ts
 models/PluginListResponseModel.ts
 models/PluginMetaData.ts
+models/ResponseBuildEngine.ts
+models/ResponseGeneratorImage.ts
 models/SetRunnerRequest.ts
 models/ValidationError.ts
 models/index.ts
