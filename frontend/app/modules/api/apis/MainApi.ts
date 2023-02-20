@@ -19,12 +19,13 @@ import type {
   BuildEngineOptions,
   FileListResponseModel,
   GenerateImageResponseModel,
-  GeneratorImageResponseModel,
   HTTPValidationError,
   ImageGenerationOptions,
   ModelCurrentResponseModel,
   ModelListResponseModel,
   PluginListResponseModel,
+  ResponseBuildEngine,
+  ResponseGeneratorImage,
   SetRunnerRequest,
 } from '../models';
 import {
@@ -36,8 +37,6 @@ import {
     FileListResponseModelToJSON,
     GenerateImageResponseModelFromJSON,
     GenerateImageResponseModelToJSON,
-    GeneratorImageResponseModelFromJSON,
-    GeneratorImageResponseModelToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
     ImageGenerationOptionsFromJSON,
@@ -48,6 +47,10 @@ import {
     ModelListResponseModelToJSON,
     PluginListResponseModelFromJSON,
     PluginListResponseModelToJSON,
+    ResponseBuildEngineFromJSON,
+    ResponseBuildEngineToJSON,
+    ResponseGeneratorImageFromJSON,
+    ResponseGeneratorImageToJSON,
     SetRunnerRequestFromJSON,
     SetRunnerRequestToJSON,
 } from '../models';
@@ -90,7 +93,7 @@ export class MainApi extends runtime.BaseAPI {
     /**
      * Build Engine
      */
-    async buildEngineRaw(requestParameters: BuildEngineRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async buildEngineRaw(requestParameters: BuildEngineRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ResponseBuildEngine>> {
         if (requestParameters.buildEngineOptions === null || requestParameters.buildEngineOptions === undefined) {
             throw new runtime.RequiredError('buildEngineOptions','Required parameter requestParameters.buildEngineOptions was null or undefined when calling buildEngine.');
         }
@@ -109,13 +112,13 @@ export class MainApi extends runtime.BaseAPI {
             body: BuildEngineOptionsToJSON(requestParameters.buildEngineOptions),
         }, initOverrides);
 
-        return new runtime.TextApiResponse(response) as any;
+        return new runtime.JSONApiResponse(response, (jsonValue) => ResponseBuildEngineFromJSON(jsonValue));
     }
 
     /**
      * Build Engine
      */
-    async buildEngine(requestParameters: BuildEngineRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async buildEngine(requestParameters: BuildEngineRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ResponseBuildEngine> {
         const response = await this.buildEngineRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -156,7 +159,7 @@ export class MainApi extends runtime.BaseAPI {
     /**
      * Generator Image
      */
-    async generatorImageRaw(requestParameters: GeneratorImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GeneratorImageResponseModel>> {
+    async generatorImageRaw(requestParameters: GeneratorImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ResponseGeneratorImage>> {
         if (requestParameters.imageGenerationOptions === null || requestParameters.imageGenerationOptions === undefined) {
             throw new runtime.RequiredError('imageGenerationOptions','Required parameter requestParameters.imageGenerationOptions was null or undefined when calling generatorImage.');
         }
@@ -175,13 +178,13 @@ export class MainApi extends runtime.BaseAPI {
             body: ImageGenerationOptionsToJSON(requestParameters.imageGenerationOptions),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => GeneratorImageResponseModelFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ResponseGeneratorImageFromJSON(jsonValue));
     }
 
     /**
      * Generator Image
      */
-    async generatorImage(requestParameters: GeneratorImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GeneratorImageResponseModel> {
+    async generatorImage(requestParameters: GeneratorImageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ResponseGeneratorImage> {
         const response = await this.generatorImageRaw(requestParameters, initOverrides);
         return await response.value();
     }

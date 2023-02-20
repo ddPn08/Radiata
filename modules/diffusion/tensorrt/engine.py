@@ -11,7 +11,7 @@ from modules import config
 
 from .models import VAE, UNet
 
-from api.generation import BuildEngineResult
+from api.tensorrt import BuildEngineProgress
 
 def get_model_path(name, onnx_dir, opt=True):
     return os.path.join(onnx_dir, name + (".opt" if opt else "") + ".onnx")
@@ -116,7 +116,7 @@ class EngineBuilder:
         os.makedirs(onnx_dir, exist_ok=True)
         for i, (model_name, model_data) in enumerate(self.models.items()):
             if generator:
-                yield BuildEngineResult(
+                yield BuildEngineProgress(
                     message= f"Building {model_name}...",
                     progress= i / len(self.models.keys())
                 )

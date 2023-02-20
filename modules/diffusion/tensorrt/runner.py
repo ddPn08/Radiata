@@ -20,7 +20,7 @@ from api.generation import (
     ImageGenerationResult,
     ImageInformation,
 )
-from api.generation.image_generation_result import ImageGenerationProgress
+from api.generation.image_generation_response import ImageGenerationProgress
 from lib.trt.utilities import TRT_LOGGER, Engine
 from modules import utils
 

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from api.generation import (
     ImageGenerationOptions,
     ImageGenerationResult,
+    ImageGenerationError,
     ImageGenerationProgress,
 )
 from modules import runners
@@ -33,10 +34,6 @@ class GenerateImageResponseModel(BaseResponseModel):
     data: ImageGenerationResult
 
 
-class GeneratorImageResponseModel(BaseResponseModel):
-    data: Union[ImageGenerationResult, ImageGenerationProgress]
-
-
 @api.post("/images/generate", response_model=GenerateImageResponseModel)
 def generate_image(req: ImageGenerationOptions):
     result = runners.generate(req)
@@ -46,10 +43,14 @@ def generate_image(req: ImageGenerationOptions):
     )
 
 
-@api.post("/images/generator")
+@api.post("/images/generator", response_model=Union[str, ImageGenerationResult, ImageGenerationError, ImageGenerationProgress])
 def generator_image(req: ImageGenerationOptions):
     def generator():
-        for data in runners.generator(req):
-            yield data.ndjson()
+        try:
+            for data in runners.generator(req):
+                yield data.ndjson()
+        except Exception as e:
+            yield ImageGenerationError(error=type(e).__name__, message=str(e)).ndjson()
+            raise e
 
     return StreamingResponse(generator())
