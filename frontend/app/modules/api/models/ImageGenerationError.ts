@@ -30,7 +30,7 @@ export interface ImageGenerationError {
      * @type {string}
      * @memberof ImageGenerationError
      */
-    error: string;
+    error?: string;
     /**
      * 
      * @type {string}
@@ -54,7 +54,6 @@ export type ImageGenerationErrorTypeEnum = typeof ImageGenerationErrorTypeEnum[k
  */
 export function instanceOfImageGenerationError(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "error" in value;
     isInstance = isInstance && "message" in value;
 
     return isInstance;
@@ -71,7 +70,7 @@ export function ImageGenerationErrorFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'type': !exists(json, 'type') ? undefined : json['type'],
-        'error': json['error'],
+        'error': !exists(json, 'error') ? undefined : json['error'],
         'message': json['message'],
     };
 }

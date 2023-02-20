@@ -43,7 +43,7 @@ export interface ResponseBuildEngine {
      * @type {string}
      * @memberof ResponseBuildEngine
      */
-    error: string;
+    error?: string;
     /**
      * 
      * @type {string}
@@ -73,7 +73,6 @@ export type ResponseBuildEngineTypeEnum = typeof ResponseBuildEngineTypeEnum[key
  */
 export function instanceOfResponseBuildEngine(value: object): boolean {
     let isInstance = true;
-    isInstance = isInstance && "error" in value;
     isInstance = isInstance && "message" in value;
     isInstance = isInstance && "progress" in value;
 
@@ -91,7 +90,7 @@ export function ResponseBuildEngineFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'type': !exists(json, 'type') ? undefined : json['type'],
-        'error': json['error'],
+        'error': !exists(json, 'error') ? undefined : json['error'],
         'message': json['message'],
         'progress': json['progress'],
     };

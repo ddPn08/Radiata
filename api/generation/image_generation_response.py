@@ -22,7 +22,7 @@ class ImageGenerationResult(BaseModelStream):
 
 class ImageGenerationError(BaseModelStream):
     type: Literal["error"] = "error"
-    error: str
+    error: Optional[str] = None
     message: str
 
 class ImageGenerationProgress(BaseModelStream):

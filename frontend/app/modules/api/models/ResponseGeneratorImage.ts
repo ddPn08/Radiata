@@ -67,7 +67,7 @@ export interface ResponseGeneratorImage {
      * @type {string}
      * @memberof ResponseGeneratorImage
      */
-    error: string;
+    error?: string;
     /**
      * 
      * @type {string}
@@ -99,7 +99,6 @@ export function instanceOfResponseGeneratorImage(value: object): boolean {
     let isInstance = true;
     isInstance = isInstance && "images" in value;
     isInstance = isInstance && "performance" in value;
-    isInstance = isInstance && "error" in value;
     isInstance = isInstance && "message" in value;
     isInstance = isInstance && "progress" in value;
 
@@ -119,7 +118,7 @@ export function ResponseGeneratorImageFromJSONTyped(json: any, ignoreDiscriminat
         'type': !exists(json, 'type') ? undefined : json['type'],
         'images': (mapValues(json['images'], ImageInformationFromJSON)),
         'performance': json['performance'],
-        'error': json['error'],
+        'error': !exists(json, 'error') ? undefined : json['error'],
         'message': json['message'],
         'progress': json['progress'],
     };

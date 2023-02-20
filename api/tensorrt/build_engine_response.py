@@ -9,5 +9,5 @@ class BuildEngineProgress(BaseModelStream):
 
 class BuildEngineError(BaseModelStream):
     type: Literal["error"] = "error"
-    error: str
+    error: Optional[str] = None
     message: str
