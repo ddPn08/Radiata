@@ -31,6 +31,7 @@ import { streamGenerator } from '~/utils/stream'
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
   const [images, setImages] = useState<[string, ImageInformation][]>([])
+  const [preImages, setPreImages] = useState<[string, ImageInformation][]>([])
   const [loadingParameters, setLoadingParameters] = useState<ImageGenerationOptions>(parameters)
   const [loadingCount, setLoadingCount] = useState<number>(0)
   const [performance, setPerformance] = useState<number | null>(null)
@@ -58,12 +59,14 @@ const Generator = () => {
         for await (const stream of streamGenerator(raw.body)) {
           if (stream.type === 'progress') {
             const data = stream as ImageGenerationProgress
+            Object.entries(data.images).length > 0 && setPreImages(Object.entries(data.images))
             setProgress(data.progress || null)
             setPerformance(data.performance)
           } else if (stream.type === 'result') {
             const data = stream as ImageGenerationResult
             setImages((prev) => [...Object.entries(data.images), ...prev])
-            setLoadingCount((i) => i - Object.keys(data.images).length)
+            setLoadingCount((i) => i - Object.entries(data.images).length)
+            setPreImages([])
             data.performance && setPerformance(data.performance)
           } else if (stream.type === 'error') {
             const data = stream as ImageGenerationError
@@ -144,8 +147,8 @@ const Generator = () => {
               }}
             >
               <Gallery
-                images={images}
-                loadingCount={loadingCount}
+                images={[...preImages, ...images]}
+                loadingCount={loadingCount - preImages.length}
                 ratio={loadingParameters.image_width! / loadingParameters.image_height!}
               />
             </Box>
