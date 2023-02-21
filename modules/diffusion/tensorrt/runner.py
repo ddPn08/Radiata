@@ -214,8 +214,11 @@ class TensorRTDiffusionRunner(BaseRunner):
 
     def infer(self, opts: ImageGenerationOptions):
         self.wait_loading()
-        opts.img = None if opts.img is None else utils.b642img(opts.img)
-
+        if opts.img is not None:
+            opts.img = utils.b642img(opts.img)
+            opts.img = preprocess_image(
+                opts.img, opts.image_height, opts.image_width
+            ).to(device=self.device)
         pre_inference_event = PreInferenceEvent(opts)
         PreInferenceEvent.call_event(pre_inference_event)
         # TODO: Implement canceling
@@ -272,11 +275,6 @@ class TensorRTDiffusionRunner(BaseRunner):
                 )
                 if self.fp16:
                     text_embeddings = text_embeddings.to(dtype=torch.float16)
-
-                if opts.img is not None:
-                    opts.img = preprocess_image(
-                        opts.img, opts.image_height, opts.image_width
-                    ).to(device=self.device)
 
                 pre_latents_create_event = PreLatentsCreateEvent(opts)
                 PreLatentsCreateEvent.call_event(pre_latents_create_event)
