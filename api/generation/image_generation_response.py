@@ -27,5 +27,6 @@ class ImageGenerationError(BaseModelStream):
 
 class ImageGenerationProgress(BaseModelStream):
     type: Literal["progress"] = "progress"
+    images: Dict[str, ImageInformation]
     progress: float
     performance: float

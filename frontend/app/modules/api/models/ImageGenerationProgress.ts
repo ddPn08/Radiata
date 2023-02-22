@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import type { ImageInformation } from './ImageInformation';
+import {
+    ImageInformationFromJSON,
+    ImageInformationFromJSONTyped,
+    ImageInformationToJSON,
+} from './ImageInformation';
+
 /**
  * 
  * @export
@@ -25,6 +32,12 @@ export interface ImageGenerationProgress {
      * @memberof ImageGenerationProgress
      */
     type?: ImageGenerationProgressTypeEnum;
+    /**
+     * 
+     * @type {{ [key: string]: ImageInformation; }}
+     * @memberof ImageGenerationProgress
+     */
+    images: { [key: string]: ImageInformation; };
     /**
      * 
      * @type {number}
@@ -54,6 +67,7 @@ export type ImageGenerationProgressTypeEnum = typeof ImageGenerationProgressType
  */
 export function instanceOfImageGenerationProgress(value: object): boolean {
     let isInstance = true;
+    isInstance = isInstance && "images" in value;
     isInstance = isInstance && "progress" in value;
     isInstance = isInstance && "performance" in value;
 
@@ -71,6 +85,7 @@ export function ImageGenerationProgressFromJSONTyped(json: any, ignoreDiscrimina
     return {
         
         'type': !exists(json, 'type') ? undefined : json['type'],
+        'images': (mapValues(json['images'], ImageInformationFromJSON)),
         'progress': json['progress'],
         'performance': json['performance'],
     };
@@ -86,6 +101,7 @@ export function ImageGenerationProgressToJSON(value?: ImageGenerationProgress | 
     return {
         
         'type': value.type,
+        'images': (mapValues(value.images, ImageInformationToJSON)),
         'progress': value.progress,
         'performance': value.performance,
     };

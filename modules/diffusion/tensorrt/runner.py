@@ -214,8 +214,11 @@ class TensorRTDiffusionRunner(BaseRunner):
 
     def infer(self, opts: ImageGenerationOptions):
         self.wait_loading()
-        opts.img = None if opts.img is None else utils.b642img(opts.img)
-
+        if opts.img is not None:
+            opts.img = utils.b642img(opts.img)
+            opts.img = preprocess_image(
+                opts.img, opts.image_height, opts.image_width
+            ).to(device=self.device)
         pre_inference_event = PreInferenceEvent(opts)
         PreInferenceEvent.call_event(pre_inference_event)
         # TODO: Implement canceling
@@ -273,11 +276,6 @@ class TensorRTDiffusionRunner(BaseRunner):
                 if self.fp16:
                     text_embeddings = text_embeddings.to(dtype=torch.float16)
 
-                if opts.img is not None:
-                    opts.img = preprocess_image(
-                        opts.img, opts.image_height, opts.image_width
-                    ).to(device=self.device)
-
                 pre_latents_create_event = PreLatentsCreateEvent(opts)
                 PreLatentsCreateEvent.call_event(pre_latents_create_event)
 
@@ -299,14 +297,33 @@ class TensorRTDiffusionRunner(BaseRunner):
                         generator=generator,
                     )
 
+                info = ImageInformation(
+                    prompt=opts.prompt,
+                    negative_prompt=opts.negative_prompt,
+                    steps=opts.steps,
+                    scale=opts.scale,
+                    seed=manual_seed,
+                    height=opts.image_height,
+                    width=opts.image_width,
+                    img2img=opts.img is not None,
+                    strength=opts.strength,
+                )
                 torch.cuda.synchronize()
 
                 for ii, timestep in enumerate(tqdm(timesteps)):
                     if opts.generator:
+                        include = ii % 10 == 0 and len(timesteps) - ii >= 10
+                        if include:
+                            factor = 1.0 / 0.18215 * latents
+                            sample_inp = cuda.DeviceView(
+                                ptr=factor.data_ptr(), shape=factor.shape, dtype=np.float32
+                            )
+                            images = self.run_engine("vae", {"latent": sample_inp})["images"]
+                            size = (opts.image_width // 4, opts.image_height // 4)
                         yield ImageGenerationProgress(
-                            progress=(i * len(timesteps) + ii)
-                            / (opts.batch_count * len(timesteps)),
+                            progress=(i * len(timesteps) + ii) / (opts.batch_count * len(timesteps)),
                             performance=time.perf_counter() - e2e_tic,
+                            images={utils.img2b64(x.resize(size)) : info for x in to_image(images)} if include else {},
                         )
 
                     latent_model_input = torch.cat([latents] * 2)
@@ -374,26 +391,11 @@ class TensorRTDiffusionRunner(BaseRunner):
                 )
                 images = self.run_engine("vae", {"latent": sample_inp})["images"]
                 torch.cuda.synchronize()
-
-                info = ImageInformation(
-                    prompt=opts.prompt,
-                    negative_prompt=opts.negative_prompt,
-                    steps=opts.steps,
-                    scale=opts.scale,
-                    seed=opts.seed,
-                    height=opts.image_height,
-                    width=opts.image_width,
-                    img2img=opts.img is not None,
-                    strength=opts.strength,
-                )
                 if opts.generator:
-                    result = ImageGenerationResult(
-                        images={},
+                    yield ImageGenerationResult(
+                        images={utils.img2b64(x) : info for x in to_image(images)},
                         performance=time.perf_counter() - e2e_tic,
                     )
-                    for x in to_image(images):
-                        result.images[utils.img2b64(x)] = info
-                    yield result
                 else:
                     results.append((to_image(images), info))
         if not opts.generator:
