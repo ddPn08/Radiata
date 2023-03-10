@@ -775,7 +775,7 @@ class CLIP(BaseModel):
 
 class UNet(BaseModel):
     def get_model(self):
-        model_opts = {'revision': 'fp16', 'torch_dtype': torch.float16} if self.fp16 else {}
+        model_opts = {'torch_dtype': torch.float16} if self.fp16 else {}
         return UNet2DConditionModel.from_pretrained("CompVis/stable-diffusion-v1-4",
             subfolder="unet",
             use_auth_token=self.hf_token,
