@@ -1,4 +1,4 @@
-from ...generation import ImageGenerationOptions
+from api.models.diffusion import ImageGenerationOptions
 from .. import CancellableEvent
 
 

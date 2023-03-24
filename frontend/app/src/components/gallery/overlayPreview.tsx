@@ -1,11 +1,11 @@
 import { Carousel, Embla, useAnimationOffsetEffect } from '@mantine/carousel'
 import { Box, Center, CloseButton, Flex, Table, Text, Drawer } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
-import type { ImageInformation } from 'internal:api'
+import type { ImageGenerationOptions } from 'internal:api'
 import { useState } from 'react'
 
 interface Props {
-  images: [string, ImageInformation][]
+  images: [string, ImageGenerationOptions][]
   initialIndex: number
   onClose: () => void
 }

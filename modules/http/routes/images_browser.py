@@ -1,9 +1,9 @@
 from fastapi.responses import FileResponse
 
 from modules import images
-from ..models.base import BaseResponseModel
 
 from ..api_router import api
+from ..models.base import BaseResponseModel
 
 
 class FileListResponseModel(BaseResponseModel):

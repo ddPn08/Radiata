@@ -1,5 +1,5 @@
 /* tslint:disable */
 /* eslint-disable */
-export * from './ApplicationApi';
-export * from './DefaultApi';
-export * from './MainApi';
+export * from './ApplicationApi'
+export * from './DefaultApi'
+export * from './MainApi'

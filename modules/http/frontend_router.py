@@ -3,7 +3,7 @@ import os
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse
 
-from ..shared import ROOT_DIR
+from ..config import ROOT_DIR
 
 frontend = APIRouter(prefix="/app", tags=["application"])
 

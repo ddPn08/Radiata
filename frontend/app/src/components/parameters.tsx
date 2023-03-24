@@ -1,6 +1,7 @@
 import { Divider, NativeSelect, Stack } from '@mantine/core'
 import { useAtom } from 'jotai'
 
+import { ModeSelector } from './modeSelector'
 import ImageParameter from './parameters/imageParameter'
 import ImageSizeParameter from './parameters/imageSizeParameter'
 import ModelParameter from './parameters/modelParameter'
@@ -15,6 +16,8 @@ const Parameters = () => {
 
   return (
     <Stack w={'100%'} p={'md'} spacing={'md'}>
+      <ModeSelector />
+
       <ModelParameter />
 
       <ImageSizeParameter />

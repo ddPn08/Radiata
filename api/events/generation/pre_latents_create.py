@@ -2,7 +2,7 @@ from typing import Optional
 
 import torch
 
-from api.generation import ImageGenerationOptions
+from api.models.diffusion import ImageGenerationOptions
 
 from .base import BaseGenerationEvent
 

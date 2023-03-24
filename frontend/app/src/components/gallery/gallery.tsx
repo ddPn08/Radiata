@@ -1,12 +1,12 @@
 import { Box, Portal, SimpleGrid, Skeleton, AspectRatio } from '@mantine/core'
-import type { ImageInformation } from 'internal:api'
+import type { ImageGenerationOptions } from 'internal:api'
 import { useState } from 'react'
 
 import GalleryImage from './galleryImage'
 import OverlayPreview from './overlayPreview'
 
 interface Props {
-  images: [string, ImageInformation][]
+  images: [string, ImageGenerationOptions][]
   loadingCount?: number | null
   ratio?: number | null
 }

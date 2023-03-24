@@ -2,7 +2,7 @@ import { NumberInput, NumberInputProps } from '@mantine/core'
 import { forwardRef, Ref } from 'react'
 
 interface Props extends NumberInputProps {
-  allowWheel?: boolean
+  allowWheel?: boolean | undefined
 }
 
 const BetterNumInput = (
@@ -28,9 +28,9 @@ const BetterNumInput = (
 
   return (
     <NumberInput
-      min={min}
-      max={max}
-      step={step}
+      min={min!}
+      max={max!}
+      step={step!}
       onBlur={(e) => {
         const value = Number(e.currentTarget.value)
 

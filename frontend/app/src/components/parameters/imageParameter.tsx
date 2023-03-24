@@ -20,7 +20,7 @@ const ImageParameter = () => {
       const base64 = arrayBufferToBase64(arrayBuffer)
       setParameters((prev) => ({ ...prev, img: base64 }))
     } else {
-      setParameters((prev) => ({ ...prev, img: undefined }))
+      setParameters((prev) => ({ ...prev, img: '' }))
     }
   }
 
@@ -69,7 +69,7 @@ const ImageParameter = () => {
         accept={IMAGE_MIME_TYPE}
         onDrop={(files) => {
           if (files.length > 0) {
-            onFileChange(files[0])
+            onFileChange(files[0] as File)
           }
         }}
         m={'xl'}

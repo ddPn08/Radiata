@@ -1,12 +1,12 @@
 import { ActionIcon, Box, Image } from '@mantine/core'
 import { IconDownload } from '@tabler/icons-react'
-import type { ImageInformation } from 'internal:api'
+import type { ImageGenerationOptions } from 'internal:api'
 
 import { downloadB64 } from '~/utils/download'
 
 interface Props {
   image: string
-  info: ImageInformation
+  info: ImageGenerationOptions
   onClick: () => void
 }
 

@@ -4,12 +4,12 @@ import { useRef, useState } from 'react'
 import BetterNumInput from './betterNumInput'
 
 interface Props extends InputWrapperBaseProps {
-  defaultValue?: number
-  min?: number
-  max?: number
-  step?: number
-  precision?: number
-  onChange?: (value: number) => void
+  defaultValue?: number | undefined
+  min?: number | undefined
+  max?: number | undefined
+  step?: number | undefined
+  precision?: number | undefined
+  onChange?: ((value: number) => void) | undefined
 }
 
 const NumberSliderInput = ({
@@ -33,9 +33,9 @@ const NumberSliderInput = ({
           label={value}
           defaultValue={defaultValue}
           value={value}
-          min={min}
-          max={max}
-          step={step}
+          min={min as number}
+          max={max as number}
+          step={step as number}
           w={'100%'}
           onChange={(e) => {
             setValue(e)
@@ -45,11 +45,11 @@ const NumberSliderInput = ({
         />
         <BetterNumInput
           value={value}
-          min={min}
-          max={max}
-          step={step}
+          min={min as number}
+          max={max as number}
+          step={step as number}
           defaultValue={defaultValue}
-          precision={precision}
+          precision={precision as number}
           w={'100px'}
           onChange={(e) => {
             if (!e) return

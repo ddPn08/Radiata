@@ -1,4 +1,5 @@
 from typing import Optional, List
+import argparse
 import importlib.util
 import os
 import platform
@@ -99,7 +100,11 @@ def extract_arg(args: List[str], name: str):
     return [x for x in args if x != name], name in args
 
 
-def install_tensorrt(tensorrt_linux_command: str):
+def install_tensorrt():
+    tensorrt_linux_command = os.environ.get(
+        "TENSORRT_LINUX_COMMAND",
+        "pip install tensorrt==8.6.0",
+    )
     if platform.system() == "Windows":
         libfile_path = which("nvinfer.dll")
         assert (
@@ -121,15 +126,15 @@ def install_tensorrt(tensorrt_linux_command: str):
     else:
         run(f"{python} -m {tensorrt_linux_command}")
 
+    run_python(
+        "import tensorrt; v = tensorrt.__version__ ; assert v == '8.6.0', f'Incorrect version of TensorRT. I need 8.6.0 but I have {v} installed.'"
+    )
+
 
 def prepare_environment(args: List[str]):
     torch_command = os.environ.get(
         "TORCH_COMMAND",
-        "pip install torch==1.12.0+cu116 --extra-index-url https://download.pytorch.org/whl/cu116",
-    )
-    tensorrt_linux_command = os.environ.get(
-        "TENSORRT_LINUX_COMMAND",
-        "pip install tensorrt==8.5.3.1",
+        "pip install torch==1.13.1+cu117 --extra-index-url https://download.pytorch.org/whl/cu117",
     )
     requirements_file = os.environ.get("REQS_FILE", "requirements.txt")
 
@@ -149,11 +154,11 @@ def prepare_environment(args: List[str]):
         )
 
     run_python(
-        "import torch; assert torch.cuda.is_available(), 'Torch is not able to use GPU; add --skip-torch-cuda-test to COMMANDLINE_ARGS variable to disable this check'"
+        "import torch; assert torch.cuda.is_available(), 'Torch is not able to use GPU'"
     )
 
     if reinstall_tensorrt or not is_installed("tensorrt"):
-        install_tensorrt(tensorrt_linux_command)
+        install_tensorrt()
 
     run(
         f'"{python}" -m pip install -r {requirements_file}',
@@ -165,58 +170,32 @@ def prepare_environment(args: List[str]):
         build.build_frontend()
 
 
-def prepare_tensorrt_pluginlib():
-    lib_dir = os.path.join(__dirname__, "lib", "trt", "lib")
-    dest_path = os.path.join(
-        lib_dir,
-        "nvinfer_plugin.dll"
-        if platform.system() == "Windows"
-        else "libnvinfer_plugin.so",
-    )
-
-    if not os.path.exists(dest_path):
-        url = (
-            "https://github.com/ddPn08/Lsmith/releases/download/tensorrt-8.5.3.1/nvinfer_plugin.dll"
-            if platform.system() == "Windows"
-            else "https://github.com/ddPn08/Lsmith/releases/download/tensorrt-8.5.3.1/libnvinfer_plugin.so"
-        )
-        download(url, dest_path)
-
-    if platform.system() == "Windows":
-        os.environ["PATH"] = f'{lib_dir}{os.pathsep}{os.environ.get("PATH", "")}'
-    else:
-        os.environ["LD_PRELOAD"] = os.path.join(lib_dir, "libnvinfer_plugin.so")
-
-    lib_dir = os.path.join(__dirname__, "lib", "trt", "lib")
-    if platform.system() == "Windows":
-        os.environ["PATH"] = f'{lib_dir}{os.pathsep}{os.environ.get("PATH", "")}'
-    else:
-        os.environ[
-            "LD_PRELOAD"
-        ] = f'{os.path.join(lib_dir, "libnvinfer_plugin.so")}{os.pathsep}{os.environ.get("LD_PRELOAD", "")}'
-
-
 if __name__ == "__main__":
-    sys.argv = sys.argv[1:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--uvicorn-args", type=str, nargs="*")
+    ns, args = parser.parse_known_args(sys.argv)
+
     main_args = os.environ.get("COMMANDLINE_ARGS", "").split(" ")
     uvicorn_args = os.environ.get("UVICORN_ARGS", "").split(" ")
 
-    if "--" in sys.argv:
-        index = sys.argv.index("--")
-        uvicorn_args += sys.argv[:index]
-        main_args += sys.argv[index + 1 :]
-    else:
-        uvicorn_args += sys.argv
-
-    main_args = [x for x in main_args if x]
+    main_args = [*args, *[x for x in main_args if x]]
     uvicorn_args = [x for x in uvicorn_args if x]
 
+    if ns.uvicorn_args:
+        for opt in ns.uvicorn_args:
+            if "=" in opt:
+                k, v = opt.split("=")
+                if type(v) == bool:
+                    if v == True:
+                        uvicorn_args.append(f"--{k}")
+                else:
+                    uvicorn_args.extend([f"--{k}", v])
+
     prepare_environment(main_args)
-    prepare_tensorrt_pluginlib()
 
     env = os.environ.copy()
     env["COMMANDLINE_ARGS"] = " ".join(main_args)
 
     subprocess.run(
-        [python, "-m", "uvicorn", "modules.main:app", *uvicorn_args], env=env
+        [python, "-m", "uvicorn", "modules.main:sio_app", *uvicorn_args], env=env
     )

@@ -16,8 +16,8 @@ const ModelParameter = () => {
 
     if (models.includes(value)) {
       setLoading(true)
-      await api.setRunner({
-        setRunnerRequest: {
+      await api.setModel({
+        setModelRequest: {
           model_id: value,
         },
       })
@@ -27,11 +27,11 @@ const ModelParameter = () => {
   }
 
   const modelRefresh = async () => {
-    const runners = await api.getRunners().then((res) => res.data)
-    setModels(runners as string[])
+    const models = await api.getModels().then((res) => res.data!)
+    setModels(models.map((v) => v.model_id))
 
-    const currentRunner = await api.getCurrentRunner().then((res) => res.data)
-    setCurrentModel(currentRunner as string)
+    const currentModel = await api.getCurrentModel().then((res) => res.data!)
+    setCurrentModel(currentModel.model_id as string)
   }
 
   useEffect(() => {

@@ -10,6 +10,7 @@ export const downloadFile = async (url: string, filename?: string) => {
 
     URL.revokeObjectURL(objectURL)
 }
+
 export const downloadB64 = async (b64: string, filename: string, contentType: string) => {
     const bin = atob(b64.replace(/^.*,/, ''))
     const bufArr = new Uint8Array(bin.length)

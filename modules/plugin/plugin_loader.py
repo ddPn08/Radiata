@@ -1,24 +1,15 @@
 import importlib
 import os
 from typing import List
-from pydantic import BaseModel
 
-from modules import shared
-from modules.plugin.plugin_meta import PluginMetaData
-
-
-class PluginData(BaseModel):
-    meta: PluginMetaData
-    module: str
-    dir: str
-    js: bool
-
+from api.models.plugin import PluginData, PluginMetaData
+from modules import config
 
 plugins: List[PluginData] = []
 
 
 def load_plugins():
-    plugin_dir = os.path.join(shared.ROOT_DIR, "plugins")
+    plugin_dir = os.path.join(config.ROOT_DIR, "plugins")
     os.makedirs(plugin_dir, exist_ok=True)
     for dir in os.listdir(plugin_dir):
         fullpath = os.path.join(plugin_dir, dir)

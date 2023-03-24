@@ -3,17 +3,24 @@ import json
 import os
 
 DEFAULT_CONFIG = {
+    "version": "0",
     "images/txt2img/save_dir": "outputs/txt2img",
     "images/txt2img/save_name": "{index}-{seed}-{prompt}.png",
     "images/img2img/save_dir": "outputs/img2img",
     "images/img2img/save_name": "{index}-{seed}-{prompt}.png",
+    "model_dir": "models",
+    "models": [{"model_id": "runwayml/stable-diffusion-v1-5"}],
+    "model": "runwayml/stable-diffusion-v1-5",
+    "mode": "diffusers",
 }
+
+ROOT_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
 parser = argparse.ArgumentParser()
 
-
 parser.add_argument("--allow-hosts", type=str, default="")
+parser.add_argument("--xformers", action="store_true")
 parser.add_argument("--model-dir", type=str, default="models")
 parser.add_argument("--config-file", type=str, default="config.json")
 parser.add_argument("--hf-token", type=str)

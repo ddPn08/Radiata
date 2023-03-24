@@ -22,7 +22,8 @@
     "embla-carousel-react": "^7.0.9",
     "jotai": "^2.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "socket.io-client": "^4.6.1"
   },
   "devDependencies": {
     "@iconify-json/material-symbols": "^1.1.27",

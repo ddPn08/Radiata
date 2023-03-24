@@ -1,8 +1,11 @@
 import os
+from typing import List
+
 from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse
-from typing import List
-from modules.plugin.plugin_loader import plugins, PluginData
+
+from modules.plugin.plugin_loader import PluginData, plugins
+
 from ..api_router import api
 from ..models.base import BaseResponseModel
 
@@ -19,7 +22,6 @@ def plugin_list():
 @api.get("/plugins/js/{plugin_name}", response_model=PluginListResponseModel)
 def plugin(plugin_name: str):
     plugin = [x for x in plugins if x.meta.name == plugin_name]
-    print(plugin, plugin_name, len(plugins))
     if len(plugin) < 1:
         raise HTTPException(status_code=404, detail="Plugin not found")
     else:

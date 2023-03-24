@@ -11,13 +11,7 @@ import {
   Progress,
 } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
-import type {
-  ImageGenerationError,
-  ImageGenerationOptions,
-  ImageGenerationProgress,
-  ImageGenerationResult,
-  ImageInformation,
-} from 'internal:api'
+import type { ImageGenerationOptions } from 'internal:api'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
 
@@ -25,13 +19,14 @@ import { api } from '~/api'
 import { generationParametersAtom } from '~/atoms/generationParameters'
 import Gallery from '~/components/gallery/gallery'
 import Parameters from '~/components/parameters'
+import { socket } from '~/sockets'
 import { Scheduler } from '~/types/generate'
-import { streamGenerator } from '~/utils/stream'
+import type { DenoiseLatentData } from '~/types/socket'
 
 const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
-  const [images, setImages] = useState<[string, ImageInformation][]>([])
-  const [preImages, setPreImages] = useState<[string, ImageInformation][]>([])
+  const [images, setImages] = useState<[string, ImageGenerationOptions][]>([])
+  const [preImages, setPreImages] = useState<[string, ImageGenerationOptions][]>([])
   const [loadingParameters, setLoadingParameters] = useState<ImageGenerationOptions>(parameters)
   const [loadingCount, setLoadingCount] = useState<number>(0)
   const [performance, setPerformance] = useState<number | null>(null)
@@ -42,7 +37,7 @@ const Generator = () => {
 
   const onSubmit = async (values: ImageGenerationOptions) => {
     try {
-      const requestBody: ImageGenerationOptions = {
+      const options: ImageGenerationOptions = {
         ...values,
         scheduler_id: Scheduler[values.scheduler_id as keyof typeof Scheduler],
       }
@@ -51,29 +46,22 @@ const Generator = () => {
       setLoadingParameters(parameters)
       setErrorMessage(null)
       setPerformance(null)
-      api.generatorImage
-      const { raw } = await api.generatorImageRaw({
-        imageGenerationOptions: requestBody,
-      })
-      if (raw.body != null) {
-        for await (const stream of streamGenerator(raw.body)) {
-          if (stream.type === 'progress') {
-            const data = stream as ImageGenerationProgress
-            Object.entries(data.images).length > 0 && setPreImages(Object.entries(data.images))
-            setProgress(data.progress || null)
-            setPerformance(data.performance)
-          } else if (stream.type === 'result') {
-            const data = stream as ImageGenerationResult
-            setImages((prev) => [...Object.entries(data.images), ...prev])
-            setLoadingCount((i) => i - Object.entries(data.images).length)
-            setPreImages([])
-            data.performance && setPerformance(data.performance)
-          } else if (stream.type === 'error') {
-            const data = stream as ImageGenerationError
-            throw new Error([data.error, data.message].filter((e) => e).join(': '))
-          }
-        }
+
+      const onDenoiseLatent = (data: DenoiseLatentData) => {
+        const { step, preview } = data
+        setProgress(step / (options.steps as number))
+        if (Object.entries(preview).length > 0) setPreImages(Object.entries(preview))
       }
+
+      socket.on('denoise_latent', onDenoiseLatent)
+      const { data } = await api.generateImage({
+        imageGenerationOptions: options,
+      })
+      socket.removeListener('denoise_latent', onDenoiseLatent)
+      setImages((prev) => [...Object.entries(data.images), ...prev])
+      setLoadingCount((i) => i - Object.entries(data.images).length)
+      setPreImages([])
+      data.performance && setPerformance(data.performance)
     } catch (e) {
       console.error(e)
       setErrorMessage((e as Error).message)

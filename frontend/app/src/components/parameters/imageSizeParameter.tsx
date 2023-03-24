@@ -12,8 +12,8 @@ const ImageSizeParameter = () => {
   const swapWidthHeight = () => {
     setParameters((p) => ({
       ...p,
-      image_width: p.image_height,
-      image_height: p.image_width,
+      image_width: p.image_height as number,
+      image_height: p.image_width as number,
     }))
   }
 

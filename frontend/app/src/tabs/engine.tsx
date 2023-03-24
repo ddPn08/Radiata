@@ -3,7 +3,6 @@ import {
   Checkbox,
   Container,
   Input,
-  NativeSelect,
   NumberInput,
   SimpleGrid,
   Space,
@@ -12,58 +11,36 @@ import {
   Box,
   Alert,
   Loader,
-  Progress,
 } from '@mantine/core'
 import { IconInfoCircle } from '@tabler/icons-react'
-import type {
-  BuildEngineOptions,
-  ImageGenerationProgress,
-  ImageGenerationError,
-} from 'internal:api'
+import type { BuildEngineOptions } from 'internal:api'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
 
 import NumberSliderInput from '../components/ui/numberSliderInput'
 
 import { api } from '~/api'
-import { engineFormAtom } from '~/atoms/engine'
+import { buildEngineOptions } from '~/atoms/engine'
+import ModelParameter from '~/components/parameters/modelParameter'
 import { IMAGE_SIZE_STEP, MAX_IMAGE_SIZE, MIN_IMAGE_SIZE } from '~/utils/static'
-import { streamGenerator } from '~/utils/stream'
 
 const Engine = () => {
-  const [form, setForm] = useAtom(engineFormAtom)
+  const [form, setForm] = useAtom(buildEngineOptions)
 
-  const [status, setStatus] = useState<Record<string, any> | null>(null)
+  const [building, setBuilding] = useState(false)
+  const [status, setStatus] = useState<'success' | 'error' | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<boolean | null>(null)
-
-  const onSubmit = () => buildEngine(form)
 
   const buildEngine = async (req: BuildEngineOptions) => {
     try {
-      setError(null)
-      setSuccess(null)
-      setStatus({
-        message: 'loading...',
-        progress: 0,
-      })
-      const { raw } = await api.buildEngineRaw({ buildEngineOptions: req })
-      if (raw.body != null) {
-        for await (const stream of streamGenerator(raw.body)) {
-          if (stream.type === 'progress') {
-            const data = stream as ImageGenerationProgress
-            setStatus(data)
-          } else if (stream.type === 'error') {
-            const data = stream as ImageGenerationError
-            throw new Error([data.error, data.message].filter((e) => e).join(': '))
-          }
-        }
-      }
       setStatus(null)
+      setBuilding(true)
+      await api.buildEngine({ buildEngineOptions: req })
+      setStatus('success')
+      setBuilding(false)
     } catch (e) {
-      setStatus(null)
+      setStatus('error')
       setError((e as Error).message)
-      setSuccess(false)
     }
   }
 
@@ -79,17 +56,25 @@ const Engine = () => {
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            onSubmit()
+            buildEngine(form)
           }}
         >
           <Stack my={'sm'}>
-            <Input.Wrapper label={'Model ID (required)'} withAsterisk>
+            <ModelParameter />
+
+            <Input.Wrapper label={'Hugging Face Access Token'}>
               <Input
-                placeholder="hugging face model id (e.g. CompVis/stablediffusion-v1-4)"
-                defaultValue={form.model_id}
-                onChange={(e) => setForm({ ...form, model_id: e.currentTarget.value })}
+                placeholder="hf_********************"
+                defaultValue={form.hf_token}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    hf_token: e.currentTarget.value,
+                  })
+                }
               />
             </Input.Wrapper>
+
             <Input.Wrapper label={'Sub Folder'}>
               <Input
                 placeholder=""
@@ -103,16 +88,12 @@ const Engine = () => {
               />
             </Input.Wrapper>
 
-            <Input.Wrapper label={'Hugging Face Access Token'}>
-              <Input
-                placeholder="hf_********************"
-                defaultValue={form.hf_token}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    hf_token: e.currentTarget.value,
-                  })
-                }
+            <Input.Wrapper label={'Max batch size'}>
+              <NumberInput
+                min={1}
+                max={32}
+                defaultValue={form.max_batch_size}
+                onChange={(value) => setForm({ ...form, max_batch_size: value || 1 })}
               />
             </Input.Wrapper>
 
@@ -134,22 +115,22 @@ const Engine = () => {
               onChange={(value) => setForm({ ...form, opt_image_height: value })}
             />
 
-            <Input.Wrapper label={'Denoising precision'}>
-              <NativeSelect
-                data={['float32', 'float16']}
-                defaultValue={form.fp16 ? 'float16' : 'float32'}
-                onChange={(e) => setForm({ ...form, fp16: e.currentTarget.value === 'float16' })}
-              />
-            </Input.Wrapper>
-
-            <Input.Wrapper label={'Max batch size'}>
-              <NumberInput
-                min={1}
-                max={32}
-                defaultValue={form.max_batch_size}
-                onChange={(value) => setForm({ ...form, max_batch_size: value || 1 })}
-              />
-            </Input.Wrapper>
+            {form.build_dynamic_shape && (
+              <>
+                <Input.Wrapper label={'Min latent resolution'}>
+                  <NumberInput
+                    defaultValue={form.min_latent_resolution}
+                    onChange={(value) => setForm({ ...form, min_latent_resolution: value || 256 })}
+                  />
+                </Input.Wrapper>
+                <Input.Wrapper label={'Max latent resolution'}>
+                  <NumberInput
+                    defaultValue={form.max_latent_resolution}
+                    onChange={(value) => setForm({ ...form, max_latent_resolution: value || 1024 })}
+                  />
+                </Input.Wrapper>
+              </>
+            )}
 
             <SimpleGrid
               cols={4}
@@ -161,6 +142,11 @@ const Engine = () => {
               ]}
             >
               <Checkbox
+                label={'Build enable refit'}
+                defaultChecked={form.build_enable_refit}
+                onChange={(e) => setForm({ ...form, build_enable_refit: e.currentTarget.checked })}
+              />
+              <Checkbox
                 label={'Build static batch'}
                 defaultChecked={form.build_static_batch}
                 onChange={(e) => setForm({ ...form, build_static_batch: e.currentTarget.checked })}
@@ -169,6 +155,11 @@ const Engine = () => {
                 label={'Build dynamic shape'}
                 defaultChecked={form.build_dynamic_shape}
                 onChange={(e) => setForm({ ...form, build_dynamic_shape: e.currentTarget.checked })}
+              />
+              <Checkbox
+                label={'Build all tactics'}
+                defaultChecked={form.build_all_tactics}
+                onChange={(e) => setForm({ ...form, build_all_tactics: e.currentTarget.checked })}
               />
               <Checkbox
                 label={'Build preview features'}
@@ -192,41 +183,16 @@ const Engine = () => {
                 defaultChecked={form.force_onnx_optimize}
                 onChange={(e) => setForm({ ...form, force_onnx_optimize: e.currentTarget.checked })}
               />
-              <Checkbox
-                label={'Onnx minimal optimization'}
-                defaultChecked={form.onnx_minimal_optimization}
-                onChange={(e) =>
-                  setForm({ ...form, onnx_minimal_optimization: e.currentTarget.checked })
-                }
-              />
             </SimpleGrid>
-
-            {form.build_dynamic_shape && (
-              <>
-                <Input.Wrapper label={'Min latent resolution'}>
-                  <NumberInput
-                    defaultValue={form.min_latent_resolution}
-                    onChange={(value) => setForm({ ...form, min_latent_resolution: value || 256 })}
-                  />
-                </Input.Wrapper>
-                <Input.Wrapper label={'Max latent resolution'}>
-                  <NumberInput
-                    defaultValue={form.max_latent_resolution}
-                    onChange={(value) => setForm({ ...form, max_latent_resolution: value || 1024 })}
-                  />
-                </Input.Wrapper>
-              </>
-            )}
 
             <Space h={'md'} />
 
-            {status ? (
+            {building ? (
               <Box w={'100%'}>
                 <Alert title={'Processing...'}>
                   <Text>
                     This may take about 10 minutes. Please wait until the process is finished.
                   </Text>
-                  <Progress sections={[{ value: status?.['progress'] * 100, color: 'blue' }]} />
                 </Alert>
                 <Button w={'100%'} my={'sm'} disabled>
                   <Loader p={'xs'} />
@@ -236,14 +202,14 @@ const Engine = () => {
               <Button type={'submit'}>Build</Button>
             )}
 
-            {success && (
+            {status === 'success' && (
               <Box>
                 <Alert
                   title={'Success!'}
                   color={'green'}
                   withCloseButton={true}
                   onClose={() => {
-                    setSuccess(null)
+                    setStatus(null)
                   }}
                 >
                   <Text>The model has been built successfully. You can now generate images!</Text>
@@ -253,7 +219,7 @@ const Engine = () => {
           </Stack>
         </form>
 
-        {error && (
+        {status === 'error' && (
           <Box>
             <Alert icon={<IconInfoCircle />} title={'Something went wrong...'} color={'red'}>
               {error}
