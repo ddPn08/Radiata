@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { api } from '~/api'
 
-const ModelParameter = () => {
+export const ModelParameter = () => {
   const [models, setModels] = useState<string[]>([])
   const [currentModel, setCurrentModel] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
@@ -60,5 +60,3 @@ const ModelParameter = () => {
     </Input.Wrapper>
   )
 }
-
-export default ModelParameter

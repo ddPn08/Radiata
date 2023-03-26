@@ -1,7 +1,7 @@
 import { Flex, Input, InputWrapperBaseProps, Slider } from '@mantine/core'
 import { useRef, useState } from 'react'
 
-import BetterNumInput from './betterNumInput'
+import { BetterNumInput } from './betterNumInput'
 
 interface Props extends InputWrapperBaseProps {
   defaultValue?: number | undefined
@@ -12,7 +12,7 @@ interface Props extends InputWrapperBaseProps {
   onChange?: ((value: number) => void) | undefined
 }
 
-const NumberSliderInput = ({
+export const NumberSliderInput = ({
   label,
   defaultValue = 768,
   min,
@@ -70,5 +70,3 @@ const NumberSliderInput = ({
     </Input.Wrapper>
   )
 }
-
-export default NumberSliderInput

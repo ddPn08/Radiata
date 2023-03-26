@@ -15,7 +15,7 @@ const imageUrl = (url: string) => {
   return regex.test(url) ? `data:image/png;base64,${url}` : url
 }
 
-const GalleryImage = ({ image, info, onClick }: Props) => {
+export const GalleryImage = ({ image, info, onClick }: Props) => {
   return (
     <Box key={image} pos={'relative'}>
       <Image
@@ -45,5 +45,3 @@ const GalleryImage = ({ image, info, onClick }: Props) => {
     </Box>
   )
 }
-
-export default GalleryImage

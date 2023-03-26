@@ -17,13 +17,13 @@ import { useState } from 'react'
 
 import { api } from '~/api'
 import { generationParametersAtom } from '~/atoms/generationParameters'
-import Gallery from '~/components/gallery/gallery'
-import Parameters from '~/components/parameters'
+import { Gallery } from '~/components/gallery/gallery'
+import { Parameters } from '~/components/parameters'
 import { socket } from '~/sockets'
 import { Scheduler } from '~/types/generate'
 import type { DenoiseLatentData } from '~/types/socket'
 
-const Generator = () => {
+export const Generator = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
   const [images, setImages] = useState<[string, ImageGenerationOptions][]>([])
   const [preImages, setPreImages] = useState<[string, ImageGenerationOptions][]>([])
@@ -185,5 +185,3 @@ const Generator = () => {
     </Box>
   )
 }
-
-export default Generator

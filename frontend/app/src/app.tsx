@@ -2,9 +2,9 @@ import { MantineProvider, Flex } from '@mantine/core'
 import { useAtomValue } from 'jotai'
 
 import { themeAtom } from './atoms/theme'
-import Tabs from './components/tabs'
+import { Tabs } from './components/tabs'
 
-const App = () => {
+export const App = () => {
   const theme = useAtomValue(themeAtom)
 
   return (
@@ -26,5 +26,3 @@ const App = () => {
     </MantineProvider>
   )
 }
-
-export default App

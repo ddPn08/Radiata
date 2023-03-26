@@ -1,15 +1,16 @@
 import { Box, Center, createStyles, Flex, MediaQuery, Navbar, Space, Stack } from '@mantine/core'
 import { IconEngine, IconPhotoEdit, IconPhotoSearch } from '@tabler/icons-react'
+import type { Property } from 'csstype'
 import React, { useState } from 'react'
 
-import GithubButton from './githubButton'
-import ThemeToggle from './themeToggle'
+import { GithubButton } from './githubButton'
+import { ThemeToggle } from './themeToggle'
 import type { Tab } from '../types/tab'
 
 import { plugins } from '~/plugin/pluginLoader'
-import Engine from '~/tabs/engine'
-import Generator from '~/tabs/generator'
-import ImagesBrowser from '~/tabs/imagesBrowser'
+import { Engine } from '~/tabs/engine'
+import { Generator } from '~/tabs/generator'
+import { ImagesBrowser } from '~/tabs/imagesBrowser'
 
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef('icon')
@@ -39,10 +40,12 @@ const useStyles = createStyles((theme, _params, getRef) => {
     linkActive: {
       '&, &:hover': {
         backgroundColor: theme.fn.variant({ variant: 'light', color: theme.primaryColor })
-          .background,
-        color: theme.fn.variant({ variant: 'light', color: theme.primaryColor }).color,
+          .background as Property.BackgroundColor,
+        color: theme.fn.variant({ variant: 'light', color: theme.primaryColor })
+          .color as Property.Color,
         [`& .${icon}`]: {
-          color: theme.fn.variant({ variant: 'light', color: theme.primaryColor }).color,
+          color: theme.fn.variant({ variant: 'light', color: theme.primaryColor })
+            .color as Property.Color,
         },
       },
     },
@@ -104,7 +107,7 @@ const SmallLink: React.FC<{
   )
 }
 
-const Tabs = () => {
+export const Tabs = () => {
   const [current, setCurrent] = useState(TABS[0]!.id)
 
   const largeLinks = (
@@ -250,5 +253,3 @@ const Tabs = () => {
     </>
   )
 }
-
-export default Tabs

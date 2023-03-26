@@ -17,14 +17,14 @@ import type { BuildEngineOptions } from 'internal:api'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
 
-import NumberSliderInput from '../components/ui/numberSliderInput'
+import { NumberSliderInput } from '../components/ui/numberSliderInput'
 
 import { api } from '~/api'
 import { buildEngineOptions } from '~/atoms/engine'
-import ModelParameter from '~/components/parameters/modelParameter'
+import { ModelParameter } from '~/components/parameters/modelParameter'
 import { IMAGE_SIZE_STEP, MAX_IMAGE_SIZE, MIN_IMAGE_SIZE } from '~/utils/static'
 
-const Engine = () => {
+export const Engine = () => {
   const [form, setForm] = useAtom(buildEngineOptions)
 
   const [building, setBuilding] = useState(false)
@@ -36,9 +36,10 @@ const Engine = () => {
       setStatus(null)
       setBuilding(true)
       await api.buildEngine({ buildEngineOptions: req })
-      setStatus('success')
       setBuilding(false)
+      setStatus('success')
     } catch (e) {
+      setBuilding(false)
       setStatus('error')
       setError((e as Error).message)
     }
@@ -230,5 +231,3 @@ const Engine = () => {
     </Box>
   )
 }
-
-export default Engine

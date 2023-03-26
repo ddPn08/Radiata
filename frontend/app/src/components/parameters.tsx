@@ -2,16 +2,16 @@ import { Divider, NativeSelect, Stack } from '@mantine/core'
 import { useAtom } from 'jotai'
 
 import { ModeSelector } from './modeSelector'
-import ImageParameter from './parameters/imageParameter'
-import ImageSizeParameter from './parameters/imageSizeParameter'
-import ModelParameter from './parameters/modelParameter'
-import SeedParameter from './parameters/seedParameter'
+import { ImageParameter } from './parameters/imageParameter'
+import { ImageSizeParameter } from './parameters/imageSizeParameter'
+import { ModelParameter } from './parameters/modelParameter'
+import { SeedParameter } from './parameters/seedParameter'
 
 import { generationParametersAtom } from '~/atoms/generationParameters'
-import NumberSliderInput from '~/components/ui/numberSliderInput'
+import { NumberSliderInput } from '~/components/ui/numberSliderInput'
 import { schedulerNames, SchedulerName } from '~/types/generate'
 
-const Parameters = () => {
+export const Parameters = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
 
   return (
@@ -94,5 +94,3 @@ const Parameters = () => {
     </Stack>
   )
 }
-
-export default Parameters

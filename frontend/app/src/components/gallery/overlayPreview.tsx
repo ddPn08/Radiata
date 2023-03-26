@@ -15,7 +15,7 @@ const imageUrl = (url: string) => {
   return regex.test(url) ? `data:image/png;base64,${url}` : url
 }
 
-const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
+export const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
   const [currentInfo, setCurrentInfo] = useState(images[initialIndex]![1])
   const [opened, setOpened] = useState(false)
   const [embla, setEmbla] = useState<Embla | null>(null)
@@ -169,5 +169,3 @@ const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
     </Box>
   )
 }
-
-export default OverlayPreview

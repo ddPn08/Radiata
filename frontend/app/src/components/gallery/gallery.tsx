@@ -2,8 +2,8 @@ import { Box, Portal, SimpleGrid, Skeleton, AspectRatio } from '@mantine/core'
 import type { ImageGenerationOptions } from 'internal:api'
 import { useState } from 'react'
 
-import GalleryImage from './galleryImage'
-import OverlayPreview from './overlayPreview'
+import { GalleryImage } from './galleryImage'
+import { OverlayPreview } from './overlayPreview'
 
 interface Props {
   images: [string, ImageGenerationOptions][]
@@ -11,7 +11,7 @@ interface Props {
   ratio?: number | null
 }
 
-const Gallery = ({ images, loadingCount, ratio }: Props) => {
+export const Gallery = ({ images, loadingCount, ratio }: Props) => {
   const [showOverlay, setShowOverlay] = useState(false)
   const [initialIndex, setInitialIndex] = useState(0)
 
@@ -67,5 +67,3 @@ const Gallery = ({ images, loadingCount, ratio }: Props) => {
     </>
   )
 }
-
-export default Gallery

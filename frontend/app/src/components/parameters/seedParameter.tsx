@@ -3,10 +3,10 @@ import { IconDice5 } from '@tabler/icons-react'
 import { useAtom } from 'jotai'
 
 import { generationParametersAtom } from '~/atoms/generationParameters'
-import BetterNumInput from '~/components/ui/betterNumInput'
+import { BetterNumInput } from '~/components/ui/betterNumInput'
 import { generateRandomNumber } from '~/utils/rand'
 
-const SeedParameter = () => {
+export const SeedParameter = () => {
   const [parameters, setParameters] = useAtom(generationParametersAtom)
 
   return (
@@ -42,5 +42,3 @@ const SeedParameter = () => {
     </Input.Wrapper>
   )
 }
-
-export default SeedParameter

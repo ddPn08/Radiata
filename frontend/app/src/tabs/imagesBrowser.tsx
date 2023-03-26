@@ -10,26 +10,26 @@ import {
 } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { IconRotateClockwise } from '@tabler/icons-react'
-import type { GetAllImageFilesRequest, ImageInformation } from 'internal:api'
+import type { GetAllImageFilesRequest, ImageGenerationOptions } from 'internal:api'
 import { useEffect, useState } from 'react'
 
 import { api, createUrl } from '~/api'
-import Gallery from '~/components/gallery/gallery'
-import BetterNumInput from '~/components/ui/betterNumInput'
+import { Gallery } from '~/components/gallery/gallery'
+import { BetterNumInput } from '~/components/ui/betterNumInput'
 import { categoryList, categoryType } from '~/types/generate'
 
-const ImagesBrowser = () => {
+export const ImagesBrowser = () => {
   const [page, setPage] = useState<number>(0)
   const [pageLength, setPageLength] = useState<number>(0)
   const [category, setCategory] = useState<categoryType>('txt2img')
-  const [images, setImages] = useState<[string, ImageInformation][]>([])
+  const [images, setImages] = useState<[string, ImageGenerationOptions][]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const isLargeScreen = useMediaQuery('(min-width: 470px)', true)
   const count = 20
 
-  const parseImages = (images: any, category: categoryType): [string, ImageInformation][] => {
-    const data: [string, ImageInformation][] = []
+  const parseImages = (images: any, category: categoryType): [string, ImageGenerationOptions][] => {
+    const data: [string, ImageGenerationOptions][] = []
 
     Object.entries(images).forEach(([key, value]: [string, any]) => {
       data.push([createUrl(`/api/images/browser/get/${category}/${key}`), value.info])
@@ -143,5 +143,3 @@ const ImagesBrowser = () => {
     </>
   )
 }
-
-export default ImagesBrowser

@@ -4,7 +4,7 @@ import { useAtom } from 'jotai'
 
 import { themeAtom } from '../atoms/theme'
 
-const ThemeToggle = () => {
+export const ThemeToggle = () => {
   const [theme, setTheme] = useAtom(themeAtom)
   return (
     <Center>
@@ -18,5 +18,3 @@ const ThemeToggle = () => {
     </Center>
   )
 }
-
-export default ThemeToggle

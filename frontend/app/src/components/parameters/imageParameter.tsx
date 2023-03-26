@@ -4,12 +4,12 @@ import { IconPhoto, IconUpload, IconX } from '@tabler/icons-react'
 import { useAtom } from 'jotai'
 import { useState } from 'react'
 
-import NumberSliderInput from '../ui/numberSliderInput'
+import { NumberSliderInput } from '../ui/numberSliderInput'
 
 import { generationParametersAtom } from '~/atoms/generationParameters'
 import { arrayBufferToBase64 } from '~/utils/base64'
 
-const ImageParameter = () => {
+export const ImageParameter = () => {
   const [file, setFile] = useState<File | null>(null)
   const [parameters, setParameters] = useAtom(generationParametersAtom)
 
@@ -110,5 +110,3 @@ const ImageParameter = () => {
     </Stack>
   )
 }
-
-export default ImageParameter
