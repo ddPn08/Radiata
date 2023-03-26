@@ -1,13 +1,10 @@
-from typing import Optional, List
 import argparse
 import importlib.util
 import os
 import platform
 import subprocess
 import sys
-import urllib.request as request
-
-import build
+from typing import List, Optional
 
 python = sys.executable
 git = os.environ.get("GIT", "git")
@@ -43,14 +40,6 @@ stderr: {result.stderr.decode(encoding="utf8", errors="ignore") if len(result.st
         raise RuntimeError(message)
 
     return result.stdout.decode(encoding="utf8", errors="ignore")
-
-
-def download(url: str, dest: str):
-    print(f"Downloading {url} to {dest}")
-    with request.urlopen(url) as res:
-        data = res.read()
-    with open(dest, mode="wb") as f:
-        f.write(data)
 
 
 def which(program):
@@ -101,9 +90,10 @@ def extract_arg(args: List[str], name: str):
 
 
 def install_tensorrt():
+    trt_version = "8.5.0"
     tensorrt_linux_command = os.environ.get(
         "TENSORRT_LINUX_COMMAND",
-        "pip install tensorrt==8.6.0",
+        f"pip install tensorrt=={trt_version}",
     )
     if platform.system() == "Windows":
         libfile_path = which("nvinfer.dll")
@@ -127,7 +117,7 @@ def install_tensorrt():
         run(f"{python} -m {tensorrt_linux_command}")
 
     run_python(
-        "import tensorrt; v = tensorrt.__version__ ; assert v == '8.6.0', f'Incorrect version of TensorRT. I need 8.6.0 but I have {v} installed.'"
+        f"import tensorrt; v = tensorrt.__version__ ; assert v == '{trt_version}', f'Incorrect version of TensorRT. Requires {trt_version} but {{v}} detected.'"
     )
 
 
@@ -144,7 +134,6 @@ def prepare_environment(args: List[str]):
 
     args, reinstall_torch = extract_arg(args, "--reinstall-torch")
     args, reinstall_tensorrt = extract_arg(args, "--reinstall-tensorrt")
-    args, force_build_frontend = extract_arg(args, "--force-build-frontend")
 
     if reinstall_torch or not is_installed("torch"):
         run(
@@ -165,9 +154,6 @@ def prepare_environment(args: List[str]):
         desc=f"Installing requirements",
         errdesc=f"Couldn't install requirements",
     )
-
-    if force_build_frontend:
-        build.build_frontend()
 
 
 if __name__ == "__main__":

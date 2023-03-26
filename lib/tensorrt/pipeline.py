@@ -118,6 +118,7 @@ class TensorRTDiffusionPipeline:
         self.device = device
 
         self.stream = cuda.Stream()
+        self.events = {}
 
     def __del__(self):
         for e in self.events.values():
@@ -148,7 +149,6 @@ class TensorRTDiffusionPipeline:
             )
 
         # Create CUDA events and stream
-        self.events = {}
         for stage in ["clip", "denoise", "vae", "vae_encoder"]:
             for marker in ["start", "stop"]:
                 self.events[stage + "-" + marker] = cudart.cudaEventCreate()[1]

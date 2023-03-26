@@ -1,4 +1,5 @@
 from api.models.diffusion import ImageGenerationOptions
+
 from .. import CancellableEvent
 
 
