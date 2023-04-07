@@ -1,5 +1,5 @@
 import { Box, Center, createStyles, Flex, MediaQuery, Navbar, Space, Stack } from '@mantine/core'
-import { IconEngine, IconPhotoEdit, IconPhotoSearch } from '@tabler/icons-react'
+import { IconEngine, IconPhotoEdit, IconPhotoSearch, IconBoxModel } from '@tabler/icons-react'
 import type { Property } from 'csstype'
 import React, { useState } from 'react'
 
@@ -11,6 +11,7 @@ import { plugins } from '~/plugin/pluginLoader'
 import { Engine } from '~/tabs/engine'
 import { Generator } from '~/tabs/generator'
 import { ImagesBrowser } from '~/tabs/imagesBrowser'
+import { Models } from '~/tabs/models'
 
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef('icon')
@@ -58,6 +59,12 @@ const TABS: Tab[] = [
     label: 'Generator',
     icon: IconPhotoEdit,
     component: Generator,
+  },
+  {
+    id: 'models',
+    label: 'Models',
+    icon: IconBoxModel,
+    component: Models,
   },
   {
     id: 'engine',

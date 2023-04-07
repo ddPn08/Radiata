@@ -1,8 +1,11 @@
 import { Carousel, Embla, useAnimationOffsetEffect } from '@mantine/carousel'
-import { Box, Center, CloseButton, Flex, Table, Text, Drawer } from '@mantine/core'
+import { Box, Center, CloseButton, Flex, Table, Text, Drawer, Button } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import type { ImageGenerationOptions } from 'internal:api'
+import { useAtom } from 'jotai'
 import { useState } from 'react'
+
+import { generationParametersAtom } from '~/atoms/generationParameters'
 
 interface Props {
   images: [string, ImageGenerationOptions][]
@@ -16,6 +19,7 @@ const imageUrl = (url: string) => {
 }
 
 export const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
+  const [parameters, setParameters] = useAtom(generationParametersAtom)
   const [currentInfo, setCurrentInfo] = useState(images[initialIndex]![1])
   const [opened, setOpened] = useState(false)
   const [embla, setEmbla] = useState<Embla | null>(null)
@@ -26,6 +30,10 @@ export const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
 
   const onSlideChange = (index: number) => {
     setCurrentInfo(images[index]![1])
+  }
+
+  const sendToGenerationTab = () => {
+    setParameters({...currentInfo})
   }
 
   return (
@@ -99,6 +107,7 @@ export const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
           <Text size={'lg'} weight={'bold'} p={'md'}>
             Information
           </Text>
+          <Button type={'submit'}>Send to geneartion tab</Button>
           <Table horizontalSpacing={'md'} verticalSpacing={'sm'} fontSize={'md'}>
             <thead>
               <tr>
@@ -135,6 +144,9 @@ export const OverlayPreview = ({ images, initialIndex, onClose }: Props) => {
           <Text size={'lg'} weight={'bold'} p={'md'}>
             Information
           </Text>
+          <Box p={'md'}>
+            <Button>Send to generation tab</Button>
+          </Box>
           <Table horizontalSpacing={'md'} verticalSpacing={'sm'} fontSize={'md'}>
             <thead>
               <tr>
