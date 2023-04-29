@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 
-from typing import Callable, List, Optional, Union
+from typing import *
 
 import tensorrt as trt
 import torch

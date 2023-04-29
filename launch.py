@@ -1,24 +1,21 @@
-import argparse
 import importlib.util
 import os
 import platform
+import shlex
 import subprocess
 import sys
-from typing import List, Optional
+
+commandline_args = os.environ.get("COMMANDLINE_ARGS", "")
+sys.argv += shlex.split(commandline_args)
 
 python = sys.executable
 git = os.environ.get("GIT", "git")
 index_url = os.environ.get("INDEX_URL", "")
+stored_commit_hash = None
 skip_install = False
-__dirname__ = os.path.dirname(__file__)
 
 
-def run(
-    command: str,
-    desc: Optional[str] = None,
-    errdesc: Optional[str] = None,
-    custom_env: Optional[str] = None,
-):
+def run(command, desc=None, errdesc=None, custom_env=None):
     if desc is not None:
         print(desc)
 
@@ -60,7 +57,14 @@ def which(program):
     return None
 
 
-def is_installed(package: str):
+def check_run(command):
+    result = subprocess.run(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+    )
+    return result.returncode == 0
+
+
+def is_installed(package):
     try:
         spec = importlib.util.find_spec(package)
     except ModuleNotFoundError:
@@ -69,7 +73,21 @@ def is_installed(package: str):
     return spec is not None
 
 
-def run_pip(args: str, desc: Optional[str] = None):
+def commit_hash():
+    global stored_commit_hash
+
+    if stored_commit_hash is not None:
+        return stored_commit_hash
+
+    try:
+        stored_commit_hash = run(f"{git} rev-parse HEAD").strip()
+    except Exception:
+        stored_commit_hash = "<none>"
+
+    return stored_commit_hash
+
+
+def run_pip(args, desc=None):
     if skip_install:
         return
 
@@ -81,16 +99,16 @@ def run_pip(args: str, desc: Optional[str] = None):
     )
 
 
-def run_python(code: str, desc: Optional[str] = None, errdesc: Optional[str] = None):
+def run_python(code, desc=None, errdesc=None):
     return run(f'"{python}" -c "{code}"', desc, errdesc)
 
 
-def extract_arg(args: List[str], name: str):
+def extract_arg(args, name):
     return [x for x in args if x != name], name in args
 
 
 def install_tensorrt():
-    trt_version = "8.5.0"
+    trt_version = "8.6.0"
     tensorrt_linux_command = os.environ.get(
         "TENSORRT_LINUX_COMMAND",
         f"pip install tensorrt=={trt_version}",
@@ -121,67 +139,68 @@ def install_tensorrt():
     )
 
 
-def prepare_environment(args: List[str]):
+def prepare_environment():
+    commit = commit_hash()
+
+    print(f"Python {sys.version}")
+    print(f"Commit hash: {commit}")
+
     torch_command = os.environ.get(
         "TORCH_COMMAND",
-        "pip install torch==1.13.1+cu117 --extra-index-url https://download.pytorch.org/whl/cu117",
+        "pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu118",
     )
-    requirements_file = os.environ.get("REQS_FILE", "requirements.txt")
 
-    args, skip_install = extract_arg(args, "--skip-install")
+    sys.argv, skip_install = extract_arg(sys.argv, "--skip-install")
     if skip_install:
         return
 
-    args, reinstall_torch = extract_arg(args, "--reinstall-torch")
-    args, reinstall_tensorrt = extract_arg(args, "--reinstall-tensorrt")
+    sys.argv, reinstall_torch = extract_arg(sys.argv, "--reinstall-torch")
+    sys.argv, reinstall_xformers = extract_arg(sys.argv, "--reinstall-xformers")
+    tensorrt = "--tensorrt" in sys.argv
 
-    if reinstall_torch or not is_installed("torch"):
+    if reinstall_torch or not is_installed("torch") or not is_installed("torchvision"):
+        if reinstall_torch:
+            run(
+                f'"{python}" -m pip uninstall torch torchvision -y',
+                "Uninstalling torch and torchvision",
+                "Couldn't uninstall torch",
+            )
         run(
             f'"{python}" -m {torch_command}',
-            "Installing torch",
+            "Installing torch and torchvision",
             "Couldn't install torch",
         )
 
-    run_python(
-        "import torch; assert torch.cuda.is_available(), 'Torch is not able to use GPU'"
-    )
-
-    if reinstall_tensorrt or not is_installed("tensorrt"):
-        install_tensorrt()
+    if reinstall_xformers or not is_installed("xformers"):
+        run_pip("install xformers", "xformers")
 
     run(
-        f'"{python}" -m pip install -r {requirements_file}',
+        f'"{python}" -m pip install -r requirements/base.txt',
         desc=f"Installing requirements",
         errdesc=f"Couldn't install requirements",
     )
 
+    if tensorrt:
+        run(
+            f'"{python}" -m pip install -r requirements/tensorrt.txt',
+            desc=f"Installing tensorrt requirements",
+            errdesc=f"Couldn't install tensorrt requirements",
+        )
+        install_tensorrt()
+
+
+def start():
+    os.environ["PATH"] = (
+        os.path.join(os.path.dirname(__file__), "bin")
+        + os.pathsep
+        + os.environ.get("PATH", "")
+    )
+    os.environ["COMMANDLINE_ARGS"] = " ".join(sys.argv[1:])
+    subprocess.run(
+        [python, "webui.py"],
+    )
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--uvicorn-args", type=str, nargs="*")
-    ns, args = parser.parse_known_args(sys.argv)
-
-    main_args = os.environ.get("COMMANDLINE_ARGS", "").split(" ")
-    uvicorn_args = os.environ.get("UVICORN_ARGS", "").split(" ")
-
-    main_args = [*args, *[x for x in main_args if x]]
-    uvicorn_args = [x for x in uvicorn_args if x]
-
-    if ns.uvicorn_args:
-        for opt in ns.uvicorn_args:
-            if "=" in opt:
-                k, v = opt.split("=")
-                if type(v) == bool:
-                    if v == True:
-                        uvicorn_args.append(f"--{k}")
-                else:
-                    uvicorn_args.extend([f"--{k}", v])
-
-    prepare_environment(main_args)
-
-    env = os.environ.copy()
-    env["COMMANDLINE_ARGS"] = " ".join(main_args)
-
-    subprocess.run(
-        [python, "-m", "uvicorn", "modules.main:sio_app", *uvicorn_args], env=env
-    )
+    prepare_environment()
+    start()

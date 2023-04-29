@@ -1,14 +1,10 @@
 import gc
 import os
 
-import onnx
 import torch
-from cuda import cudart
 
 from api.models.tensorrt import BuildEngineOptions, TensorRTEngineData
-from lib.tensorrt.models import BaseModel
 from lib.tensorrt.utilities import (
-    Engine,
     build_engine,
     create_models,
     export_onnx,
@@ -16,6 +12,7 @@ from lib.tensorrt.utilities import (
 )
 from modules import model_manager
 from modules.logger import logger
+from modules.shared import hf_cache_dir
 
 
 def create_onnx_path(name, onnx_dir, opt=True):
@@ -33,80 +30,8 @@ class EngineBuilder:
             device=torch.device("cuda"),
             use_auth_token=opts.hf_token,
             max_batch_size=opts.max_batch_size,
+            hf_cache_dir=hf_cache_dir(),
         )
-
-    def build_onnx(
-        self,
-        model_name: str,
-        onnx_dir: str,
-        model_data: BaseModel,
-    ):
-        onnx_path = create_onnx_path(model_name, onnx_dir, opt=False)
-        onnx_opt_path = create_onnx_path(model_name, onnx_dir)
-        if self.opts.force_onnx_export or not os.path.exists(onnx_path):
-            logger.info(f"Exporting model: {onnx_path}")
-            model = model_data.get_model()
-            with torch.inference_mode(), torch.autocast("cuda"):
-                inputs = model_data.get_sample_input(
-                    1, self.opts.opt_image_height, self.opts.opt_image_width
-                )
-                torch.onnx.export(
-                    model,
-                    inputs,
-                    onnx_path,
-                    export_params=True,
-                    opset_version=self.opts.onnx_opset,
-                    do_constant_folding=True,
-                    input_names=model_data.get_input_names(),
-                    output_names=model_data.get_output_names(),
-                    dynamic_axes=model_data.get_dynamic_axes(),
-                )
-            del model
-            torch.cuda.empty_cache()
-            gc.collect()
-        else:
-            logger.info(f"Found cached model: {onnx_path}")
-
-        if self.opts.force_onnx_optimize or not os.path.exists(onnx_opt_path):
-            logger.info(f"Generating optimizing model: {onnx_opt_path}")
-            onnx_opt_graph = model_data.optimize(onnx.load(onnx_path))
-            onnx.save(onnx_opt_graph, onnx_opt_path)
-
-    def build_engine(
-        self,
-        model_name: str,
-        engine_dir: str,
-        onnx_dir: str,
-        model_data: BaseModel,
-    ):
-        _, free_mem, _ = cudart.cudaMemGetInfo()
-        GiB = 2**30
-        if free_mem > 6 * GiB:
-            activation_carveout = 4 * GiB
-            max_workspace_size = free_mem - activation_carveout
-        else:
-            max_workspace_size = 0
-        model_data.min_latent_shape = self.opts.min_latent_resolution // 8
-        model_data.max_latent_shape = self.opts.max_latent_resolution // 8
-        engine = Engine(os.path.join(engine_dir, f"{model_name}.plan"))
-        onnx_opt_path = create_onnx_path(model_name, onnx_dir)
-        engine.build(
-            onnx_opt_path,
-            fp16=True,
-            input_profile=model_data.get_input_profile(
-                1,
-                self.opts.opt_image_height,
-                self.opts.opt_image_width,
-                static_batch=self.opts.build_static_batch,
-                static_shape=not self.opts.build_dynamic_shape,
-            ),
-            enable_all_tactics=self.opts.build_all_tactics,
-            enable_refit=self.opts.build_enable_refit,
-            enable_preview=self.opts.build_preview_features,
-            workspace_size=max_workspace_size,
-        )
-
-        return engine
 
     def build(self):
         model_dir = self.model.get_trt_path()
@@ -127,6 +52,7 @@ class EngineBuilder:
                     opt_image_height=self.opts.opt_image_height,
                     opt_image_width=self.opts.opt_image_width,
                     onnx_opset=self.opts.onnx_opset,
+                    hf_cache_dir=hf_cache_dir(),
                 )
             if not self.opts.force_onnx_optimize and os.path.exists(onnx_opt_path):
                 logger.info(f"Found cached model: {onnx_opt_path}")

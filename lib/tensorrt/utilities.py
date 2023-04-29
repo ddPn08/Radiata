@@ -21,7 +21,7 @@
 import gc
 from collections import OrderedDict
 from copy import copy
-from typing import Dict, List, Optional, Union
+from typing import *
 
 import diffusers
 import numpy as np
@@ -343,12 +343,19 @@ def create_models(
     use_auth_token: Optional[str],
     device: Union[str, torch.device],
     max_batch_size: int,
+    hf_cache_dir: Optional[str] = None,
 ):
     text_encoder_config = CLIPTextConfig.from_pretrained(
-        model_id, subfolder="text_encoder", use_auth_token=use_auth_token
+        model_id,
+        subfolder="text_encoder",
+        use_auth_token=use_auth_token,
+        cache_dir=hf_cache_dir,
     )
     unet = diffusers.UNet2DConditionModel.from_pretrained(
-        model_id, subfolder="unet", use_auth_token=use_auth_token
+        model_id,
+        subfolder="unet",
+        use_auth_token=use_auth_token,
+        cache_dir=hf_cache_dir,
     )
     unet_dim = unet.in_channels
     embedding_dim = text_encoder_config.hidden_size
@@ -438,8 +445,9 @@ def export_onnx(
     opt_image_height: int,
     opt_image_width: int,
     onnx_opset: int,
+    hf_cache_dir: Optional[str] = None,
 ):
-    model = model_data.get_model()
+    model = model_data.get_model(hf_cache_dir=hf_cache_dir)
     with torch.inference_mode(), torch.autocast("cuda"):
         inputs = model_data.get_sample_input(1, opt_image_height, opt_image_width)
         torch.onnx.export(
@@ -465,3 +473,6 @@ def optimize_onnx(
 ):
     onnx_opt_graph = model_data.optimize(onnx.load(onnx_path))
     onnx.save(onnx_opt_graph, onnx_opt_path)
+    del onnx_opt_graph
+    torch.cuda.empty_cache()
+    gc.collect()

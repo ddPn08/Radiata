@@ -1,0 +1,3 @@
+isort
+black
+pre-commit

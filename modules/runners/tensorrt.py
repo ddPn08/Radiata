@@ -1,29 +1,24 @@
 import gc
 import os
 import random
-import time
-from itertools import chain
+from concurrent.futures import ThreadPoolExecutor
+from queue import Queue
+from typing import *
 from typing import Optional, Union
 
-import numpy as np
 import torch
-from polygraphy import cuda
 
-from api.models.diffusion import (
-    DenoiseLatentData,
-    ImageGenerationOptions,
-    ImageGenerationResult,
-)
+from api.models.diffusion import ImageGenerationOptions
 from lib.tensorrt.pipeline_stable_diffusion import TensorRTStableDiffusionPipeline
 from lib.tensorrt.pipeline_stable_diffusion_img2img import (
     TensorRTStableDiffusionImg2ImgPipeline,
 )
-from modules import config, utils
+from modules import config
 from modules.acceleration.tensorrt.text_encoder import TensorRTCLIPTextModel
-from modules.app import sio
 from modules.diffusion.lpw import LongPromptWeightingPipeline
 from modules.images import save_image
 from modules.model import StableDiffusionModel
+from modules.shared import hf_cache_dir
 
 from .runner import BaseRunner
 
@@ -49,6 +44,7 @@ class TensorRTDiffusionRunner(BaseRunner):
             use_auth_token=config.get("hf_token"),
             device=torch.device("cuda"),
             max_batch_size=1,
+            hf_cache_dir=hf_cache_dir(),
         )
         self.loading = False
         self.text_encoder = TensorRTCLIPTextModel(
@@ -78,17 +74,19 @@ class TensorRTDiffusionRunner(BaseRunner):
         self.pipe._encode_prompt = _encode_prompt
 
     def teardown(self):
-        del self.pipe
+        if hasattr(self, "pipe"):
+            del self.pipe
         torch.cuda.empty_cache()
         gc.collect()
 
-    def generate(self, opts: ImageGenerationOptions) -> ImageGenerationResult:
+    def generate(self, opts: ImageGenerationOptions):
         self.wait_loading()
         if opts.seed is None or opts.seed == -1:
             opts.seed = random.randrange(0, 4294967294, 1)
 
-        e2e_tic = time.perf_counter()
         results = []
+
+        self.pipe.scheduler = self.get_scheduler(opts.scheduler_id)
 
         for i in range(opts.batch_count):
             manual_seed = opts.seed + i
@@ -98,46 +96,48 @@ class TensorRTDiffusionRunner(BaseRunner):
                 timestep: torch.Tensor,
                 latents: torch.Tensor,
             ):
-                timesteps = self.pipe.scheduler.timesteps
-                include = step % 10 == 0 and len(timesteps) - step >= 10
-                if include:
-                    factor = 1.0 / 0.18215 * latents
-                    sample_inp = cuda.DeviceView(
-                        ptr=factor.data_ptr(), shape=factor.shape, dtype=np.float32
-                    )
-                    images = self.pipe.run_engine("vae", {"latent": sample_inp})[
-                        "images"
-                    ]
-                    images = self.pipe.decode_images(images)
-                    images = [
-                        *images,
-                        *list(chain.from_iterable([x for x, _ in results])),
-                    ]
-
-                async def runner():
-                    data = DenoiseLatentData(
-                        step=step,
-                        preview={utils.img2b64(x): opts for x in images}
-                        if include
-                        else [],
-                    )
-                    await sio.emit("denoise_latent", data=data.dict())
-
-                utils.fire_and_forget(runner)()
+                queue.put(((opts.steps * i) + step,))
 
             generator = torch.Generator(device=self.pipe.device).manual_seed(
                 manual_seed
             )
-            images = self.pipe(
-                prompt=opts.prompt,
-                negative_prompt=opts.negative_prompt,
-                image_height=opts.image_height,
-                image_width=opts.image_width,
-                guidance_scale=opts.scale,
-                num_inference_steps=opts.steps,
-                generator=generator,
-                callback=callback,
-            )
+
+            queue = Queue()
+            done = object()
+
+            def callback(
+                step: int,
+                timestep: torch.Tensor,
+                latents: torch.Tensor,
+            ):
+                queue.put(((opts.steps * i) + step, results))
+
+            def on_done(feature):
+                queue.put(done)
+
+            with ThreadPoolExecutor() as executer:
+                feature = executer.submit(
+                    self.pipe,
+                    prompt=[opts.prompt] * opts.batch_size,
+                    negative_prompt=[opts.negative_prompt] * opts.batch_size,
+                    image_height=opts.image_height,
+                    image_width=opts.image_width,
+                    guidance_scale=opts.scale,
+                    num_inference_steps=opts.steps,
+                    generator=generator,
+                    callback=callback,
+                )
+                feature.add_done_callback(on_done)
+
+                while True:
+                    data = queue.get()
+                    if data is done:
+                        break
+                    else:
+                        yield data
+
+                images = feature.result()
+
             results.append(
                 (
                     images,
@@ -146,12 +146,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                     ),
                 )
             )
-
-        all_perf_time = time.perf_counter() - e2e_tic
-        result = ImageGenerationResult(images={}, performance=all_perf_time)
-        for images, opts in results:
             for img in images:
-                result.images[utils.img2b64(img)] = opts
                 save_image(img, opts)
 
-        return result
+        yield results

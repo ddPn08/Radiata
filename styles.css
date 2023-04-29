@@ -1,0 +1,31 @@
+
+/* general gradio fixes */
+
+:root, .dark{
+    --checkbox-label-gap: 0.25em 0.1em;
+    --section-header-text-size: 12pt;
+    --block-background-fill: transparent;
+}
+
+
+div.gradio-container{
+    max-width: unset !important;
+}
+
+@media screen and (min-width: 2500px) {
+    .image_generation_gallery {
+        min-height: 768px;
+    }
+}
+
+.image_generation_gallery img{
+    object-fit: scale-down !important;
+}
+
+.tool-button{
+    max-width: 2.2em;
+    min-width: 2.2em !important;
+    height: 2.4em;
+    align-self: center;
+    border-radius: 0.5em;
+}

@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import *
 
 from pydantic import BaseModel
 
@@ -18,22 +18,6 @@ class ImageGenerationOptions(BaseModel):
     img: Optional[str] = None
 
 
-class ImageGenerationResult(BaseModel):
-    images: Dict[str, ImageGenerationOptions]
-    performance: float
-
-
 class ImageGenerationError(BaseModel):
     error: Optional[str] = None
     message: str
-
-
-class ImageGenerationProgress(BaseModel):
-    images: Dict[str, ImageGenerationOptions]
-    progress: float
-    performance: float
-
-
-class DenoiseLatentData(BaseModel):
-    step: int
-    preview: Optional[Dict[str, ImageGenerationOptions]]

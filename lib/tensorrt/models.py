@@ -94,7 +94,7 @@ class BaseModel:
         self.embedding_dim = embedding_dim
         self.text_maxlen = text_maxlen
 
-    def get_model(self):
+    def get_model(self, hf_cache_dir=None):
         pass
 
     def get_input_names(self):
@@ -185,9 +185,12 @@ class CLIP(BaseModel):
         )
         self.name = "CLIP"
 
-    def get_model(self):
+    def get_model(self, hf_cache_dir=None):
         return CLIPTextModel.from_pretrained(
-            self.path, subfolder="text_encoder", use_auth_token=self.hf_token
+            self.path,
+            subfolder="text_encoder",
+            use_auth_token=self.hf_token,
+            cache_dir=hf_cache_dir,
         ).to(self.device)
 
     def get_input_names(self):
@@ -268,12 +271,13 @@ class UNet(BaseModel):
         self.unet_dim = unet_dim
         self.name = "UNet"
 
-    def get_model(self):
+    def get_model(self, hf_cache_dir=None):
         return UNet2DConditionModel.from_pretrained(
             self.path,
             subfolder="unet",
             use_auth_token=self.hf_token,
             torch_dtype=torch.float16 if self.fp16 else torch.float32,
+            cache_dir=hf_cache_dir,
         ).to(self.device)
 
     def get_input_names(self):
@@ -372,9 +376,12 @@ class VAE(BaseModel):
         )
         self.name = "VAE decoder"
 
-    def get_model(self):
+    def get_model(self, hf_cache_dir=None):
         vae = AutoencoderKL.from_pretrained(
-            self.path, subfolder="vae", use_auth_token=self.hf_token
+            self.path,
+            subfolder="vae",
+            use_auth_token=self.hf_token,
+            cache_dir=hf_cache_dir,
         ).to(self.device)
         vae.forward = vae.decode
         return vae
@@ -443,11 +450,11 @@ class VAE(BaseModel):
 
 
 class TorchVAEEncoder(torch.nn.Module):
-    def __init__(self, token, device, path):
+    def __init__(self, token, device, path, hf_cache_dir=None):
         super().__init__()
         self.path = path
         self.vae_encoder = AutoencoderKL.from_pretrained(
-            self.path, subfolder="vae", use_auth_token=token
+            self.path, subfolder="vae", use_auth_token=token, cache_dir=hf_cache_dir
         ).to(device)
 
     def forward(self, x):
@@ -465,8 +472,10 @@ class VAEEncoder(BaseModel):
         )
         self.name = "VAE encoder"
 
-    def get_model(self):
-        vae_encoder = TorchVAEEncoder(self.hf_token, self.device, self.path)
+    def get_model(self, hf_cache_dir=None):
+        vae_encoder = TorchVAEEncoder(
+            self.hf_token, self.device, self.path, hf_cache_dir=hf_cache_dir
+        )
         return vae_encoder
 
     def get_input_names(self):

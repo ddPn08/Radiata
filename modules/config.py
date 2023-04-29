@@ -1,6 +1,7 @@
 import argparse
-import json
 import os
+
+import toml
 
 DEFAULT_CONFIG = {
     "version": "0",
@@ -19,11 +20,17 @@ ROOT_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--allow-hosts", type=str, default="")
-parser.add_argument("--xformers", action="store_true")
+parser.add_argument("--config-file", type=str, default="config.toml")
+
+parser.add_argument("--host", type=str, default="")
+parser.add_argument("--port", type=int, default=7860)
+parser.add_argument("--share", action="store_true")
+
 parser.add_argument("--model-dir", type=str, default="models")
-parser.add_argument("--config-file", type=str, default="config.json")
 parser.add_argument("--hf-token", type=str)
+
+parser.add_argument("--xformers", action="store_true")
+parser.add_argument("--tensorrt", action="store_true")
 
 cmd_opts, _ = parser.parse_known_args(
     os.environ["COMMANDLINE_ARGS"].split(" ")
@@ -36,19 +43,24 @@ opts = {}
 
 
 def get_config():
+    if not os.path.exists(cmd_opts.config_file):
+        with open(cmd_opts.config_file, "w") as f:
+            f.write(toml.dumps(DEFAULT_CONFIG))
+
     with open(cmd_opts.config_file, mode="r") as f:
         txt = f.read()
 
     try:
-        config = json.loads(txt)
-    except:
+        config = toml.loads(txt)
+    except Exception as e:
+        print(e)
         config = DEFAULT_CONFIG
     return config
 
 
 def save_config():
     with open(cmd_opts.config_file, mode="w") as f:
-        f.write(json.dumps(opts))
+        f.write(toml.dumps(opts))
 
 
 def set(key: str, value: str):

@@ -2,7 +2,8 @@ import asyncio
 import base64
 import importlib
 import io
-from typing import List
+from distutils.version import LooseVersion
+from typing import *
 
 import numpy as np
 import torch
@@ -44,6 +45,12 @@ def is_installed(package: str):
         return False
 
     return spec is not None
+
+
+def tensorrt_is_available():
+    tensorrt = is_installed("tensorrt")
+    version = LooseVersion("2") > LooseVersion(torch.__version__)
+    return tensorrt, version
 
 
 def fire_and_forget(f):

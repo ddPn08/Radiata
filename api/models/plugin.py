@@ -13,4 +13,3 @@ class PluginData(BaseModel):
     meta: PluginMetaData
     module: str
     dir: str
-    js: bool

@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Union
+from typing import *
 
 import torch
 from transformers import CLIPTokenizer

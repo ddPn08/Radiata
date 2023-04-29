@@ -28,7 +28,7 @@ class BuildEngineOptions(BaseModel):
     build_dynamic_shape = True
     build_all_tactics = False
     build_preview_features = False
-    onnx_opset = 16
+    onnx_opset = 17
     force_engine_build = False
     force_onnx_export = False
     force_onnx_optimize = False

@@ -19,7 +19,7 @@
 
 import inspect
 import os
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import *
 
 import diffusers
 import torch
@@ -52,6 +52,7 @@ class TensorRTDiffusionPipeline:
         device: Union[str, torch.device],
         onnx_refit_dir: Optional[str] = None,
         max_batch_size: int = 1,
+        hf_cache_dir: Optional[str] = None,
     ):
         models = create_models(
             model_id=model_id,
@@ -59,6 +60,7 @@ class TensorRTDiffusionPipeline:
             use_auth_token=use_auth_token,
             device=device,
             max_batch_size=max_batch_size,
+            hf_cache_dir=hf_cache_dir,
         )
 
         engines = {}
@@ -91,10 +93,16 @@ class TensorRTDiffusionPipeline:
         )
 
         pipe.tokenizer = CLIPTokenizer.from_pretrained(
-            model_id, subfolder="tokenizer", use_auth_token=use_auth_token
+            model_id,
+            subfolder="tokenizer",
+            use_auth_token=use_auth_token,
+            cache_dir=hf_cache_dir,
         )
         pipe.scheduler = diffusers.DDIMScheduler.from_pretrained(
-            model_id, subfolder="scheduler", use_auth_token=use_auth_token
+            model_id,
+            subfolder="scheduler",
+            use_auth_token=use_auth_token,
+            cache_dir=hf_cache_dir,
         )
 
         return pipe
@@ -161,7 +169,7 @@ class TensorRTDiffusionPipeline:
         self,
         batch_size: int,
         unet_channels: int,
-        height: torch.Tensor,
+        height: int,
         width: int,
         dtype: torch.dtype,
         device: torch.device,
@@ -172,6 +180,7 @@ class TensorRTDiffusionPipeline:
                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
                 f" size of {batch_size}. Make sure the batch size matches the length of the generators."
             )
+
         shape = (batch_size, unet_channels, height, width)
         latents = diffusers.utils.randn_tensor(
             shape,
