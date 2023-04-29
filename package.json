@@ -1,12 +1,12 @@
 {
-  "name": "lsmith-docs",
+  "name": "radiata-docs",
   "version": "0.0.1",
-  "description": "Documentation for Lsmith project",
+  "description": "Documentation for Radiata project",
   "main": "index.js",
-  "repository": "https://github.com/ddPn08/Lsmith.git",
+  "repository": "https://github.com/ddPn08/Radiata.git",
   "license": "Apache-2.0",
   "devDependencies": {
-    "vitepress": "^1.0.0-alpha.46",
+    "vitepress": "1.0.0-alpha.74",
     "vue": "^3.2.47"
   },
   "scripts": {
