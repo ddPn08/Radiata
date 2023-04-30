@@ -20,11 +20,16 @@ def save_image(img: Image.Image, opts: ImageGenerationOptions):
     metadata.add_text("parameters", opts.json())
     dir = config.get(f"images/{get_category(opts)}/save_dir")
     basename: str = config.get(f"images/{get_category(opts)}/save_name")
-    filename = basename.format(
-        seed=opts.seed,
-        index=len(os.listdir(dir)) + 1 if os.path.exists(dir) else 0,
-        prompt=opts.prompt[:20].replace(" ", "_"),
-        date=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+    filename = (
+        basename.format(
+            seed=opts.seed,
+            index=len(os.listdir(dir)) + 1 if os.path.exists(dir) else 0,
+            prompt=opts.prompt[:20].replace(" ", "_"),
+            date=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+        )
+        .replace("\n", "_")
+        .replace("\r", "_")
+        .replace("\t", "_")
     )
     os.makedirs(dir, exist_ok=True)
     filepath = os.path.join(dir, filename)
