@@ -2,9 +2,7 @@ from typing import *
 
 import gradio as gr
 
-from api.models.tensorrt import BuildEngineOptions
 from modules import config, model_manager
-from modules.acceleration.tensorrt.engine import EngineBuilder
 from modules.ui import Tab
 from modules.utils import tensorrt_is_available
 
@@ -143,6 +141,9 @@ class Txt2Img(Tab):
         force_onnx_export: bool,
         force_onnx_optimize: bool,
     ):
+        from api.models.tensorrt import BuildEngineOptions
+        from modules.acceleration.tensorrt.engine import EngineBuilder
+
         yield "Building engine..."
         model_manager.runner.teardown()
         opts = BuildEngineOptions(
