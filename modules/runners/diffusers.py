@@ -1,7 +1,6 @@
 import gc
 import random
 from concurrent.futures import ThreadPoolExecutor
-from queue import Queue
 from typing import *
 
 import torch
@@ -12,7 +11,7 @@ from modules import config, utils
 from modules.diffusion.lpw import LongPromptWeightingPipeline
 from modules.images import save_image
 from modules.model import DiffusersModel
-from modules.shared import hf_cache_dir
+from modules.shared import hf_diffusers_cache_dir
 
 from .runner import BaseRunner
 
@@ -30,7 +29,7 @@ class DiffusersDiffusionRunner(BaseRunner):
             self.model.model_id,
             use_auth_token=config.get("hf_token"),
             torch_dtype=torch.float16,
-            cache_dir=hf_cache_dir(),
+            cache_dir=hf_diffusers_cache_dir(),
         ).to(
             torch.device("cuda")
         )
@@ -74,25 +73,14 @@ class DiffusersDiffusionRunner(BaseRunner):
 
         self.pipe.scheduler = self.get_scheduler(opts.scheduler_id)
 
+        callback, on_done, wait = self.yielder()
+
         for i in range(opts.batch_count):
             manual_seed = opts.seed + i
 
             generator = torch.Generator(device=self.pipe.device).manual_seed(
                 manual_seed
             )
-
-            queue = Queue()
-            done = object()
-
-            def callback(
-                step: int,
-                timestep: torch.Tensor,
-                latents: torch.Tensor,
-            ):
-                queue.put(((opts.steps * i) + step, results))
-
-            def on_done(feature):
-                queue.put(done)
 
             with ThreadPoolExecutor() as executer:
                 feature = executer.submit(
@@ -108,12 +96,7 @@ class DiffusersDiffusionRunner(BaseRunner):
                 )
                 feature.add_done_callback(on_done)
 
-                while True:
-                    data = queue.get()
-                    if data is done:
-                        break
-                    else:
-                        yield data
+                yield from wait()
 
                 images = feature.result().images
 

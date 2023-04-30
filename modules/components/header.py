@@ -105,35 +105,38 @@ def tensorrt_ui():
 
 
 def deepfloyd_if_ui():
-    with gr.Box(visible=model_manager.mode == "deepfloyd_if") as box:
-        with gr.Row():
-            stage_1_textbox = gr.Textbox(
-                placeholder="Stage 1", show_label=False, value="DeepFloyd/IF-I-L-v1.0"
-            )
-            stage_2_textbox = gr.Textbox(
-                placeholder="Stage 2", show_label=False, value="DeepFloyd/IF-II-L-v1.0"
-            )
-            stage_3_textbox = gr.Textbox(
-                placeholder="Stage 3",
-                show_label=False,
-                value="stabilityai/stable-diffusion-x4-upscaler",
-            )
-            apply_button = gr.Button("💾", elem_classes=["tool-button"])
+    with gr.Row(visible=model_manager.mode == "deepfloyd_if") as box:
+        stage_1_textbox = gr.Textbox(
+            placeholder="Stage 1", show_label=False, value="DeepFloyd/IF-I-L-v1.0"
+        )
+        stage_2_textbox = gr.Textbox(
+            placeholder="Stage 2", show_label=False, value="DeepFloyd/IF-II-L-v1.0"
+        )
+        stage_3_textbox = gr.Textbox(
+            placeholder="Stage 3",
+            show_label=False,
+            value="stabilityai/stable-diffusion-x4-upscaler",
+        )
+        mode = gr.Radio(
+            choices=["auto", "lowvram", "medvram", "highvram"], value="auto"
+        )
+        apply_button = gr.Button("💾", elem_classes=["tool-button"])
 
-    def apply(stage_1: str, stage_2: str, stage_3: str):
+    def apply(stage_1: str, stage_2: str, stage_3: str, mode: str):
         model = DiffusersModel(
             model_id="deepfloyd_if",
             IF_model_id_1=stage_1,
             IF_model_id_2=stage_2,
             IF_model_id_3=stage_3,
         )
-        model_manager._set_model(model)
-        return stage_1, stage_2, stage_3
+        model_manager._set_model(model, load_after=True)
+        model_manager.runner.mode = mode
+        return stage_1, stage_2, stage_3, mode
 
     apply_button.click(
         fn=apply,
-        inputs=[stage_1_textbox, stage_2_textbox, stage_3_textbox],
-        outputs=[stage_1_textbox, stage_2_textbox, stage_3_textbox],
+        inputs=[stage_1_textbox, stage_2_textbox, stage_3_textbox, mode],
+        outputs=[stage_1_textbox, stage_2_textbox, stage_3_textbox, mode],
     )
 
     return box
@@ -142,9 +145,10 @@ def deepfloyd_if_ui():
 def ui():
     with gr.Box():
         with gr.Row():
-            diffusers = diffusers_ui()
-            tensorrt = tensorrt_ui()
-            deepfloyd_if = deepfloyd_if_ui()
+            with gr.Column(scale=3):
+                diffusers = diffusers_ui()
+                tensorrt = tensorrt_ui()
+                deepfloyd_if = deepfloyd_if_ui()
             with gr.Row():
                 mode = gr.Radio(
                     choices=model_manager.available_mode,
@@ -175,9 +179,13 @@ def ui():
         )
 
     reload_button.click(
-        fn=reload, inputs=[], outputs=[mode, diffusers, tensorrt, deepfloyd_if]
+        fn=reload,
+        inputs=[],
+        outputs=[mode, diffusers, tensorrt, deepfloyd_if],
     )
 
     mode.change(
-        fn=on_change, inputs=[mode], outputs=[mode, diffusers, tensorrt, deepfloyd_if]
+        fn=on_change,
+        inputs=[mode],
+        outputs=[mode, diffusers, tensorrt, deepfloyd_if],
     )

@@ -44,7 +44,12 @@ def set_mode(m: ModelMode):
     global mode
     if m == mode:
         return
+    prev = mode
     mode = m
+    if prev == "deepfloyd_if":
+        set_default_model()
+        config.set("mode", mode)
+        return
     if runner is not None:
         runner.teardown()
     if sd_model is not None:
@@ -97,16 +102,14 @@ def _set_model(model: DiffusersModel):
             or sd_model.IF_model_id_2 is None
             or sd_model.IF_model_id_3 is None
         ):
-            runner = DeepfloydIFRunner(
-                DiffusersModel(
-                    model_id="deepfloyd_if",
-                    IF_model_id_1="DeepFloyd/IF-I-L-v1.0",
-                    IF_model_id_2="DeepFloyd/IF-II-L-v1.0",
-                    IF_model_id_3="stabilityai/stable-diffusion-x4-upscaler",
-                )
+            sd_model = DiffusersModel(
+                model_id="deepfloyd_if",
+                IF_model_id_1="DeepFloyd/IF-I-L-v1.0",
+                IF_model_id_2="DeepFloyd/IF-II-L-v1.0",
+                IF_model_id_3="stabilityai/stable-diffusion-x4-upscaler",
             )
-        else:
-            runner = DeepfloydIFRunner(sd_model)
+
+        runner = DeepfloydIFRunner(sd_model)
 
     config.set("model", sd_model.model_id)
 
@@ -140,11 +143,13 @@ def set_default_model():
     else:
         sd_model = None
 
-    if mode == "tensorrt" and not sd_model.trt_available():
+    if mode == "tensorrt" and sd_model and not sd_model.trt_available():
         sd_model = None
 
     if mode == "deepfloyd_if":
-        mode = "diffusers"
+        sd_model = DiffusersModel(model_id="deepfloyd_if")
+        _set_model(sd_model)
+        return
 
     if sd_model is None:
         available_models = [*sd_models]

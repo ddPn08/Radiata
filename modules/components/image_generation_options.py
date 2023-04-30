@@ -19,10 +19,22 @@ def ui():
                     placeholder="Negative Prompt",
                     show_label=False,
                 )
-            generate_button = gr.Button(
-                "Generate",
-                variant="primary",
-            )
+
+            with gr.Column(scale=1):
+                generate_button = gr.Button(
+                    "Generate",
+                    variant="primary",
+                )
+                with gr.Row():
+                    stage_2_button = gr.Button(
+                        "Stage 2",
+                        variant="secondary",
+                    )
+                    stage_3_button = gr.Button(
+                        "Stage 3",
+                        variant="secondary",
+                    )
+
         with gr.Row():
             with gr.Column(scale=1.25):
                 with gr.Row():
@@ -63,10 +75,10 @@ def ui():
                     )
                 with gr.Row():
                     width_slider = gr.Slider(
-                        value=512, minimum=128, maximum=2048, step=64, label="Width"
+                        value=512, minimum=64, maximum=2048, step=64, label="Width"
                     )
                     height_slider = gr.Slider(
-                        value=512, minimum=128, maximum=2048, step=64, label="Height"
+                        value=512, minimum=64, maximum=2048, step=64, label="Height"
                     )
                 with gr.Row():
                     seed_number = gr.Number(
@@ -78,6 +90,7 @@ def ui():
                 ).style(columns=4)
                 status_textbox = gr.Textbox(interactive=False, show_label=False)
 
+    buttons = [generate_button, stage_2_button, stage_3_button]
     prompts = [prompt_textbox, negative_prompt_textbox]
     options = [
         sampler_dropdown,  # sampler name
@@ -91,4 +104,4 @@ def ui():
     ]
     outputs = [output_images, status_textbox]
 
-    return generate_button, prompts, options, outputs
+    return buttons, prompts, options, outputs

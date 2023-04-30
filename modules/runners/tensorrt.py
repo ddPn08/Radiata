@@ -2,7 +2,6 @@ import gc
 import os
 import random
 from concurrent.futures import ThreadPoolExecutor
-from queue import Queue
 from typing import *
 from typing import Optional, Union
 
@@ -18,7 +17,7 @@ from modules.acceleration.tensorrt.text_encoder import TensorRTCLIPTextModel
 from modules.diffusion.lpw import LongPromptWeightingPipeline
 from modules.images import save_image
 from modules.model import DiffusersModel
-from modules.shared import hf_cache_dir
+from modules.shared import hf_diffusers_cache_dir
 
 from .runner import BaseRunner
 
@@ -31,6 +30,7 @@ class TensorRTDiffusionRunner(BaseRunner):
 
         self.engine_dir = os.path.join(model_dir, "engine")
         self.onnx_dir = os.path.join(model_dir, "onnx")
+
         self.activate()
 
     def activate(self):
@@ -44,7 +44,7 @@ class TensorRTDiffusionRunner(BaseRunner):
             use_auth_token=config.get("hf_token"),
             device=torch.device("cuda"),
             max_batch_size=1,
-            hf_cache_dir=hf_cache_dir(),
+            hf_cache_dir=hf_diffusers_cache_dir(),
         )
         self.loading = False
         self.text_encoder = TensorRTCLIPTextModel(
@@ -88,32 +88,14 @@ class TensorRTDiffusionRunner(BaseRunner):
 
         self.pipe.scheduler = self.get_scheduler(opts.scheduler_id)
 
+        callback, on_done, wait = self.yielder()
+
         for i in range(opts.batch_count):
             manual_seed = opts.seed + i
-
-            def callback(
-                step: int,
-                timestep: torch.Tensor,
-                latents: torch.Tensor,
-            ):
-                queue.put(((opts.steps * i) + step,))
 
             generator = torch.Generator(device=self.pipe.device).manual_seed(
                 manual_seed
             )
-
-            queue = Queue()
-            done = object()
-
-            def callback(
-                step: int,
-                timestep: torch.Tensor,
-                latents: torch.Tensor,
-            ):
-                queue.put(((opts.steps * i) + step, results))
-
-            def on_done(feature):
-                queue.put(done)
 
             with ThreadPoolExecutor() as executer:
                 feature = executer.submit(
@@ -129,12 +111,7 @@ class TensorRTDiffusionRunner(BaseRunner):
                 )
                 feature.add_done_callback(on_done)
 
-                while True:
-                    data = queue.get()
-                    if data is done:
-                        break
-                    else:
-                        yield data
+                yield from wait()
 
                 images = feature.result()
 

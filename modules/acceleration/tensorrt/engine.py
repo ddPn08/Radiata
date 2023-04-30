@@ -12,7 +12,7 @@ from lib.tensorrt.utilities import (
 )
 from modules import model_manager
 from modules.logger import logger
-from modules.shared import hf_cache_dir
+from modules.shared import hf_diffusers_cache_dir
 
 
 def create_onnx_path(name, onnx_dir, opt=True):
@@ -30,7 +30,7 @@ class EngineBuilder:
             device=torch.device("cuda"),
             use_auth_token=opts.hf_token,
             max_batch_size=opts.max_batch_size,
-            hf_cache_dir=hf_cache_dir(),
+            hf_cache_dir=hf_diffusers_cache_dir(),
         )
 
     def build(self):
@@ -52,7 +52,7 @@ class EngineBuilder:
                     opt_image_height=self.opts.opt_image_height,
                     opt_image_width=self.opts.opt_image_width,
                     onnx_opset=self.opts.onnx_opset,
-                    hf_cache_dir=hf_cache_dir(),
+                    hf_cache_dir=hf_diffusers_cache_dir(),
                 )
             if not self.opts.force_onnx_optimize and os.path.exists(onnx_opt_path):
                 logger.info(f"Found cached model: {onnx_opt_path}")
