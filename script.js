@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const root = gradioApp().getElementById("radiata-root")
             if (root) {
                 clearInterval(interval)
-                const button =  gradioApp().getElementById("inference-mode-reload-button")
+                const button = gradioApp().getElementById("inference-mode-reload-button")
                 button.click()
             }
         }, 500)
