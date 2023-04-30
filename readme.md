@@ -27,7 +27,7 @@
 ```
 git clone https://github.com/ddPn08/Radiata.git
 cd Radiata
-./webui-user.bat
+./launch-user.bat
 ```
 
 ## Linux
@@ -35,5 +35,5 @@ cd Radiata
 ```
 git clone https://github.com/ddPn08/Radiata.git
 cd Radiata
-./webui.sh
+./launch.sh
 ```
