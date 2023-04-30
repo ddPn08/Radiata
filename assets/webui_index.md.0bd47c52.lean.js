@@ -1,0 +1,1 @@
+import{_ as e,c as t,o,R as a}from"./chunks/framework.f1d5a83d.js";const m=JSON.parse('{"title":"WebUI","description":"","frontmatter":{},"headers":[],"relativePath":"webui/index.md","lastUpdated":1682863149000}'),s={name:"webui/index.md"},r=a("",4),d=[r];function i(c,n,l,_,h,u){return o(),t("div",null,d)}const b=e(s,[["render",i]]);export{m as __pageData,b as default};
