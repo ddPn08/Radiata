@@ -2,25 +2,24 @@
 
 ---
 
-<div align="center"><b>Lsmith is a fast Stable Diffusion WebUI using high-speed inference technology with TensorRT</b></div>
+<div align="center"><b>Radiata is a stable diffusion webui based on diffusers.</b></div>
 
 ---
 
-# Benchmark
-
-![benchmark](./images/readme-benchmark.png)
-
----
 
 # Screenshots
 
-- Batch generation
+- Stable diffusion
 
-![lemons](./images/readme-sample-screenshot-01.png)
+![](./images/readme-screenshots-01.png)
 
-- img2img support
+- Deepfloyd IF
 
-![img2img](./images/readme-sample-screenshot-img2img-01.png)
+![](./images/readme-screenshots-02.png)
+
+- TensorRT
+
+![](./images/readme-screenshots-03.png)
 
 ---
 

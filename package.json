@@ -6,6 +6,7 @@
   "repository": "https://github.com/ddPn08/Radiata.git",
   "license": "Apache-2.0",
   "devDependencies": {
+    "prettier": "^2.8.8",
     "vitepress": "1.0.0-alpha.74",
     "vue": "^3.2.47"
   },

@@ -10,7 +10,6 @@ Please read the rules before you start editing the documentation.
 
 - All new images will be in WEBP or JPEG format with maximum of 90% image quality
 - Images will be of sensible resolution (no 4k or higher resolution images)
-- English only
 - Grammarly correct when possible
 - Keep it simple
 
@@ -25,25 +24,25 @@ Once the change is reviewed and approved it will be merged into the branch and w
 ## Running documentation locally
 
 ::: info
-`yarn` can be installed using `npm install -g yarn`
+`pnpm` can be installed using `npm install -g pnpm`
 :::
 
 Clone the repository
 
 ```bash
-git clone https://github.com/ddPn08/Lsmith.git
+git clone https://github.com/ddPn08/Radiata.git
 ```
 
 Install dependencies
 
 ```bash
-yarn install
+pnpm i
 ```
 
 Run the documentation
 
 ```bash
-yarn docs:dev
+pnpm docs:dev
 ```
 
-You should now be able to access the documentation on `http://localhost:5173/Lsmith/`
+You should now be able to access the documentation on `http://localhost:5173/Radiata/`

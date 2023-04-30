@@ -2,8 +2,6 @@ import time
 from queue import Queue
 from typing import *
 
-import torch
-
 from api.models.diffusion import ImageGenerationOptions
 from lib.diffusers.scheduler import SCHEDULERS
 from modules import config

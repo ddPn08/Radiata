@@ -10,4 +10,6 @@ if exist ".git" (
     git reset --hard origin/main
 )
 
+echo "Update complete."
+
 pause
