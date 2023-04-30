@@ -5,3 +5,4 @@ Once started, access `http://localhost:7860` (or `<ip address>:<port number>` if
 ## How to use
 
 - [model](./model)
+- [TensorRT](./tensorrt)
