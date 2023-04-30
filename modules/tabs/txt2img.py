@@ -27,7 +27,7 @@ class Txt2Img(Tab):
         seed: int = -1,
     ):
         if model_manager.runner is None:
-            yield None, "Please select a model."
+            yield None, "Please select a model.", gr.Button.update()
 
         yield [], "Generating...", gr.Button.update(
             value="Generating...", variant="secondary", interactive=False

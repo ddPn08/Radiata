@@ -3,18 +3,19 @@ from typing import *
 from huggingface_hub import HfApi, ModelFilter
 
 from modules.logger import logger
+from modules.runners.runner import BaseRunner
 
 from . import config
-from .model import StableDiffusionModel
+from .model import DiffusersModel
 from .utils import tensorrt_is_available
 
-ModelMode = Literal["diffusers", "tensorrt"]
+ModelMode = Literal["diffusers", "tensorrt", "deepfloyd_if"]
 
-runner = None
+runner: Optional[BaseRunner] = None
 mode: ModelMode = config.get("mode")
-sd_models: List[StableDiffusionModel] = []
-sd_model: Optional[StableDiffusionModel] = None
-available_mode = ["diffusers"]
+sd_models: List[DiffusersModel] = []
+sd_model: Optional[DiffusersModel] = None
+available_mode = ["diffusers", "deepfloyd_if"]
 
 
 def init():
@@ -23,7 +24,7 @@ def init():
     if len(raw_model_list) < 1:
         raw_model_list = config.DEFAULT_CONFIG["models"]
     for model_data in raw_model_list:
-        sd_models.append(StableDiffusionModel(**model_data))
+        sd_models.append(DiffusersModel(**model_data))
 
     trt_module_status, trt_version_status = tensorrt_is_available()
     if config.get("tensorrt"):
@@ -44,8 +45,10 @@ def set_mode(m: ModelMode):
     if m == mode:
         return
     mode = m
-    runner.teardown()
-    set_model(sd_model.model_id)
+    if runner is not None:
+        runner.teardown()
+    if sd_model is not None:
+        set_model(sd_model.model_id)
     config.set("mode", mode)
 
 
@@ -58,24 +61,21 @@ def get_model(model_id: str):
 
 def add_model(model_id: str):
     global sd_models
-    sd_models.append(StableDiffusionModel(model_id=model_id))
+    sd_models.append(DiffusersModel(model_id=model_id))
     config.set("models", [x.dict() for x in sd_models])
 
 
-def set_model(model_id: str):
+def _set_model(model: DiffusersModel):
     global runner
     global sd_model
-    sd_model = [x for x in sd_models if x.model_id == model_id]
-    if len(sd_model) != 1:
-        raise ValueError("Model not found or multiple models with same ID.")
-    else:
-        sd_model = sd_model[0]
+
+    sd_model = model
 
     if runner is not None:
         runner.teardown()
         del runner
+        runner = None
 
-    logger.info(f"Loading {sd_model.model_id}...")
     if mode == "diffusers":
         from modules.runners.diffusers import DiffusersDiffusionRunner
 
@@ -83,22 +83,68 @@ def set_model(model_id: str):
     elif mode == "tensorrt":
         from .runners.tensorrt import TensorRTDiffusionRunner
 
+        if not model.trt_available():
+            logger.warning("TensorRT is not available for this model.")
+            set_default_model()
+            return
+
         runner = TensorRTDiffusionRunner(sd_model)
-    logger.info(f"Loaded {sd_model.model_id}...")
+    elif mode == "deepfloyd_if":
+        from .runners.deepfloyd_if import DeepfloydIFRunner
+
+        if (
+            sd_model.IF_model_id_1 is None
+            or sd_model.IF_model_id_2 is None
+            or sd_model.IF_model_id_3 is None
+        ):
+            runner = DeepfloydIFRunner(
+                DiffusersModel(
+                    model_id="deepfloyd_if",
+                    IF_model_id_1="DeepFloyd/IF-I-L-v1.0",
+                    IF_model_id_2="DeepFloyd/IF-II-L-v1.0",
+                    IF_model_id_3="stabilityai/stable-diffusion-x4-upscaler",
+                )
+            )
+        else:
+            runner = DeepfloydIFRunner(sd_model)
 
     config.set("model", sd_model.model_id)
 
 
+def set_model(model_id: str):
+    global runner, sd_model, mode
+    sd_model = [x for x in sd_models if x.model_id == model_id]
+    if len(sd_model) != 1:
+        raise ValueError("Model not found or multiple models with same ID.")
+    else:
+        sd_model = sd_model[0]
+
+    if mode == "tensorrt" and not sd_model.trt_available():
+        logger.warning("TensorRT is not available for this model.")
+        mode = "diffusers"
+        set_default_model()
+        return
+
+    logger.info(f"Loading {sd_model.model_id}...")
+    _set_model(sd_model)
+    logger.info(f"Loaded {sd_model.model_id}...")
+
+
 def set_default_model():
-    global sd_model
+    global sd_model, mode
     prev = config.get("model")
     sd_model = [x for x in sd_models if x.model_id == prev]
 
     if len(sd_model) == 1:
         sd_model = sd_model[0]
+    else:
+        sd_model = None
 
     if mode == "tensorrt" and not sd_model.trt_available():
         sd_model = None
+
+    if mode == "deepfloyd_if":
+        mode = "diffusers"
 
     if sd_model is None:
         available_models = [*sd_models]
@@ -107,7 +153,8 @@ def set_default_model():
             available_models = [x for x in available_models if x.trt_available()]
 
         if len(available_models) < 1:
-            set_mode("diffusers")
+            mode = "diffusers"
+            available_models = [*sd_models]
 
         sd_model = available_models[0]
 

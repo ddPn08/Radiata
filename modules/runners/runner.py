@@ -4,13 +4,13 @@ from typing import *
 from api.models.diffusion import ImageGenerationOptions
 from lib.diffusers.scheduler import SCHEDULERS
 from modules import config
-from modules.model import StableDiffusionModel
+from modules.model import DiffusersModel
 from modules.shared import hf_cache_dir
 
 
 class BaseRunner:
-    def __init__(self, model: StableDiffusionModel) -> None:
-        self.loading = True
+    def __init__(self, model: DiffusersModel) -> None:
+        self.loading = None
         self.model = model
 
     def activate(self) -> None:
@@ -20,6 +20,8 @@ class BaseRunner:
         pass
 
     def wait_loading(self):
+        if self.loading is None:
+            self.activate()
         while self.loading:
             time.sleep(0.5)
 

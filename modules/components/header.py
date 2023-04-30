@@ -1,6 +1,7 @@
 import gradio as gr
 
 from modules import model_manager
+from modules.model import DiffusersModel
 
 
 def model_list_str():
@@ -103,11 +104,47 @@ def tensorrt_ui():
     return row
 
 
+def deepfloyd_if_ui():
+    with gr.Box(visible=model_manager.mode == "deepfloyd_if") as box:
+        with gr.Row():
+            stage_1_textbox = gr.Textbox(
+                placeholder="Stage 1", show_label=False, value="DeepFloyd/IF-I-L-v1.0"
+            )
+            stage_2_textbox = gr.Textbox(
+                placeholder="Stage 2", show_label=False, value="DeepFloyd/IF-II-L-v1.0"
+            )
+            stage_3_textbox = gr.Textbox(
+                placeholder="Stage 3",
+                show_label=False,
+                value="stabilityai/stable-diffusion-x4-upscaler",
+            )
+            apply_button = gr.Button("💾", elem_classes=["tool-button"])
+
+    def apply(stage_1: str, stage_2: str, stage_3: str):
+        model = DiffusersModel(
+            model_id="deepfloyd_if",
+            IF_model_id_1=stage_1,
+            IF_model_id_2=stage_2,
+            IF_model_id_3=stage_3,
+        )
+        model_manager._set_model(model)
+        return stage_1, stage_2, stage_3
+
+    apply_button.click(
+        fn=apply,
+        inputs=[stage_1_textbox, stage_2_textbox, stage_3_textbox],
+        outputs=[stage_1_textbox, stage_2_textbox, stage_3_textbox],
+    )
+
+    return box
+
+
 def ui():
     with gr.Box():
         with gr.Row():
             diffusers = diffusers_ui()
             tensorrt = tensorrt_ui()
+            deepfloyd_if = deepfloyd_if_ui()
             with gr.Row():
                 mode = gr.Radio(
                     choices=model_manager.available_mode,
@@ -125,6 +162,7 @@ def ui():
             model_manager.mode,
             gr.Row.update(visible=model_manager.mode == "diffusers"),
             gr.Row.update(visible=model_manager.mode == "tensorrt"),
+            gr.Box.update(visible=model_manager.mode == "deepfloyd_if"),
         )
 
     def on_change(mode: str):
@@ -133,8 +171,13 @@ def ui():
             mode,
             gr.Row.update(visible=mode == "diffusers"),
             gr.Row.update(visible=mode == "tensorrt"),
+            gr.Box.update(visible=mode == "deepfloyd_if"),
         )
 
-    reload_button.click(fn=reload, inputs=[], outputs=[mode, diffusers, tensorrt])
+    reload_button.click(
+        fn=reload, inputs=[], outputs=[mode, diffusers, tensorrt, deepfloyd_if]
+    )
 
-    mode.change(fn=on_change, inputs=[mode], outputs=[mode, diffusers, tensorrt])
+    mode.change(
+        fn=on_change, inputs=[mode], outputs=[mode, diffusers, tensorrt, deepfloyd_if]
+    )

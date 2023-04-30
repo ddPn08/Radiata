@@ -17,14 +17,14 @@ from modules import config
 from modules.acceleration.tensorrt.text_encoder import TensorRTCLIPTextModel
 from modules.diffusion.lpw import LongPromptWeightingPipeline
 from modules.images import save_image
-from modules.model import StableDiffusionModel
+from modules.model import DiffusersModel
 from modules.shared import hf_cache_dir
 
 from .runner import BaseRunner
 
 
 class TensorRTDiffusionRunner(BaseRunner):
-    def __init__(self, model: StableDiffusionModel) -> None:
+    def __init__(self, model: DiffusersModel) -> None:
         super().__init__(model)
 
         model_dir = model.get_trt_path()

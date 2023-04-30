@@ -81,7 +81,7 @@ class Txt2Img(Tab):
                         minimum=7,
                         maximum=18,
                         step=1,
-                        value=16,
+                        value=17,
                     )
                 with gr.Row():
                     force_engine_build_checkbox = gr.Checkbox(

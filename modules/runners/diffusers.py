@@ -11,14 +11,14 @@ from api.models.diffusion import ImageGenerationOptions
 from modules import config, utils
 from modules.diffusion.lpw import LongPromptWeightingPipeline
 from modules.images import save_image
-from modules.model import StableDiffusionModel
+from modules.model import DiffusersModel
 from modules.shared import hf_cache_dir
 
 from .runner import BaseRunner
 
 
 class DiffusersDiffusionRunner(BaseRunner):
-    def __init__(self, model: StableDiffusionModel) -> None:
+    def __init__(self, model: DiffusersModel) -> None:
         super().__init__(model)
         self.activate()
 
