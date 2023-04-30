@@ -147,11 +147,11 @@ def prepare_environment():
 
     torch_command = os.environ.get(
         "TORCH_COMMAND",
-        "pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu118",
+        "pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 --extra-index-url https://download.pytorch.org/whl/cu117",
     )
     xformers_command = os.environ.get(
         "XFORMERS_COMMAND",
-        "pip install xformers",
+        "pip install xformers==0.0.16",
     )
 
     sys.argv, skip_install = extract_arg(sys.argv, "--skip-install")

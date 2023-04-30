@@ -21,9 +21,7 @@ TensorRT は NVIDIA が提供する高速な推論エンジンです。
 set PYTHON=
 set GIT=
 set VENV_DIR=
-set COMMANDLINE_ARGS=--tensorrt --reinstall-torch
-set TORCH_COMMAND=pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 --extra-index-url https://download.pytorch.org/whl/cu117
-set XFORMERS_COMMAND=pip install xformers==0.0.16
+set COMMANDLINE_ARGS=--tensorrt
 
 call launch.bat
 ```
@@ -35,15 +33,13 @@ call launch.bat
 1. `webui-user.sh`を以下のように書き換えます
 
 ```sh
-# export COMMANDLINE_ARGS="--tensorrt"
+# export COMMANDLINE_ARGS=""
 ```
 
 ↓
 
 ```sh
-export COMMANDLINE_ARGS="--tensorrt --reinstall-torch"
-export TORCH_COMMAND="pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 --extra-index-url https://download.pytorch.org/whl/cu117"
-export XFORMERS_COMMAND="pip install xformers==0.0.16"
+export COMMANDLINE_ARGS="--tensorrt"
 ```
 
 2. `launch-user.sh`を実行します

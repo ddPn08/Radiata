@@ -20,9 +20,7 @@ TensorRT is a high-speed inference engine provided by NVIDIA.
 set PYTHON=
 set GIT=
 set VENV_DIR=
-set COMMANDLINE_ARGS=--tensorrt --reinstall-torch
-set TORCH_COMMAND=pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 --extra-index-url https://download.pytorch.org/whl/cu117
-set XFORMERS_COMMAND=pip install xformers==0.0.16
+set COMMANDLINE_ARGS=--tensorrt
 
 call launch.bat
 ```
@@ -34,15 +32,13 @@ call launch.bat
 1. Rewrite `webui-user.sh` as follows
 
 ```sh
-# export COMMANDLINE_ARGS="--tensorrt"
+# export COMMANDLINE_ARGS=""
 ```
 
 ↓
 
 ```sh
-export COMMANDLINE_ARGS="--tensorrt --reinstall-torch"
-export TORCH_COMMAND="pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 --extra-index-url https://download.pytorch.org/whl/cu117"
-export XFORMERS_COMMAND="pip install xformers==0.0.16"
+export COMMANDLINE_ARGS="--tensorrt"
 ```
 
 2. Run `launch-user.sh`
