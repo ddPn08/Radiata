@@ -37,6 +37,3 @@ git clone https://github.com/ddPn08/Radiata.git
 cd Radiata
 ./webui.sh
 ```
-
-# Document
-More detailed documentation here: [Radiata Document](https://ddpn08.github.io/Radiata/)
