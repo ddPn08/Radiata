@@ -21,6 +21,9 @@
 # install command for torch
 #export TORCH_COMMAND="pip install torch --extra-index-url https://download.pytorch.org/whl/cu118"
 
+# install command for xformers
+#export XFORMERS_COMMAND="pip install xformers"
+
 # Requirements file to use for stable-diffusion-webui
 #export REQS_FILE="requirements_versions.txt"
 
