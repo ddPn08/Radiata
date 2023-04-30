@@ -7,6 +7,104 @@ export default defineConfig({
     appearance: 'dark',
     lastUpdated: true,
     base: '/Radiata/',
+    locales: {
+        en: {
+            label: 'English',
+            lang: 'en',
+            link: '/en/',
+            themeConfig: {
+                sidebar: [
+                    {
+                        text: 'Introduction',
+                        items: [{ text: 'Introduction', link: '/en/' }],
+                    },
+                    {
+                        text: 'Installation',
+                        items: [
+                            { text: 'Windows', link: '/en/installation/windows' },
+                            { text: 'Linux', link: '/en/installation/linux' },
+                        ],
+                    },
+                    {
+                        text: 'Usage',
+                        items: [
+                            { text: 'WebUI', link: '/en/usage/' },
+                            { text: 'Model', link: '/en/usage/model' },
+                            { text: 'TensorRT', link: '/en/usage/tensorrt' },
+                        ],
+                    },
+                    {
+                        text: 'Developers',
+                        items: [
+                            { text: 'TensorRT', link: '/en/developers/tensorrt' },
+                            {
+                                text: 'Documentation',
+                                link: '/en/developers/documentation',
+                            },
+                        ],
+                    },
+                    {
+                        text: 'Troubleshooting',
+                        items: [
+                            { text: 'Linux', link: '/en/troubleshooting/linux' },
+                            {
+                                text: 'Windows',
+                                link: '/en/troubleshooting/windows',
+                            },
+                        ],
+                    },
+                ],
+            },
+        },
+        ja: {
+            label: 'Japanese',
+            lang: 'ja',
+            link: '/ja/',
+            themeConfig: {
+                sidebar: [
+                    {
+                        text: '導入',
+                        items: [{ text: 'Introduction', link: '/ja/' }],
+                    },
+                    {
+                        text: 'インストール',
+                        items: [
+                            { text: 'Windows', link: '/ja/installation/windows' },
+                            { text: 'Linux', link: '/ja/installation/linux' },
+                        ],
+                    },
+                    {
+                        text: '使い方',
+                        items: [
+                            { text: 'WebUI', link: '/ja/usage/' },
+                            { text: 'Model', link: '/ja/usage/model' },
+                            { text: 'TensorRT', link: '/ja/usage/tensorrt' },
+                        ],
+                    },
+                    {
+                        text: '開発者向け',
+                        items: [
+                            { text: 'TensorRT', link: '/ja/developers/tensorrt' },
+                            {
+                                text: 'Documentation',
+                                link: '/ja/developers/documentation',
+                            },
+                        ],
+                    },
+                    {
+                        text: 'トラブルシューティング',
+                        items: [
+                            { text: 'Linux', link: '/ja/troubleshooting/linux' },
+                            {
+                                text: 'Windows',
+                                link: '/ja/troubleshooting/windows',
+                            },
+                        ],
+                    },
+                ],
+            },
+        },
+    },
     themeConfig: {
         editLink: {
             pattern: 'https://github.com/ddPn08/Radiata/edit/main/docs/:path',
@@ -19,41 +117,14 @@ export default defineConfig({
         ],
         sidebar: [
             {
-                text: 'Introduction',
-                items: [{ text: 'Introduction', link: '/' }],
+                text: 'Radiata documentation',
+                items: [{ text: 'Languages', link: '/' }],
             },
             {
-                text: 'Installation',
+                text: 'Languages',
                 items: [
-                    { text: 'Windows', link: '/installation/windows' },
-                    { text: 'Linux', link: '/installation/linux' },
-                ],
-            },
-            {
-                text: 'WebUI',
-                items: [
-                    { text: 'WebUI', link: '/webui/' },
-                    { text: 'Model', link: '/webui/model' },
-                ],
-            },
-            {
-                text: 'Developers',
-                items: [
-                    { text: 'TensorRT', link: '/developers/tensorrt' },
-                    {
-                        text: 'Documentation',
-                        link: '/developers/documentation',
-                    },
-                ],
-            },
-            {
-                text: 'Troubleshooting',
-                items: [
-                    { text: 'Linux', link: '/troubleshooting/linux' },
-                    {
-                        text: 'Windows',
-                        link: '/troubleshooting/windows',
-                    },
+                    { text: 'English', link: '/en/' },
+                    { text: '日本語', link: '/ja/' },
                 ],
             },
         ],

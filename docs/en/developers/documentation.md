@@ -2,17 +2,6 @@
 
 This is will show you how to edit our documentation and how to properly contribute while outlining some rules for us.
 
-## Rules
-
-::: warning
-Please read the rules before you start editing the documentation.
-:::
-
-- All new images will be in WEBP or JPEG format with maximum of 90% image quality
-- Images will be of sensible resolution (no 4k or higher resolution images)
-- Grammarly correct when possible
-- Keep it simple
-
 ## How to edit
 
 All documentation is written in Markdown and is located in the `docs` folder. You can edit it directly on GitHub or you can clone the repository and edit it locally.
