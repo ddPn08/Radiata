@@ -1,0 +1,1 @@
+import{_ as e,c as t,o}from"./chunks/framework.f1d5a83d.js";const _=JSON.parse('{"title":"","description":"","frontmatter":{},"headers":[],"relativePath":"en/troubleshooting/linux.md","lastUpdated":1682951790000}'),n={name:"en/troubleshooting/linux.md"};function a(r,s,c,i,l,p){return o(),t("div")}const u=e(n,[["render",a]]);export{_ as __pageData,u as default};
