@@ -3,18 +3,12 @@ import os
 import random
 from concurrent.futures import ThreadPoolExecutor
 from typing import *
-from typing import Optional, Union
 
 import torch
 
 from api.models.diffusion import ImageGenerationOptions
-from lib.tensorrt.pipeline_stable_diffusion import TensorRTStableDiffusionPipeline
-from lib.tensorrt.pipeline_stable_diffusion_img2img import (
-    TensorRTStableDiffusionImg2ImgPipeline,
-)
 from modules import config
-from modules.acceleration.tensorrt.text_encoder import TensorRTCLIPTextModel
-from modules.diffusion.lpw import LongPromptWeightingPipeline
+from modules.diffusion.pipelines.tensorrt import TensorRTStableDiffusionPipeline
 from modules.images import save_image
 from modules.model import DiffusersModel
 from modules.shared import hf_diffusers_cache_dir
@@ -31,60 +25,39 @@ class TensorRTDiffusionRunner(BaseRunner):
         self.engine_dir = os.path.join(model_dir, "engine")
         self.onnx_dir = os.path.join(model_dir, "onnx")
 
+        self.pipe: Optional[TensorRTStableDiffusionPipeline] = None
+
         self.activate()
 
     def activate(self):
         self.loading = True
-        self.pipe: Union[
-            TensorRTStableDiffusionPipeline, TensorRTStableDiffusionImg2ImgPipeline
-        ] = TensorRTStableDiffusionPipeline.from_pretrained(
-            model_id=self.model.model_id,
-            onnx_dir=self.onnx_dir,
-            engine_dir=self.engine_dir,
-            use_auth_token=config.get("hf_token"),
-            device=torch.device("cuda"),
-            max_batch_size=1,
-            hf_cache_dir=hf_diffusers_cache_dir(),
+        self.pipe: TensorRTStableDiffusionPipeline = (
+            TensorRTStableDiffusionPipeline.from_pretrained(
+                model_id=self.model.model_id,
+                engine_dir=self.engine_dir,
+                use_auth_token=config.get("hf_token"),
+                device=torch.device("cuda"),
+                max_batch_size=1,
+                hf_cache_dir=hf_diffusers_cache_dir(),
+            )
         )
         self.loading = False
-        self.text_encoder = TensorRTCLIPTextModel(
-            self.pipe.engine["clip"], self.pipe.stream
-        )
-
-        self.lpw = LongPromptWeightingPipeline(
-            self.text_encoder, self.pipe.tokenizer, self.pipe.device
-        )
-
-        def _encode_prompt(
-            prompt,
-            device,
-            num_images_per_prompt,
-            do_classifier_free_guidance,
-            negative_prompt=None,
-            prompt_embeds: Optional[torch.FloatTensor] = None,
-            negative_prompt_embeds: Optional[torch.FloatTensor] = None,
-        ):
-            return self.lpw(
-                prompt,
-                negative_prompt,
-                num_images_per_prompt,
-                max_embeddings_multiples=1,
-            ).to(dtype=torch.float16)
-
-        self.pipe._encode_prompt = _encode_prompt
 
     def teardown(self):
-        if hasattr(self, "pipe"):
-            del self.pipe
+        del self.pipe
+        self.pipe = None
         torch.cuda.empty_cache()
         gc.collect()
 
-    def generate(self, opts: ImageGenerationOptions):
+    def generate(
+        self, opts: ImageGenerationOptions, init_image: Optional[torch.Tensor] = None
+    ):
         self.wait_loading()
-        if opts.seed is None or opts.seed == -1:
-            opts.seed = random.randrange(0, 4294967294, 1)
 
         results = []
+
+        if opts.seed is None or opts.seed == -1:
+            opts.seed = random.randrange(0, 4294967294, 1)
 
         self.pipe.scheduler = self.get_scheduler(opts.scheduler_id)
 
@@ -102,18 +75,20 @@ class TensorRTDiffusionRunner(BaseRunner):
                     self.pipe,
                     prompt=[opts.prompt] * opts.batch_size,
                     negative_prompt=[opts.negative_prompt] * opts.batch_size,
-                    image_height=opts.image_height,
-                    image_width=opts.image_width,
+                    height=opts.image_height,
+                    width=opts.image_width,
                     guidance_scale=opts.scale,
                     num_inference_steps=opts.steps,
                     generator=generator,
+                    strength=opts.strength,
                     callback=callback,
+                    image=init_image,
                 )
                 feature.add_done_callback(on_done)
 
                 yield from wait()
 
-                images = feature.result()
+                images = feature.result().images
 
             results.append(
                 (

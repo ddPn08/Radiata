@@ -339,7 +339,6 @@ def prepare_mask_and_masked_image(image: Image.Image, mask: Image.Image):
 
 def create_models(
     model_id: str,
-    stages: List[str],
     use_auth_token: Optional[str],
     device: Union[str, torch.device],
     max_batch_size: int,
@@ -383,18 +382,15 @@ def create_models(
             max_batch_size=max_batch_size,
             embedding_dim=embedding_dim,
         ),
-    }
-
-    if "vae_encoder" in stages:
-        models["vae_encoder"] = VAEEncoder(
+        "vae_encoder": VAEEncoder(
             hf_token=use_auth_token,
             device=device,
             path=model_id,
             max_batch_size=max_batch_size,
             embedding_dim=embedding_dim,
-        )
-    del unet
-    del text_encoder_config
+        ),
+    }
+    del unet, text_encoder_config
     torch.cuda.empty_cache()
     gc.collect()
     return models

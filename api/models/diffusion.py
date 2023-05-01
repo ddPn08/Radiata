@@ -15,7 +15,7 @@ class ImageGenerationOptions(BaseModel):
     image_width: int = 512
     seed: Optional[int] = None
     strength: Optional[float] = None
-    img: Optional[str] = None
+    img2img: bool = False
 
 
 class ImageGenerationError(BaseModel):

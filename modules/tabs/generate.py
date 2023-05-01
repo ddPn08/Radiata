@@ -19,6 +19,8 @@ def generate_fn(fn):
         width: int = 512,
         height: int = 512,
         seed: int = -1,
+        strength: float = 0.5,
+        init_image=None,
     ):
         opts = ImageGenerationOptions(
             prompt=prompt,
@@ -30,16 +32,18 @@ def generate_fn(fn):
             scale=cfg_scale,
             image_height=height,
             image_width=width,
+            strength=strength,
             seed=seed,
+            img2img=init_image is not None,
         )
-        yield from fn(self, opts)
+        yield from fn(self, opts, init_image)
 
     return wrapper
 
 
 class Txt2Img(Tab):
     def title(self):
-        return "txt2img"
+        return "Generate"
 
     def sort(self):
         return 1
@@ -48,6 +52,7 @@ class Txt2Img(Tab):
     def generate_image(
         self,
         opts: ImageGenerationOptions,
+        init_image,
     ):
         if model_manager.runner is None:
             yield None, "Please select a model.", gr.Button.update()
@@ -58,7 +63,7 @@ class Txt2Img(Tab):
 
         count = 0
 
-        for data in model_manager.runner.generate(opts):
+        for data in model_manager.runner.generate(opts, init_image):
             if type(data) == tuple:
                 step, preview = data
                 progress = step / (opts.batch_count * opts.steps)
@@ -89,6 +94,7 @@ class Txt2Img(Tab):
     def if_stage_2(
         self,
         opts: ImageGenerationOptions,
+        init_image,
     ):
         if model_manager.mode != "deepfloyd_if":
             yield None, "Current mode is not deepfloyd_if.", gr.Button.update()
@@ -132,6 +138,7 @@ class Txt2Img(Tab):
     def if_stage_3(
         self,
         opts: ImageGenerationOptions,
+        init_image,
     ):
         if model_manager.mode != "deepfloyd_if":
             yield None, "Current mode is not deepfloyd_if.", gr.Button.update()

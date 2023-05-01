@@ -4,11 +4,10 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import *
 
 import torch
-from diffusers import StableDiffusionImg2ImgPipeline, StableDiffusionPipeline
 
 from api.models.diffusion import ImageGenerationOptions
 from modules import config, utils
-from modules.diffusion.lpw import LongPromptWeightingPipeline
+from modules.diffusion.pipelines.diffusers import DiffusersPipeline
 from modules.images import save_image
 from modules.model import DiffusersModel
 from modules.shared import hf_diffusers_cache_dir
@@ -23,16 +22,12 @@ class DiffusersDiffusionRunner(BaseRunner):
 
     def activate(self) -> None:
         self.loading = True
-        self.pipe: Union[
-            StableDiffusionPipeline, StableDiffusionImg2ImgPipeline
-        ] = StableDiffusionPipeline.from_pretrained(
+        self.pipe: DiffusersPipeline = DiffusersPipeline.from_pretrained(
             self.model.model_id,
             use_auth_token=config.get("hf_token"),
             torch_dtype=torch.float16,
             cache_dir=hf_diffusers_cache_dir(),
-        ).to(
-            torch.device("cuda")
-        )
+        ).to(device=torch.device("cuda"))
 
         self.pipe.safety_checker = None
         self.pipe.enable_attention_slicing()
@@ -40,30 +35,15 @@ class DiffusersDiffusionRunner(BaseRunner):
             self.pipe.enable_xformers_memory_efficient_attention()
         self.loading = False
 
-        self.lpw = LongPromptWeightingPipeline(
-            self.pipe.text_encoder, self.pipe.tokenizer, self.pipe.device
-        )
-
-        def _encode_prompt(
-            prompt,
-            device,
-            num_images_per_prompt,
-            do_classifier_free_guidance,
-            negative_prompt=None,
-            prompt_embeds: Optional[torch.FloatTensor] = None,
-            negative_prompt_embeds: Optional[torch.FloatTensor] = None,
-        ):
-            return self.lpw(prompt, negative_prompt, num_images_per_prompt)
-
-        self.pipe._encode_prompt = _encode_prompt
-
     def teardown(self):
         if hasattr(self, "pipe"):
             del self.pipe
         torch.cuda.empty_cache()
         gc.collect()
 
-    def generate(self, opts: ImageGenerationOptions):
+    def generate(
+        self, opts: ImageGenerationOptions, init_image: Optional[torch.Tensor] = None
+    ):
         self.wait_loading()
 
         results = []
@@ -92,7 +72,9 @@ class DiffusersDiffusionRunner(BaseRunner):
                     guidance_scale=opts.scale,
                     num_inference_steps=opts.steps,
                     generator=generator,
+                    strength=opts.strength,
                     callback=callback,
+                    image=init_image,
                 )
                 feature.add_done_callback(on_done)
 

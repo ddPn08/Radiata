@@ -73,6 +73,10 @@ def ui():
                         step=0.5,
                         label="CFG Scale",
                     )
+                    seed_number = gr.Number(
+                        label="Seed",
+                        value=-1,
+                    )
                 with gr.Row():
                     width_slider = gr.Slider(
                         value=512, minimum=64, maximum=2048, step=64, label="Width"
@@ -80,10 +84,16 @@ def ui():
                     height_slider = gr.Slider(
                         value=512, minimum=64, maximum=2048, step=64, label="Height"
                     )
-                with gr.Row():
-                    seed_number = gr.Number(
-                        value=-1,
-                    )
+
+                with gr.Column():
+                    with gr.Accordion("Img2Img"):
+                        init_image = gr.Image(label="Init Image", type="pil")
+                        strength_slider = gr.Slider(
+                            value=0.5,
+                            minimum=0,
+                            maximum=1,
+                            step=0.01,
+                        )
             with gr.Column():
                 output_images = gr.Gallery(
                     elem_classes="image_generation_gallery"
@@ -101,6 +111,8 @@ def ui():
         width_slider,  # width
         height_slider,  # height
         seed_number,  # seed
+        strength_slider,  # strength
+        init_image,  # init image
     ]
     outputs = [output_images, status_textbox]
 

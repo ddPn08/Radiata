@@ -11,8 +11,7 @@ from modules import config
 
 
 def get_category(opts: ImageGenerationOptions):
-    if hasattr(opts, "img"):
-        return "img2img" if opts.img is not None else "txt2img"
+    return "img2img" if opts.img2img is not None else "txt2img"
 
 
 def save_image(img: Image.Image, opts: ImageGenerationOptions):

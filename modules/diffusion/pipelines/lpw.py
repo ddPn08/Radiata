@@ -113,11 +113,10 @@ class LongPromptWeightingPipeline:
         self,
         text_encoder,
         tokenizer: CLIPTokenizer,
-        device=torch.device("cuda"),
-    ) -> None:
+    ):
         self.text_encoder = text_encoder
         self.tokenizer = tokenizer
-        self.device = device
+        self.device = torch.device("cuda")
 
     def get_unweighted_text_embeddings(
         self,
