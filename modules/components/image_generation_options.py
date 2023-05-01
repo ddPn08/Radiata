@@ -20,20 +20,10 @@ def ui():
                     show_label=False,
                 )
 
-            with gr.Column(scale=1):
-                generate_button = gr.Button(
-                    "Generate",
-                    variant="primary",
-                )
-                with gr.Row():
-                    stage_2_button = gr.Button(
-                        "Stage 2",
-                        variant="secondary",
-                    )
-                    stage_3_button = gr.Button(
-                        "Stage 3",
-                        variant="secondary",
-                    )
+            generate_button = gr.Button(
+                "Generate",
+                variant="primary",
+            )
 
         with gr.Row():
             with gr.Column(scale=1.25):
@@ -100,7 +90,6 @@ def ui():
                 ).style(columns=4)
                 status_textbox = gr.Textbox(interactive=False, show_label=False)
 
-    buttons = [generate_button, stage_2_button, stage_3_button]
     prompts = [prompt_textbox, negative_prompt_textbox]
     options = [
         sampler_dropdown,  # sampler name
@@ -116,4 +105,4 @@ def ui():
     ]
     outputs = [output_images, status_textbox]
 
-    return buttons, prompts, options, outputs
+    return generate_button, prompts, options, outputs

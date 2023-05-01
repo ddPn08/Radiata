@@ -6,3 +6,4 @@ transformers==4.28.1
 sentencepiece~=0.1
 pillow
 toml
+colored

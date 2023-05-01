@@ -1,10 +1,16 @@
+import gc
 import inspect
 from typing import *
 
 import numpy as np
 import PIL.Image
 import torch
-from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel
+from diffusers import (
+    AutoencoderKL,
+    DDPMScheduler,
+    StableDiffusionPipeline,
+    UNet2DConditionModel,
+)
 from diffusers.models import AutoencoderKL, UNet2DConditionModel
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 from diffusers.utils import PIL_INTERPOLATION, numpy_to_pil, randn_tensor
@@ -24,50 +30,19 @@ class DiffusersPipeline:
         cache_dir: Optional[str] = None,
         subfolder: Optional[str] = None,
     ):
-        def create_subfolder(path: str):
-            nonlocal subfolder
-            if subfolder is not None:
-                if subfolder.endswith("/"):
-                    subfolder = subfolder[:-1]
-                return subfolder + "/" + path
-            else:
-                return path
+        temporary_pipe = StableDiffusionPipeline.from_pretrained(
+            pretrained_model_id,
+            use_auth_token=use_auth_token,
+            torch_dtype=torch_dtype,
+            cache_dir=cache_dir,
+        )
 
-        vae = AutoencoderKL.from_pretrained(
-            pretrained_model_id,
-            use_auth_token=use_auth_token,
-            torch_dtype=torch_dtype,
-            cache_dir=cache_dir,
-            subfolder=create_subfolder("vae"),
-        )
-        tokenizer = CLIPTokenizer.from_pretrained(
-            pretrained_model_id,
-            use_auth_token=use_auth_token,
-            torch_dtype=torch_dtype,
-            cache_dir=cache_dir,
-            subfolder=create_subfolder("tokenizer"),
-        )
-        text_encoder = CLIPTextModel.from_pretrained(
-            pretrained_model_id,
-            use_auth_token=use_auth_token,
-            torch_dtype=torch_dtype,
-            cache_dir=cache_dir,
-            subfolder=create_subfolder("text_encoder"),
-        )
-        unet = UNet2DConditionModel.from_pretrained(
-            pretrained_model_id,
-            use_auth_token=use_auth_token,
-            torch_dtype=torch_dtype,
-            cache_dir=cache_dir,
-            subfolder=create_subfolder("unet"),
-        )
-        scheduler = DDPMScheduler.from_pretrained(
-            pretrained_model_id,
-            use_auth_token=use_auth_token,
-            torch_dtype=torch_dtype,
-            cache_dir=cache_dir,
-            subfolder=create_subfolder("scheduler"),
-        )
+        vae = temporary_pipe.vae
+        text_encoder = temporary_pipe.text_encoder
+        tokenizer = temporary_pipe.tokenizer
+        unet = temporary_pipe.unet
+        scheduler = temporary_pipe.scheduler
+
         pipe = cls(
             vae=vae,
             text_encoder=text_encoder,
@@ -75,6 +50,9 @@ class DiffusersPipeline:
             unet=unet,
             scheduler=scheduler,
         )
+        del temporary_pipe
+        torch.cuda.empty_cache()
+        gc.collect()
         return pipe
 
     def __init__(

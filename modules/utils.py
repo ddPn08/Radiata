@@ -9,6 +9,11 @@ import numpy as np
 import torch
 from PIL import Image
 
+from lib.diffusers.scheduler import SCHEDULERS
+
+from . import config
+from .shared import hf_diffusers_cache_dir
+
 
 def img2b64(img: Image.Image, format="png"):
     buf = io.BytesIO()
@@ -61,3 +66,12 @@ def fire_and_forget(f):
         asyncio.new_event_loop().run_in_executor(None, runner)
 
     return wrapped
+
+
+def create_scheduler(scheduler_name: str, model_id: str):
+    return SCHEDULERS[scheduler_name].from_pretrained(
+        model_id,
+        subfolder="scheduler",
+        use_auth_token=config.get("hf_token"),
+        cache_dir=hf_diffusers_cache_dir(),
+    )

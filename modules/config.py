@@ -2,15 +2,18 @@ import argparse
 import os
 
 import toml
+from packaging.version import Version
+
+from .version import update
 
 DEFAULT_CONFIG = {
-    "version": "0",
+    "version": "0.0.1",
     "images/txt2img/save_dir": "outputs/txt2img",
     "images/txt2img/save_name": "{index}-{seed}-{prompt}.png",
     "images/img2img/save_dir": "outputs/img2img",
     "images/img2img/save_name": "{index}-{seed}-{prompt}.png",
     "model_dir": "models",
-    "models": [{"model_id": "runwayml/stable-diffusion-v1-5"}],
+    "models": ["runwayml/stable-diffusion-v1-5"],
     "model": "runwayml/stable-diffusion-v1-5",
     "mode": "diffusers",
 }
@@ -58,9 +61,9 @@ def get_config():
     return config
 
 
-def save_config():
+def save_config(options: dict = None):
     with open(cmd_opts.config_file, mode="w") as f:
-        f.write(toml.dumps(opts))
+        f.write(toml.dumps(options or opts))
 
 
 def set(key: str, value: str):
@@ -85,4 +88,14 @@ def init():
         opts = DEFAULT_CONFIG
         save_config()
     else:
+        config = get_config()
+        if Version(config["version"]) < Version(DEFAULT_CONFIG["version"]):
+            for v in update.update(
+                config["version"],
+                DEFAULT_CONFIG["version"],
+            ):
+                config = get_config()
+                config["version"] = v
+                save_config(config)
+
         opts = get_config()

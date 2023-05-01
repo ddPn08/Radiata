@@ -54,7 +54,7 @@ class Txt2Img(Tab):
         opts: ImageGenerationOptions,
         init_image,
     ):
-        if model_manager.runner is None:
+        if model_manager.sd_model is None:
             yield None, "Please select a model.", gr.Button.update()
 
         yield [], "Generating...", gr.Button.update(
@@ -63,7 +63,7 @@ class Txt2Img(Tab):
 
         count = 0
 
-        for data in model_manager.runner.generate(opts, init_image):
+        for data in model_manager.sd_model(opts, init_image):
             if type(data) == tuple:
                 step, preview = data
                 progress = step / (opts.batch_count * opts.steps)
@@ -90,97 +90,9 @@ class Txt2Img(Tab):
             value="Generate", variant="primary", interactive=True
         )
 
-    @generate_fn
-    def if_stage_2(
-        self,
-        opts: ImageGenerationOptions,
-        init_image,
-    ):
-        if model_manager.mode != "deepfloyd_if":
-            yield None, "Current mode is not deepfloyd_if.", gr.Button.update()
-        if model_manager.runner is None:
-            yield None, "Please select a model.", gr.Button.update()
-
-        yield [], "Generating...", gr.Button.update(
-            value="Generating...", variant="secondary", interactive=False
-        )
-
-        count = 0
-
-        for data in model_manager.runner.stage_2(opts):
-            if type(data) == tuple:
-                step, preview = data
-                progress = step / (opts.batch_count * opts.steps)
-                previews = []
-                for images, opts in preview:
-                    previews.extend(images)
-
-                if len(previews) == count:
-                    update = gr.Gallery.update()
-                else:
-                    update = gr.Gallery.update(value=previews)
-                    count = len(previews)
-                yield update, f"Progress: {progress * 100:.2f}%, Step: {step}", gr.Button.update(
-                    value="Generating...", variant="secondary", interactive=False
-                )
-            else:
-                image = data
-
-        results = []
-        for images, opts in image:
-            results.extend(images)
-
-        yield results, "Finished", gr.Button.update(
-            value="Stage 2", variant="secondary", interactive=True
-        )
-
-    @generate_fn
-    def if_stage_3(
-        self,
-        opts: ImageGenerationOptions,
-        init_image,
-    ):
-        if model_manager.mode != "deepfloyd_if":
-            yield None, "Current mode is not deepfloyd_if.", gr.Button.update()
-        if model_manager.runner is None:
-            yield None, "Please select a model.", gr.Button.update()
-
-        yield [], "Generating...", gr.Button.update(
-            value="Generating...", variant="secondary", interactive=False
-        )
-
-        count = 0
-
-        for data in model_manager.runner.stage_3(opts):
-            if type(data) == tuple:
-                step, preview = data
-                progress = step / (opts.batch_count * opts.steps)
-                previews = []
-                for images, opts in preview:
-                    previews.extend(images)
-
-                if len(previews) == count:
-                    update = gr.Gallery.update()
-                else:
-                    update = gr.Gallery.update(value=previews)
-                    count = len(previews)
-                yield update, f"Progress: {progress * 100:.2f}%, Step: {step}", gr.Button.update(
-                    value="Generating...", variant="secondary", interactive=False
-                )
-            else:
-                image = data
-
-        results = []
-        for images, opts in image:
-            results.extend(images)
-
-        yield results, "Finished", gr.Button.update(
-            value="Stage 3", variant="secondary", interactive=True
-        )
-
     def ui(self, outlet):
         (
-            [generate_button, stage_2_button, stage_3_button],
+            generate_button,
             prompts,
             options,
             outputs,
@@ -190,16 +102,4 @@ class Txt2Img(Tab):
             fn=self.generate_image,
             inputs=[*prompts, *options],
             outputs=[*outputs, generate_button],
-        )
-
-        stage_2_button.click(
-            fn=self.if_stage_2,
-            inputs=[*prompts, *options],
-            outputs=[*outputs, stage_2_button],
-        )
-
-        stage_3_button.click(
-            fn=self.if_stage_3,
-            inputs=[*prompts, *options],
-            outputs=[*outputs, stage_3_button],
         )

@@ -145,7 +145,7 @@ class Txt2Img(Tab):
         from modules.acceleration.tensorrt.engine import EngineBuilder
 
         yield "Building engine..."
-        model_manager.runner.teardown()
+        model_manager.sd_model.teardown()
         opts = BuildEngineOptions(
             max_batch_size=max_batch_size,
             opt_image_height=opt_image_height,
@@ -164,5 +164,5 @@ class Txt2Img(Tab):
         )
         builder = EngineBuilder(opts)
         builder.build()
-        model_manager.runner.activate()
+        model_manager.sd_model.activate()
         yield "Engine built"

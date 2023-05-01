@@ -1,7 +1,6 @@
 from typing import *
 
 import torch
-from diffusers.models.autoencoder_kl import AutoencoderKLOutput
 from diffusers.models.unet_2d_condition import UNet2DConditionOutput
 from diffusers.models.vae import DecoderOutput
 from polygraphy import cuda

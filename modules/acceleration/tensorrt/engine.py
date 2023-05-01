@@ -26,7 +26,6 @@ class EngineBuilder:
         self.opts = opts
         self.models = create_models(
             model_id=self.model.model_id,
-            stages=["clip", "denoise", "vae", "vae_encoder"],
             device=torch.device("cuda"),
             use_auth_token=opts.hf_token,
             max_batch_size=opts.max_batch_size,

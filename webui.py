@@ -14,7 +14,6 @@ from modules import config, model_manager, ui
 def pre_load():
     config.init()
     model_manager.init()
-    model_manager.set_default_model()
 
 
 def webui():
