@@ -25,7 +25,7 @@
 # Features
 
 - [x] Stable diffusion
-- [x] DeepFloyd IF
+- [ ] DeepFloyd IF
 - [x] Acceleration using TensorRT
 - [ ] Acceleration using AITemplate
 - [ ] ControlNet
