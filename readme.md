@@ -28,7 +28,7 @@
 - [ ] DeepFloyd IF
 - [x] Acceleration using TensorRT
 - [ ] Acceleration using AITemplate
-- [ ] ControlNet
+- [x] ControlNet -> [plugin](https://github.com/ddPn08/radiata-controlnet-plugin)
 - [ ] Lora
 - [ ] Hypernetwork
 - [ ] Composable lora
