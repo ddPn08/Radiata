@@ -1,3 +1,5 @@
+from typing import *
+
 import gradio as gr
 
 from api.models.diffusion import ImageGenerationOptions
@@ -7,41 +9,47 @@ from modules.ui import Tab
 
 
 def generate_fn(fn):
-    def wrapper(
-        self,
-        prompt: str,
-        negative_prompt: str,
-        sampler_name: str,
-        sampling_steps: int,
-        batch_size: int,
-        batch_count: int,
-        cfg_scale: float,
-        width: int = 512,
-        height: int = 512,
-        seed: int = -1,
-        strength: float = 0.5,
-        init_image=None,
-    ):
+    def wrapper(self, data):
+        as_list = [x for x in data.values()]
+        (
+            prompt,
+            negative_prompt,
+            sampler_name,
+            sampling_steps,
+            batch_size,
+            batch_count,
+            cfg_scale,
+            seed,
+            width,
+            height,
+            init_image,
+            strength,
+        ) = as_list[0:12]
+
+        plugin_values = dict(list(data.items())[12:])
+
         opts = ImageGenerationOptions(
             prompt=prompt,
             negative_prompt=negative_prompt,
             batch_size=batch_size,
             batch_count=batch_count,
             scheduler_id=sampler_name,
-            steps=sampling_steps,
-            scale=cfg_scale,
-            image_height=height,
-            image_width=width,
+            num_inference_steps=sampling_steps,
+            guidance_scale=cfg_scale,
+            height=height,
+            width=width,
             strength=strength,
             seed=seed,
-            img2img=init_image is not None,
+            image=init_image,
         )
-        yield from fn(self, opts, init_image)
+        yield from fn(self, opts, plugin_values)
 
     return wrapper
 
 
 class Txt2Img(Tab):
+    plugin_values = {}
+
     def title(self):
         return "Generate"
 
@@ -49,11 +57,7 @@ class Txt2Img(Tab):
         return 1
 
     @generate_fn
-    def generate_image(
-        self,
-        opts: ImageGenerationOptions,
-        init_image,
-    ):
+    def generate_image(self, opts, plugin_values):
         if model_manager.sd_model is None:
             yield None, "Please select a model.", gr.Button.update()
 
@@ -61,12 +65,19 @@ class Txt2Img(Tab):
             value="Generating...", variant="secondary", interactive=False
         )
 
+        plugin_data = {}
+
+        for plugin, values in Txt2Img.plugin_values.items():
+            plugin_data[plugin] = []
+            for value in values:
+                plugin_data[plugin].append(plugin_values[value])
+
         count = 0
 
-        for data in model_manager.sd_model(opts, init_image):
+        for data in model_manager.sd_model(opts, plugin_data):
             if type(data) == tuple:
                 step, preview = data
-                progress = step / (opts.batch_count * opts.steps)
+                progress = step / (opts.batch_count * opts.num_inference_steps)
                 previews = []
                 for images, opts in preview:
                     previews.extend(images)
@@ -96,10 +107,19 @@ class Txt2Img(Tab):
             prompts,
             options,
             outputs,
+            plugin_values,
         ) = image_generation_options.ui()
+
+        Txt2Img.plugin_values = plugin_values
+
+        plugin_values_list = [x for value in plugin_values.values() for x in value]
 
         generate_button.click(
             fn=self.generate_image,
-            inputs=[*prompts, *options],
+            inputs={
+                *prompts,
+                *options,
+                *plugin_values_list,
+            },
             outputs=[*outputs, generate_button],
         )

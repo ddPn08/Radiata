@@ -1,18 +1,6 @@
-from typing import Literal, Optional
+from typing import *
 
 from pydantic import BaseModel
-
-
-class BuildEngineProgress(BaseModel):
-    type: Literal["result"] = "result"
-    message: str
-    progress: float
-
-
-class BuildEngineError(BaseModel):
-    type: Literal["error"] = "error"
-    error: Optional[str] = None
-    message: str
 
 
 class BuildEngineOptions(BaseModel):

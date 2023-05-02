@@ -1,23 +1,35 @@
+import json
+from dataclasses import asdict, dataclass, field
 from typing import *
 
-from pydantic import BaseModel
+import PIL.Image
 
 
-class ImageGenerationOptions(BaseModel):
+@dataclass
+class ImageGenerationOptions:
+    # serializable
     prompt: str
     negative_prompt: str = ""
     batch_size: int = 1
     batch_count: int = 1
     scheduler_id: str = "euler_a"
-    steps: int = 28
-    scale: float = 7.5
-    image_height: int = 512
-    image_width: int = 512
+    num_inference_steps: int = 28
+    guidance_scale: float = 7.5
+    height: int = 512
+    width: int = 512
     seed: Optional[int] = None
-    strength: Optional[float] = None
-    img2img: bool = False
+    strength: Optional[float] = 1.0
 
+    image: PIL.Image.Image = field(default_factory=PIL.Image.Image)
 
-class ImageGenerationError(BaseModel):
-    error: Optional[str] = None
-    message: str
+    def dict(self):
+        return asdict(self)
+
+    def json(self):
+        d = self.dict()
+        del d["image"]
+        return json.dumps(d)
+
+    @classmethod
+    def parse_obj(cls, obj):
+        return ImageGenerationOptions(**obj)

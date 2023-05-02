@@ -22,6 +22,8 @@ from .diffusers import DiffusersPipeline
 
 
 class TensorRTStableDiffusionPipeline(DiffusersPipeline):
+    __mode__ = "tensorrt"
+
     @classmethod
     def from_pretrained(
         cls,

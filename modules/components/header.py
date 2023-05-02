@@ -63,7 +63,7 @@ def ui():
         outputs=[model_id_dropdown, mode],
     )
 
-    def add_model(model_id: str):
+    def add_model(model_id):
         if model_id not in model_list_str():
             searched = model_manager.search_model(model_id)
             if len(searched) < 1:

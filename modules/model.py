@@ -2,7 +2,6 @@ import gc
 import os
 import random
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass
 from queue import Queue
 from typing import *
 
@@ -118,9 +117,7 @@ class DiffusersModel:
         self.mode = mode
         self.activate()
 
-    def __call__(
-        self, opts: ImageGenerationOptions, init_image: Optional[torch.Tensor] = None
-    ):
+    def __call__(self, opts: ImageGenerationOptions, plugin_data: Dict[str, List] = {}):
         if not self.activated:
             raise RuntimeError("Model not activated")
 
@@ -153,16 +150,10 @@ class DiffusersModel:
             with ThreadPoolExecutor() as executer:
                 feature = executer.submit(
                     self.pipe,
-                    prompt=[opts.prompt] * opts.batch_size,
-                    negative_prompt=[opts.negative_prompt] * opts.batch_size,
-                    height=opts.image_height,
-                    width=opts.image_width,
-                    guidance_scale=opts.scale,
-                    num_inference_steps=opts.steps,
+                    opts=opts,
                     generator=generator,
-                    strength=opts.strength,
                     callback=callback,
-                    image=init_image,
+                    plugin_data=plugin_data,
                 )
                 feature.add_done_callback(on_done)
 

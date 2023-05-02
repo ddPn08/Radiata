@@ -17,10 +17,14 @@ from diffusers.utils import PIL_INTERPOLATION, numpy_to_pil, randn_tensor
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
+from api.events.generation import LoadResourceEvent, UNetDenoisingEvent
+from api.models.diffusion import ImageGenerationOptions
 from modules.diffusion.pipelines.lpw import LongPromptWeightingPipeline
 
 
 class DiffusersPipeline:
+    __mode__ = "diffusers"
+
     @classmethod
     def from_pretrained(
         cls,
@@ -71,6 +75,9 @@ class DiffusersPipeline:
 
         self.lpw = LongPromptWeightingPipeline(self.text_encoder, self.tokenizer)
 
+        self.plugin_data = None
+        self.opts = None
+
     def to(self, device: torch.device = None, dtype: torch.dtype = None):
         self.vae.to(device, dtype)
         self.text_encoder.to(device, dtype)
@@ -94,6 +101,7 @@ class DiffusersPipeline:
         num_inference_steps: int,
     ):
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
+        LoadResourceEvent.call_event(LoadResourceEvent(pipe=self))
 
     def get_timesteps(self, num_inference_steps: int, strength: Optional[float]):
         if strength is None:
@@ -216,28 +224,48 @@ class DiffusersPipeline:
                     latent_model_input, timestep
                 )
 
-                # predict the noise residual
-                noise_pred = self.unet(
-                    latent_model_input,
-                    timestep,
-                    encoder_hidden_states=prompt_embeds,
-                    cross_attention_kwargs=cross_attention_kwargs,
-                ).sample
-
-                # perform guidance
-                if do_classifier_free_guidance:
-                    noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                    noise_pred = noise_pred_uncond + guidance_scale * (
-                        noise_pred_text - noise_pred_uncond
-                    )
-
-                # compute the previous noisy sample x_t -> x_t-1
-                latents = self.scheduler.step(
-                    model_output=noise_pred,
+                event = UNetDenoisingEvent(
+                    pipe=self,
+                    latent_model_input=latent_model_input,
                     timestep=timestep,
-                    sample=latents,
-                    **extra_step_kwargs,
-                ).prev_sample
+                    step=step,
+                    latents=latents,
+                    timesteps=timesteps,
+                    do_classifier_free_guidance=do_classifier_free_guidance,
+                    prompt_embeds=prompt_embeds,
+                    extra_step_kwargs=extra_step_kwargs,
+                    callback=callback,
+                    callback_steps=callback_steps,
+                    cross_attention_kwargs=cross_attention_kwargs,
+                )
+                UNetDenoisingEvent.call_event(event)
+
+                latents = event.latents
+
+                if not event.skip:
+                    # predict the noise residual
+                    noise_pred = self.unet(
+                        latent_model_input,
+                        timestep,
+                        encoder_hidden_states=prompt_embeds,
+                        cross_attention_kwargs=cross_attention_kwargs,
+                        **event.unet_additional_kwargs,
+                    ).sample
+
+                    # perform guidance
+                    if do_classifier_free_guidance:
+                        noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                        noise_pred = noise_pred_uncond + guidance_scale * (
+                            noise_pred_text - noise_pred_uncond
+                        )
+
+                    # compute the previous noisy sample x_t -> x_t-1
+                    latents = self.scheduler.step(
+                        model_output=noise_pred,
+                        timestep=timestep,
+                        sample=latents,
+                        **extra_step_kwargs,
+                    ).prev_sample
 
                 # call the callback, if provided
                 if step == len(timesteps) - 1 or (
@@ -285,15 +313,9 @@ class DiffusersPipeline:
     @torch.no_grad()
     def __call__(
         self,
-        prompt: Union[str, List[str]] = None,
-        height: Optional[int] = None,
-        width: Optional[int] = None,
-        num_inference_steps: int = 50,
-        guidance_scale: float = 7.5,
-        negative_prompt: Optional[Union[str, List[str]]] = None,
-        num_images_per_prompt: Optional[int] = 1,
-        eta: float = 0.0,
+        opts: ImageGenerationOptions,
         generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
+        eta: float = 0.0,
         latents: Optional[torch.FloatTensor] = None,
         prompt_embeds: Optional[torch.FloatTensor] = None,
         negative_prompt_embeds: Optional[torch.FloatTensor] = None,
@@ -302,39 +324,34 @@ class DiffusersPipeline:
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
         callback_steps: int = 1,
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
-        image: Union[torch.FloatTensor, PIL.Image.Image] = None,
-        strength: float = 1.0,
+        plugin_data: Optional[Dict[str, Any]] = {},
     ):
-        if type(prompt) != list:
-            prompt = [prompt]
-        if type(negative_prompt) != list:
-            negative_prompt = [negative_prompt]
-
-        assert len(prompt) == len(
-            negative_prompt
-        ), "Prompt and negative prompt must have the same length"
+        self.plugin_data = plugin_data
+        self.opts = opts
 
         # 1. Define call parameters
-        batch_size = len(prompt)
+        num_images_per_prompt = 1
+        prompt = [opts.prompt] * opts.batch_size
+        negative_prompt = [opts.negative_prompt] * opts.batch_size
 
         # here `guidance_scale` is defined analog to the guidance weight `w` of equation (2)
         # of the Imagen paper: https://arxiv.org/pdf/2205.11487.pdf . `guidance_scale = 1`
         # corresponds to doing no classifier free guidance.
-        do_classifier_free_guidance = guidance_scale > 1.0
+        do_classifier_free_guidance = opts.guidance_scale > 1.0
 
         # 2. Prepare pipeline resources
         self.load_resources(
-            image_height=height,
-            image_width=width,
-            batch_size=batch_size,
-            num_inference_steps=num_inference_steps,
+            image_height=opts.height,
+            image_width=opts.width,
+            batch_size=opts.batch_size,
+            num_inference_steps=opts.num_inference_steps,
         )
 
         # 3. Prepare timesteps
-        timesteps, num_inference_steps = self.get_timesteps(
-            num_inference_steps, strength if image is not None else None
+        timesteps, opts.num_inference_steps = self.get_timesteps(
+            opts.num_inference_steps, opts.strength if opts.image is not None else None
         )
-        latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
+        latent_timestep = timesteps[:1].repeat(opts.batch_size * num_images_per_prompt)
 
         # 4. Prepare extra step kwargs. TODO: Logic should ideally just be moved out of the pipeline
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
@@ -344,8 +361,8 @@ class DiffusersPipeline:
             enterer.__enter__()
 
         # 5. Preprocess image
-        if image is not None:
-            image = self.preprocess_image(image, height, width)
+        if opts.image is not None:
+            opts.image = self.preprocess_image(opts.image, opts.height, opts.width)
 
         # 6. Encode input prompt
         prompt_embeds = self._encode_prompt(
@@ -361,11 +378,11 @@ class DiffusersPipeline:
         latents = self.prepare_latents(
             vae_scale_factor=8,
             unet_in_channels=4,
-            image=image,
+            image=opts.image,
             timestep=latent_timestep,
-            batch_size=batch_size,
-            height=height,
-            width=width,
+            batch_size=opts.batch_size,
+            height=opts.height,
+            width=opts.width,
             dtype=prompt_embeds.dtype,
             generator=generator,
         )
@@ -376,8 +393,8 @@ class DiffusersPipeline:
         latents = self.denoise_latent(
             latents=latents,
             timesteps=timesteps,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale,
+            num_inference_steps=opts.num_inference_steps,
+            guidance_scale=opts.guidance_scale,
             do_classifier_free_guidance=do_classifier_free_guidance,
             prompt_embeds=prompt_embeds,
             extra_step_kwargs=extra_step_kwargs,
@@ -392,6 +409,9 @@ class DiffusersPipeline:
 
         for enterer in enterers:
             enterer.__exit__(None, None, None)
+
+        self.plugin_data = None
+        self.opts = None
 
         return outputs
 

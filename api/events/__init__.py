@@ -1,27 +1,47 @@
 import inspect
-from typing import Callable
+from dataclasses import dataclass
+from typing import *
+
+handlers: Dict[str, List[Callable]] = {}
 
 
 class BaseEvent:
-    handlers = []
-    event_name = ""
+    __event_name__: ClassVar[str] = ""
 
     @classmethod
-    def call_event(cls, event):
+    def register(cls, handler):
+        if cls not in handlers:
+            handlers[cls] = []
+        handlers[cls].append(handler)
+
+    @classmethod
+    def call_event(cls, event=None):
+        if event is None:
+            event = cls()
         if not isinstance(event, BaseEvent):
             raise TypeError(
                 "Expected event to be an instance of BaseEvent, got {}".format(
                     type(event)
                 )
             )
-        for handler in cls.handlers:
+
+        if cls not in handlers:
+            return event
+
+        for handler in handlers[cls]:
             handler(event)
+
         return event
 
 
+@dataclass
 class CancellableEvent(BaseEvent):
-    def __init__(self):
-        self.cancelled = False
+    cancelled = False
+
+
+@dataclass
+class SkippableEvent(BaseEvent):
+    skip = False
 
 
 def event_handler():
@@ -33,7 +53,6 @@ def event_handler():
         [e, *_] = args_types
         e = e.annotation
         if issubclass(e, BaseEvent):
-            e.handlers.append(func)
-        return
+            e.register(func)
 
     return decorator

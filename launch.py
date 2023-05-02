@@ -4,6 +4,7 @@ import platform
 import shlex
 import subprocess
 import sys
+from glob import glob
 
 commandline_args = os.environ.get("COMMANDLINE_ARGS", "")
 sys.argv += shlex.split(commandline_args)
@@ -107,6 +108,20 @@ def extract_arg(args, name):
     return [x for x in args if x != name], name in args
 
 
+def install_plugin_deps():
+    plugins = glob(
+        os.path.join(os.path.dirname(__file__), "plugins", "*", "requirements.txt")
+    )
+    for plugin in plugins:
+        dirname = os.path.dirname(plugin)
+        dir_basename = os.path.basename(dirname)
+        run(
+            f'"{python}" -m pip install -r {plugin}',
+            desc=f"Installing {dir_basename} plugin dependencies",
+            errdesc=f"Couldn't install {dir_basename} plugin dependencies",
+        )
+
+
 def install_tensorrt():
     trt_version = "8.6.0"
     tensorrt_linux_command = os.environ.get(
@@ -189,6 +204,8 @@ def prepare_environment():
             errdesc=f"Couldn't install tensorrt requirements",
         )
         install_tensorrt()
+
+    install_plugin_deps()
 
 
 def start():

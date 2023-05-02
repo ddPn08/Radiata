@@ -1,6 +1,5 @@
 import logging
-import sys
 
+fmt = "[%(levelname)s] %(message)s"
+logging.basicConfig(format=fmt, level=logging.INFO)
 logger = logging.getLogger("radiata")
-logger.addHandler(logging.StreamHandler(sys.stdout))
-logger.setLevel(logging.DEBUG)

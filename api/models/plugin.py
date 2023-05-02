@@ -1,15 +1,11 @@
+from typing import *
+
 from pydantic import BaseModel
 
 
 class PluginMetaData(BaseModel):
     main: str
     name: str
-    author: str
     version: str
-    url: str
-
-
-class PluginData(BaseModel):
-    meta: PluginMetaData
-    module: str
-    dir: str
+    author: Optional[str]
+    url: Optional[str]

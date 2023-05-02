@@ -1,4 +1,4 @@
-gradio
+gradio==3.28.1
 
 accelerate==0.18.0
 diffusers==0.16.1
