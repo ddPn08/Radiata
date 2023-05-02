@@ -141,7 +141,7 @@ class DiffusersModel:
             queue.put(done)
 
         for i in range(opts.batch_count):
-            manual_seed = opts.seed + i
+            manual_seed = int(opts.seed + i)
 
             generator = torch.Generator(device=self.pipe.device).manual_seed(
                 manual_seed
