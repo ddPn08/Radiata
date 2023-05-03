@@ -8,6 +8,7 @@ from typing import *
 import torch
 
 from api.models.diffusion import ImageGenerationOptions
+from lib.diffusers.scheduler import SCHEDULERS
 
 from . import config, utils
 from .images import save_image
@@ -104,7 +105,6 @@ class DiffusersModel:
     def teardown(self):
         if not self.activated:
             return
-        del self.pipe
         self.pipe = None
         torch.cuda.empty_cache()
         gc.collect()
@@ -117,6 +117,13 @@ class DiffusersModel:
         self.mode = mode
         self.activate()
 
+    def swap_scheduler(self, scheduler_id: str):
+        if not self.activated:
+            raise RuntimeError("Model not activated")
+        self.pipe.scheduler = SCHEDULERS[scheduler_id].from_config(
+            self.pipe.scheduler.config
+        )
+
     def __call__(self, opts: ImageGenerationOptions, plugin_data: Dict[str, List] = {}):
         if not self.activated:
             raise RuntimeError("Model not activated")
@@ -124,7 +131,7 @@ class DiffusersModel:
         if opts.seed is None or opts.seed == -1:
             opts.seed = random.randrange(0, 4294967294, 1)
 
-        self.pipe.scheduler = utils.create_scheduler(opts.scheduler_id, self.model_id)
+        self.swap_scheduler(opts.scheduler_id)
 
         queue = Queue()
         done = object()

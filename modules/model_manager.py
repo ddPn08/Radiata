@@ -1,8 +1,13 @@
+import os
+from glob import glob
 from typing import *
 
+import torch
 from huggingface_hub import HfApi, ModelFilter
+from safetensors.torch import load_file
 
 from modules.logger import logger
+from modules.shared import ROOT_DIR
 
 from . import config
 from .model import DiffusersModel
@@ -71,5 +76,14 @@ def init():
         raw_model_list = config.DEFAULT_CONFIG["models"]
     for model_id in raw_model_list:
         sd_models.append(DiffusersModel(model_id=model_id))
+
+    checkpoints_path = os.path.join(ROOT_DIR, "models", "checkpoints")
+
+    for model in glob(os.path.join(checkpoints_path, "**", "*"), recursive=True):
+        if model.endswith(".safetensors") or model.endswith(".ckpt"):
+            relpath = os.path.relpath(model, checkpoints_path)
+            model_id = relpath.replace(os.sep, "/")
+            if model_id not in raw_model_list:
+                sd_models.append(DiffusersModel(model_id=model_id))
 
     set_default_model()

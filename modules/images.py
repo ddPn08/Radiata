@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import re
 from datetime import datetime
 
 from PIL import Image
@@ -12,6 +13,14 @@ from modules import config
 
 def get_category(opts: ImageGenerationOptions):
     return "img2img" if opts.image is not None else "txt2img"
+
+
+def replace_invalid_chars(filepath, replace_with="_"):
+    invalid_chars = '[\\/:*?"<>|]'
+
+    replace_with = replace_with
+
+    return re.sub(invalid_chars, replace_with, filepath)
 
 
 def save_image(img: Image.Image, opts: ImageGenerationOptions):
@@ -30,6 +39,7 @@ def save_image(img: Image.Image, opts: ImageGenerationOptions):
         .replace("\r", "_")
         .replace("\t", "_")
     )
+    filename = replace_invalid_chars(filename)
     os.makedirs(dir, exist_ok=True)
     filepath = os.path.join(dir, filename)
     img.save(filepath, pnginfo=metadata)

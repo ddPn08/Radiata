@@ -1,5 +1,6 @@
 import gc
 import inspect
+import os
 from typing import *
 
 import numpy as np
@@ -11,8 +12,10 @@ from diffusers import (
     StableDiffusionPipeline,
     UNet2DConditionModel,
 )
-from diffusers.models import AutoencoderKL, UNet2DConditionModel
-from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
+from diffusers.pipelines.stable_diffusion import (
+    StableDiffusionPipelineOutput,
+    convert_from_ckpt,
+)
 from diffusers.utils import PIL_INTERPOLATION, numpy_to_pil, randn_tensor
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
@@ -20,6 +23,7 @@ from transformers import CLIPTextModel, CLIPTokenizer
 from api.events.generation import LoadResourceEvent, UNetDenoisingEvent
 from api.models.diffusion import ImageGenerationOptions
 from modules.diffusion.pipelines.lpw import LongPromptWeightingPipeline
+from modules.shared import ROOT_DIR
 
 
 class DiffusersPipeline:
@@ -32,14 +36,29 @@ class DiffusersPipeline:
         use_auth_token: Optional[str] = None,
         torch_dtype: torch.dtype = torch.float32,
         cache_dir: Optional[str] = None,
+        device: Optional[torch.device] = None,
         subfolder: Optional[str] = None,
     ):
-        temporary_pipe = StableDiffusionPipeline.from_pretrained(
-            pretrained_model_id,
-            use_auth_token=use_auth_token,
-            torch_dtype=torch_dtype,
-            cache_dir=cache_dir,
+        checkpooint_path = os.path.join(
+            ROOT_DIR, "models", "checkpoints", pretrained_model_id
         )
+        if os.path.exists(checkpooint_path):
+            temporary_pipe = (
+                convert_from_ckpt.download_from_original_stable_diffusion_ckpt(
+                    checkpooint_path,
+                    from_safetensors=pretrained_model_id.endswith(".safetensors"),
+                    load_safety_checker=False,
+                    device=device,
+                )
+            )
+        else:
+            temporary_pipe = StableDiffusionPipeline.from_pretrained(
+                pretrained_model_id,
+                use_auth_token=use_auth_token,
+                torch_dtype=torch_dtype,
+                cache_dir=cache_dir,
+                device_map=device,
+            )
 
         vae = temporary_pipe.vae
         text_encoder = temporary_pipe.text_encoder
@@ -47,16 +66,20 @@ class DiffusersPipeline:
         unet = temporary_pipe.unet
         scheduler = temporary_pipe.scheduler
 
+        del temporary_pipe
+
+        torch.cuda.empty_cache()
+        gc.collect()
+
         pipe = cls(
             vae=vae,
             text_encoder=text_encoder,
             tokenizer=tokenizer,
             unet=unet,
             scheduler=scheduler,
+            device=device,
+            dtype=torch_dtype,
         )
-        del temporary_pipe
-        torch.cuda.empty_cache()
-        gc.collect()
         return pipe
 
     def __init__(
@@ -66,6 +89,8 @@ class DiffusersPipeline:
         tokenizer: CLIPTokenizer,
         unet: UNet2DConditionModel,
         scheduler: DDPMScheduler,
+        device: torch.device = torch.device("cpu"),
+        dtype: torch.dtype = torch.float32,
     ):
         self.vae = vae
         self.text_encoder = text_encoder
@@ -75,10 +100,17 @@ class DiffusersPipeline:
 
         self.lpw = LongPromptWeightingPipeline(self.text_encoder, self.tokenizer)
 
+        self.device = device
+        self.dtype = dtype
+
         self.plugin_data = None
         self.opts = None
 
     def to(self, device: torch.device = None, dtype: torch.dtype = None):
+        if device is None:
+            device = self.device
+        if dtype is None:
+            dtype = self.dtype
         self.vae.to(device, dtype)
         self.text_encoder.to(device, dtype)
         self.unet.to(device, dtype)

@@ -30,6 +30,9 @@ class CLIPTextModelEngine:
     def to(self, *args, **kwargs):
         pass
 
+    def forward(self, *args, **kwargs):
+        pass
+
 
 class UNet2DConditionModelEngine:
     def __init__(self, filepath: str, stream: cuda.Stream):
@@ -69,6 +72,9 @@ class UNet2DConditionModelEngine:
     def to(self, *args, **kwargs):
         pass
 
+    def forward(self, *args, **kwargs):
+        pass
+
 
 class AutoencoderKLEngine:
     def __init__(self, encoder_path: str, decoder_path: str, stream: cuda.Stream):
@@ -104,4 +110,7 @@ class AutoencoderKLEngine:
         )
 
     def to(self, *args, **kwargs):
+        pass
+
+    def forward(self, *args, **kwargs):
         pass

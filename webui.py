@@ -16,12 +16,14 @@ from api.events.common import (
     PreUICreateEvent,
 )
 from modules import config, model_manager, plugin_loader, ui
+from modules.diffusion import networks
 
 
 def pre_load():
     config.init()
     plugin_loader.load_plugins()
     PreAppLaunchEvent.call_event()
+    networks.init()
     model_manager.init()
 
 
