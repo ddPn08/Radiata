@@ -25,7 +25,7 @@
 # Features
 
 - [x] Stable diffusion
-- [x] DeepFloyd IF -> with `-deepfloyd_if`
+- [x] DeepFloyd IF -> with `--deepfloyd_if`
 - [x] Acceleration using TensorRT -> with `--tensorrt`
 - [ ] Acceleration using AITemplate
 - [x] ControlNet -> [plugin](https://github.com/ddPn08/radiata-controlnet-plugin)
