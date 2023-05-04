@@ -13,3 +13,4 @@ losalina
 pillow
 toml
 colored
+psutil

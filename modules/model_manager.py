@@ -2,9 +2,7 @@ import os
 from glob import glob
 from typing import *
 
-import torch
 from huggingface_hub import HfApi, ModelFilter
-from safetensors.torch import load_file
 
 from modules.logger import logger
 from modules.shared import ROOT_DIR
@@ -14,7 +12,9 @@ from .model import DiffusersModel
 
 sd_models: List[DiffusersModel] = []
 sd_model: Optional[DiffusersModel] = None
-available_mode = ["diffusers"]
+mode: Literal["stable-diffusion", "deepfloyd_if"] = (
+    "deepfloyd_if" if config.get("deepfloyd_if") else "stable-diffusion"
+)
 
 
 def get_model(model_id: str):
@@ -71,6 +71,8 @@ def set_default_model():
 
 
 def init():
+    if mode != "stable-diffusion":
+        return
     raw_model_list = config.get("models") or []
     if len(raw_model_list) < 1:
         raw_model_list = config.DEFAULT_CONFIG["models"]

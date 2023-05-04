@@ -5,7 +5,7 @@ from typing import *
 import gradio as gr
 import gradio.routes
 
-from modules import shared
+from modules import model_manager, shared
 
 from .components import header
 from .shared import ROOT_DIR
@@ -130,7 +130,8 @@ def create_ui():
     block = gr.Blocks()
 
     with block:
-        header.ui()
+        if model_manager.mode == "stable-diffusion":
+            header.ui()
         with gr.Tabs(elem_id="radiata-root"):
             for tab in load_tabs():
                 if not tab.visible():

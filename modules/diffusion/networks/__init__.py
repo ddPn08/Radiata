@@ -9,8 +9,8 @@ from api.events import event_handler
 from api.events.generation import LoadResourceEvent
 from api.models.diffusion import ImageGenerationOptions
 from modules.diffusion.attentions import replace_attentions_for_hypernetwork
-from modules.shared import ROOT_DIR
 from modules.logger import logger
+from modules.shared import ROOT_DIR
 
 from . import lora, lyco
 
@@ -75,6 +75,9 @@ def load_network_modules(e: LoadResourceEvent):
 
     restore_networks(e.pipe.unet, e.pipe.text_encoder)
     latest_networks.clear()
+
+    if len(positive_networks) == 0:
+        return
 
     for module_type, basename, multiplier in positive_networks:
         multiplier = float(multiplier)

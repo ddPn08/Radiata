@@ -10,11 +10,8 @@ from PIL import Image
 from polygraphy import cuda
 from transformers import CLIPTokenizer
 
-from lib.tensorrt.engine import (
-    AutoencoderKLEngine,
-    CLIPTextModelEngine,
-    UNet2DConditionModelEngine,
-)
+from lib.tensorrt.engine import (AutoencoderKLEngine, CLIPTextModelEngine,
+                                 UNet2DConditionModelEngine)
 from lib.tensorrt.models import BaseModel
 from lib.tensorrt.utilities import TRT_LOGGER, create_models
 

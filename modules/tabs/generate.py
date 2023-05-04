@@ -56,6 +56,9 @@ class Txt2Img(Tab):
     def sort(self):
         return 1
 
+    def visible(self):
+        return model_manager.mode == "stable-diffusion"
+
     @generate_fn
     def generate_image(self, opts, plugin_values):
         if model_manager.sd_model is None:
@@ -102,13 +105,21 @@ class Txt2Img(Tab):
         )
 
     def ui(self, outlet):
-        (
-            generate_button,
-            prompts,
-            options,
-            outputs,
-            plugin_values,
-        ) = image_generation_options.ui()
+        with gr.Column():
+            with gr.Row():
+                with gr.Column(scale=3):
+                    prompts = image_generation_options.prompt_ui()
+                generate_button = image_generation_options.button_ui()
+
+            with gr.Row():
+                with gr.Column(scale=1.25):
+                    options = image_generation_options.common_options_ui()
+
+                    options += image_generation_options.img2img_options_ui()
+
+                    plugin_values = image_generation_options.plugin_options_ui()
+
+                outputs = image_generation_options.outputs_gallery_ui()
 
         Txt2Img.plugin_values = plugin_values
 

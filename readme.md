@@ -25,11 +25,11 @@
 # Features
 
 - [x] Stable diffusion
-- [ ] DeepFloyd IF
-- [x] Acceleration using TensorRT
+- [x] DeepFloyd IF -> with `-deepfloyd_if`
+- [x] Acceleration using TensorRT -> with `--tensorrt`
 - [ ] Acceleration using AITemplate
 - [x] ControlNet -> [plugin](https://github.com/ddPn08/radiata-controlnet-plugin)
-- [ ] Lora
+- [x] Lora & Lycoris
 - [ ] Hypernetwork
 - [ ] Composable lora
 - [ ] Latent couple

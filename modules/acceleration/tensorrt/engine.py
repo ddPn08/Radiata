@@ -4,12 +4,8 @@ import os
 import torch
 
 from api.models.tensorrt import BuildEngineOptions, TensorRTEngineData
-from lib.tensorrt.utilities import (
-    build_engine,
-    create_models,
-    export_onnx,
-    optimize_onnx,
-)
+from lib.tensorrt.utilities import (build_engine, create_models, export_onnx,
+                                    optimize_onnx)
 from modules import model_manager
 from modules.logger import logger
 from modules.shared import hf_diffusers_cache_dir
@@ -83,8 +79,8 @@ class EngineBuilder:
                     build_preview_features=self.opts.build_preview_features,
                 )
 
-        torch.cuda.empty_cache()
         gc.collect()
+        torch.cuda.empty_cache()
 
         data = TensorRTEngineData(
             static_batch=self.opts.build_static_batch,

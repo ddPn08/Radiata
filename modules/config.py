@@ -34,6 +34,7 @@ parser.add_argument("--hf-token", type=str)
 
 parser.add_argument("--xformers", action="store_true")
 parser.add_argument("--tensorrt", action="store_true")
+parser.add_argument("--deepfloyd_if", action="store_true")
 
 cmd_opts, _ = parser.parse_known_args(
     os.environ["COMMANDLINE_ARGS"].split(" ")

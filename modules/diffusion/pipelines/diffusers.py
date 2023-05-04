@@ -6,16 +6,10 @@ from typing import *
 import numpy as np
 import PIL.Image
 import torch
-from diffusers import (
-    AutoencoderKL,
-    DDPMScheduler,
-    StableDiffusionPipeline,
-    UNet2DConditionModel,
-)
+from diffusers import (AutoencoderKL, DDPMScheduler, StableDiffusionPipeline,
+                       UNet2DConditionModel)
 from diffusers.pipelines.stable_diffusion import (
-    StableDiffusionPipelineOutput,
-    convert_from_ckpt,
-)
+    StableDiffusionPipelineOutput, convert_from_ckpt)
 from diffusers.utils import PIL_INTERPOLATION, numpy_to_pil, randn_tensor
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
@@ -68,8 +62,8 @@ class DiffusersPipeline:
 
         del temporary_pipe
 
-        torch.cuda.empty_cache()
         gc.collect()
+        torch.cuda.empty_cache()
 
         pipe = cls(
             vae=vae,

@@ -33,14 +33,9 @@ from cuda import cudart
 from PIL import Image
 from polygraphy import cuda
 from polygraphy.backend.common import bytes_from_path
-from polygraphy.backend.trt import (
-    CreateConfig,
-    Profile,
-    engine_from_bytes,
-    engine_from_network,
-    network_from_onnx_path,
-    save_engine,
-)
+from polygraphy.backend.trt import (CreateConfig, Profile, engine_from_bytes,
+                                    engine_from_network,
+                                    network_from_onnx_path, save_engine)
 from polygraphy.backend.trt import util as trt_util
 from transformers import CLIPTextConfig
 
@@ -391,8 +386,8 @@ def create_models(
         ),
     }
     del unet, text_encoder_config
-    torch.cuda.empty_cache()
     gc.collect()
+    torch.cuda.empty_cache()
     return models
 
 
@@ -458,8 +453,8 @@ def export_onnx(
             dynamic_axes=model_data.get_dynamic_axes(),
         )
     del model
-    torch.cuda.empty_cache()
     gc.collect()
+    torch.cuda.empty_cache()
 
 
 def optimize_onnx(
@@ -470,5 +465,5 @@ def optimize_onnx(
     onnx_opt_graph = model_data.optimize(onnx.load(onnx_path))
     onnx.save(onnx_opt_graph, onnx_opt_path)
     del onnx_opt_graph
-    torch.cuda.empty_cache()
     gc.collect()
+    torch.cuda.empty_cache()
