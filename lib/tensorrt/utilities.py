@@ -33,9 +33,14 @@ from cuda import cudart
 from PIL import Image
 from polygraphy import cuda
 from polygraphy.backend.common import bytes_from_path
-from polygraphy.backend.trt import (CreateConfig, Profile, engine_from_bytes,
-                                    engine_from_network,
-                                    network_from_onnx_path, save_engine)
+from polygraphy.backend.trt import (
+    CreateConfig,
+    Profile,
+    engine_from_bytes,
+    engine_from_network,
+    network_from_onnx_path,
+    save_engine,
+)
 from polygraphy.backend.trt import util as trt_util
 from transformers import CLIPTextConfig
 

@@ -4,8 +4,12 @@ import os
 import torch
 
 from api.models.tensorrt import BuildEngineOptions, TensorRTEngineData
-from lib.tensorrt.utilities import (build_engine, create_models, export_onnx,
-                                    optimize_onnx)
+from lib.tensorrt.utilities import (
+    build_engine,
+    create_models,
+    export_onnx,
+    optimize_onnx,
+)
 from modules import model_manager
 from modules.logger import logger
 from modules.shared import hf_diffusers_cache_dir

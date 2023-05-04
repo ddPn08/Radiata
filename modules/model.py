@@ -89,8 +89,7 @@ class DiffusersModel:
             if utils.is_installed("xformers") and config.get("xformers"):
                 self.pipe.enable_xformers_memory_efficient_attention()
         elif self.mode == "tensorrt":
-            from .diffusion.pipelines.tensorrt import \
-                TensorRTStableDiffusionPipeline
+            from .diffusion.pipelines.tensorrt import TensorRTStableDiffusionPipeline
 
             model_dir = self.get_trt_path()
             self.pipe = TensorRTStableDiffusionPipeline.from_pretrained(

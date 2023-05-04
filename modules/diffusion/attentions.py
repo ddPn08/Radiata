@@ -1,7 +1,9 @@
 import torch
-from diffusers.models.attention_processor import (Attention,
-                                                  SlicedAttnProcessor,
-                                                  XFormersAttnProcessor)
+from diffusers.models.attention_processor import (
+    Attention,
+    SlicedAttnProcessor,
+    XFormersAttnProcessor,
+)
 
 try:
     import xformers.ops
