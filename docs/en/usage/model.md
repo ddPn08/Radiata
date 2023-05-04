@@ -1,6 +1,10 @@
 # Model
 
-## Add stable diffusion model
+## Use checkpoint files
+
+You can load a model by placing a file ending with `ckpt` or `safetensors` in the `models/checkpoints` folder.
+
+## Use HuggingFace Diffusers model
 
 1. Get model id from huggingface
 

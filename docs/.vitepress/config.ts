@@ -31,6 +31,7 @@ export default defineConfig({
                             { text: 'WebUI', link: '/en/usage/' },
                             { text: 'Model', link: '/en/usage/model' },
                             { text: 'TensorRT', link: '/en/usage/tensorrt' },
+                            { text: 'Deepfloyd IF', link: '/en/usage/deepfloyd_if' },
                         ],
                     },
                     {
@@ -79,6 +80,7 @@ export default defineConfig({
                             { text: 'WebUI', link: '/ja/usage/' },
                             { text: 'Model', link: '/ja/usage/model' },
                             { text: 'TensorRT', link: '/ja/usage/tensorrt' },
+                            { text: 'Deepfloyd IF', link: '/ja/usage/deepfloyd_if' },
                         ],
                     },
                     {

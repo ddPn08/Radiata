@@ -1,8 +1,12 @@
 # Model
 
-## StableDiffusionを追加する
+## チェックポイントファイルを使用する
 
-1. HuggingFaceからモデルIDを取得
+`models/checkpoints`フォルダに`ckpt`, `safetensors`で終わるファイルを配置することで、そのモデルを読み込むことができます。
+
+## HuggingFace の Diffusers モデルを使用する
+
+1. HuggingFace からモデル ID を取得
 
 ![](../../images/webui/model-01.png)
 
