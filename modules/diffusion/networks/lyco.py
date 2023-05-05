@@ -235,6 +235,8 @@ class LycorisNetwork(torch.nn.Module):
         for module in te_replaced_modules + unet_replaced_modules:
             if not hasattr(module, "_lora_org_forward"):
                 setattr(module, "_lora_org_forward", module.forward)
+            if not hasattr(module, "_lora_org_weight"):
+                setattr(module, "_lora_org_weight", module.weight.clone().cpu())
 
     def set_multiplier(self, multiplier):
         self.multiplier = multiplier
@@ -245,9 +247,16 @@ class LycorisNetwork(torch.nn.Module):
         for lora in self.text_encoder_loras + self.unet_loras:
             lora.apply_to()
 
+    def merge_to(self):
+        for lora in self.text_encoder_loras + self.unet_loras:
+            lora.merge_to()
+
     def restore(self, *modules: torch.nn.Module):
         for module in modules:
             for child in module.modules():
                 if hasattr(child, "_lora_org_forward"):
                     child.forward = child._lora_org_forward
                     del child._lora_org_forward
+                if hasattr(child, "_lora_org_weight"):
+                    child.weight.copy_(child._lora_org_weight)
+                    del child._lora_org_weight

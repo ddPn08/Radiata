@@ -59,7 +59,7 @@ class LoRAModule(torch.nn.Module):
         multiplier: float = 1.0,
         lora_dim: int = 4,
         lora_alpha: int = 1,
-    ) -> None:
+    ):
         super().__init__()
         self.lora_name = lora_name
         self.lora_dim = lora_dim
@@ -103,6 +103,43 @@ class LoRAModule(torch.nn.Module):
     def apply_to(self):
         self.org_module[0].forward = self.forward
 
+    def make_weight(self):
+        org_weight = self.org_module[0].weight.to(torch.float)
+
+        state_dict = self.state_dict()
+        up_weight = state_dict["lora_up.weight"].to(torch.float).to(org_weight.device)
+        down_weight = (
+            state_dict["lora_down.weight"].to(torch.float).to(org_weight.device)
+        )
+
+        if len(org_weight.size()) == 2:
+            # linear
+            org_weight = self.multiplier * (up_weight @ down_weight) * self.scale
+        elif down_weight.size()[2:4] == (1, 1):
+            # conv2d 1x1
+            org_weight = (
+                self.multiplier
+                * (up_weight.squeeze(3).squeeze(2) @ down_weight.squeeze(3).squeeze(2))
+                .unsqueeze(2)
+                .unsqueeze(3)
+                * self.scale
+            )
+        else:
+            # conv2d 3x3
+            conved = torch.nn.functional.conv2d(
+                down_weight.permute(1, 0, 2, 3), up_weight
+            ).permute(1, 0, 2, 3)
+            # print(conved.size(), weight.size(), module.stride, module.padding)
+            org_weight = self.multiplier * conved * self.scale
+        return org_weight
+
+    def merge_to(self):
+        # extract weight from org_module
+        org_weight = self.org_module[0].weight
+        weight = self.make_weight()
+        # set weight to org_module
+        org_weight.copy_(org_weight + weight.to(org_weight.dtype))
+
     def forward(self, x: torch.Tensor):
         return (
             self.org_forward(x)
@@ -135,7 +172,7 @@ class LoRANetwork(torch.nn.Module):
         modules_dim: Optional[Dict] = None,
         modules_alpha: Optional[Dict] = None,
         network_module: Optional[torch.nn.Module] = LoRAModule,
-    ) -> None:
+    ):
         super().__init__()
         self.multiplier = multiplier
 
@@ -211,6 +248,8 @@ class LoRANetwork(torch.nn.Module):
         for module in te_replaced_modules + unet_replaced_modules:
             if not hasattr(module, "_lora_org_forward"):
                 setattr(module, "_lora_org_forward", module.forward)
+            if not hasattr(module, "_lora_org_weight"):
+                setattr(module, "_lora_org_weight", module.weight.clone().cpu())
 
     def set_multiplier(self, multiplier):
         self.multiplier = multiplier
@@ -221,9 +260,16 @@ class LoRANetwork(torch.nn.Module):
         for lora in self.text_encoder_loras + self.unet_loras:
             lora.apply_to()
 
+    def merge_to(self):
+        for lora in self.text_encoder_loras + self.unet_loras:
+            lora.merge_to()
+
     def restore(self, *modules: torch.nn.Module):
         for module in modules:
             for child in module.modules():
                 if hasattr(child, "_lora_org_forward"):
                     child.forward = child._lora_org_forward
                     del child._lora_org_forward
+                if hasattr(child, "_lora_org_weight"):
+                    child.weight.copy_(child._lora_org_weight)
+                    del child._lora_org_weight

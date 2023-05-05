@@ -94,13 +94,28 @@ class LoConModule(nn.Module):
     def apply_to(self):
         self.org_module[0].forward = self.forward
 
-    def remote_apply(self):
-        self.org_module[0].forward = self.org_forward
-
     def make_weight(self):
-        wa = self.lora_up.weight
-        wb = self.lora_down.weight
-        return (wa.view(wa.size(0), -1) @ wb.view(wb.size(0), -1)).view(self.shape)
+        org_weight = self.org_module[0].weight.to(torch.float)
+        up = self.lora_up.weight.to(device=org_weight.device, dtype=org_weight.dtype)
+        down = self.lora_down.weight.to(
+            device=org_weight.device, dtype=org_weight.dtype
+        )
+        if self.cp:
+            mid = self.lora_mid.weight.to(
+                device=org_weight.device, dtype=org_weight.dtype
+            )
+            up = up.reshape(up.size(0), up.size(1))
+            down = down.reshape(down.size(0), down.size(1))
+            weight = torch.einsum("m n w h, i m, n j -> i j w h", mid, up, down)
+        else:
+            weight = up.reshape(up.size(0), -1) @ down.reshape(down.size(0), -1)
+
+        return weight.reshape(org_weight.shape) * self.scale
+
+    def merge_to(self):
+        org_weight = self.org_module[0].weight
+        weight = self.make_weight()
+        org_weight.copy_(org_weight + weight.to(org_weight.dtype))
 
     def forward(self, x):
         if self.cp:

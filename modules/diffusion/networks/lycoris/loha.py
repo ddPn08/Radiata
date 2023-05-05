@@ -201,13 +201,29 @@ class LohaModule(nn.Module):
     def apply_to(self):
         self.org_module[0].forward = self.forward
 
-    def remote_apply(self):
-        self.org_module[0].forward = self.org_forward
+    def make_weight(self):
+        org_weight = self.org_module[0].weight.to(torch.float)
+        w1a = self.hada_w1_a.to(device=org_weight.device, dtype=org_weight.dtype)
+        w1b = self.hada_w1_b.to(device=org_weight.device, dtype=org_weight.dtype)
+        w2a = self.hada_w2_a.to(device=org_weight.device, dtype=org_weight.dtype)
+        w2b = self.hada_w2_b.to(device=org_weight.device, dtype=org_weight.dtype)
 
-    def get_weight(self):
-        d_weight = self.hada_w1_a @ self.hada_w1_b
-        d_weight *= self.hada_w2_a @ self.hada_w2_b
-        return (d_weight).reshape(self.shape)
+        if self.cp:
+            t1 = self.hada_t1.to(device=org_weight.device, dtype=org_weight.dtype)
+            t2 = self.hada_t2.to(device=org_weight.device, dtype=org_weight.dtype)
+            weight_1 = torch.einsum("i j k l, j r -> i r k l", t1, w1b)
+            weight_1 = torch.einsum("i j k l, i r -> r j k l", weight_1, w1a)
+            weight_2 = torch.einsum("i j k l, j r -> i r k l", t2, w2b)
+            weight_2 = torch.einsum("i j k l, i r -> r j k l", weight_2, w2a)
+        else:
+            weight_1 = w1a @ w1b
+            weight_2 = w2a @ w2b
+        return (weight_1 * weight_2).reshape(org_weight.shape) * self.scale
+
+    def merge_to(self):
+        org_weight = self.org_module[0].weight
+        weight = self.make_weight()
+        org_weight.copy_(org_weight + weight.to(org_weight.dtype))
 
     @torch.enable_grad()
     def forward(self, x):
