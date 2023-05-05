@@ -14,7 +14,7 @@ IF is a new image generation AI technology developed by the Deepfloyd team at St
 set PYTHON=
 set GIT=
 set VENV_DIR=
-set COMMANDLINE_ARGS=--tensorrt
+set COMMANDLINE_ARGS=--deepfloyd_if
 
 call launch.bat
 ```
@@ -32,7 +32,7 @@ call launch.bat
 ↓
 
 ```sh
-export COMMANDLINE_ARGS="--tensorrt"
+export COMMANDLINE_ARGS="--deepfloyd_if"
 ```
 
 2. Run `launch-user.sh`
