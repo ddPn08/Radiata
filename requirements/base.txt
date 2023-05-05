@@ -6,9 +6,6 @@ transformers==4.28.1
 sentencepiece~=0.1
 safetensors
 
-# additional networks
-lycoris_lora
-
 pillow
 toml
 colored
