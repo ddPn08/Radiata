@@ -12,11 +12,9 @@ from lib.diffusers.scheduler import SCHEDULERS
 
 from . import config, utils
 from .images import save_image
-from .logger import logger
 from .shared import hf_diffusers_cache_dir
 
 ModelMode = Literal["diffusers", "tensorrt"]
-logged_trt_warning = False
 
 
 class DiffusersModel:
@@ -65,11 +63,6 @@ class DiffusersModel:
         trt_module_status, trt_version_status = utils.tensorrt_is_available()
         if config.get("tensorrt"):
             if not trt_module_status or not trt_version_status:
-                if not logged_trt_warning:
-                    logger.warning(
-                        "TensorRT is available, but torch version is not compatible."
-                    )
-                    logged_trt_warning = True
                 return False
         return True
 

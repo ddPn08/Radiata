@@ -23,7 +23,6 @@ from collections import OrderedDict
 from copy import copy
 from typing import *
 
-import diffusers
 import numpy as np
 import onnx
 import onnx_graphsurgeon as gs
@@ -42,7 +41,6 @@ from polygraphy.backend.trt import (
     save_engine,
 )
 from polygraphy.backend.trt import util as trt_util
-from transformers import CLIPTextConfig
 
 from .models import CLIP, VAE, BaseModel, UNet, VAEEncoder
 
@@ -343,21 +341,9 @@ def create_models(
     device: Union[str, torch.device],
     max_batch_size: int,
     hf_cache_dir: Optional[str] = None,
+    unet_in_channels: int = 4,
+    embedding_dim: int = 768,
 ):
-    text_encoder_config = CLIPTextConfig.from_pretrained(
-        model_id,
-        subfolder="text_encoder",
-        use_auth_token=use_auth_token,
-        cache_dir=hf_cache_dir,
-    )
-    unet = diffusers.UNet2DConditionModel.from_pretrained(
-        model_id,
-        subfolder="unet",
-        use_auth_token=use_auth_token,
-        cache_dir=hf_cache_dir,
-    )
-    unet_dim = unet.in_channels
-    embedding_dim = text_encoder_config.hidden_size
     models = {
         "clip": CLIP(
             hf_token=use_auth_token,
@@ -373,7 +359,7 @@ def create_models(
             path=model_id,
             max_batch_size=max_batch_size,
             embedding_dim=embedding_dim,
-            unet_dim=unet_dim,
+            unet_dim=unet_in_channels,
         ),
         "vae": VAE(
             hf_token=use_auth_token,
@@ -390,9 +376,6 @@ def create_models(
             embedding_dim=embedding_dim,
         ),
     }
-    del unet, text_encoder_config
-    gc.collect()
-    torch.cuda.empty_cache()
     return models
 
 
@@ -436,14 +419,13 @@ def build_engine(
 
 
 def export_onnx(
+    model,
     onnx_path: str,
     model_data: BaseModel,
     opt_image_height: int,
     opt_image_width: int,
     onnx_opset: int,
-    hf_cache_dir: Optional[str] = None,
 ):
-    model = model_data.get_model(hf_cache_dir=hf_cache_dir)
     with torch.inference_mode(), torch.autocast("cuda"):
         inputs = model_data.get_sample_input(1, opt_image_height, opt_image_width)
         torch.onnx.export(

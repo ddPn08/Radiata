@@ -30,6 +30,22 @@ class DiffusersPipeline:
     __mode__ = "diffusers"
 
     @classmethod
+    def load_unet(cls, model_id: str):
+        ckpt_path = os.path.join(ROOT_DIR, "models", "checkpoints", model_id)
+        if os.path.exists(ckpt_path):
+            temporary_pipe = (
+                convert_from_ckpt.download_from_original_stable_diffusion_ckpt(
+                    ckpt_path,
+                    from_safetensors=model_id.endswith(".safetensors"),
+                    load_safety_checker=False,
+                )
+            )
+            unet = temporary_pipe.unet
+        else:
+            unet = UNet2DConditionModel.from_pretrained(model_id, subfolder="unet")
+        return unet
+
+    @classmethod
     def from_pretrained(
         cls,
         pretrained_model_id: str,

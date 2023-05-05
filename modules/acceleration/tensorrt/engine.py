@@ -11,6 +11,12 @@ from lib.tensorrt.utilities import (
     optimize_onnx,
 )
 from modules import model_manager
+from modules.diffusion.utils import (
+    load_text_encoder,
+    load_unet,
+    load_vae_decoder,
+    load_vae_encoder,
+)
 from modules.logger import logger
 from modules.shared import hf_diffusers_cache_dir
 
@@ -24,12 +30,17 @@ class EngineBuilder:
         self.model = model_manager.sd_model
         self.device = "cuda"
         self.opts = opts
+
+        unet = load_unet(self.model.model_id)
+        text_encoder = load_text_encoder(self.model.model_id)
         self.models = create_models(
             model_id=self.model.model_id,
             device=torch.device("cuda"),
             use_auth_token=opts.hf_token,
             max_batch_size=opts.max_batch_size,
             hf_cache_dir=hf_diffusers_cache_dir(),
+            unet_in_channels=unet.config.in_channels,
+            embedding_dim=text_encoder.config.hidden_size,
         )
 
     def build(self):
@@ -45,13 +56,22 @@ class EngineBuilder:
                 logger.info(f"Found cached model: {onnx_path}")
             else:
                 logger.info(f"Exporting model: {onnx_path}")
+                if model_name == "unet":
+                    model = load_unet(self.model.model_id, device=self.device)
+                    model = model.to(dtype=torch.float16)
+                elif model_name == "clip":
+                    model = load_text_encoder(self.model.model_id, device=self.device)
+                elif model_name == "vae":
+                    model = load_vae_decoder(self.model.model_id, device=self.device)
+                elif model_name == "vae_encoder":
+                    model = load_vae_encoder(self.model.model_id, device=self.device)
                 export_onnx(
+                    model,
                     onnx_path=onnx_path,
                     model_data=model_data,
                     opt_image_height=self.opts.opt_image_height,
                     opt_image_width=self.opts.opt_image_width,
                     onnx_opset=self.opts.onnx_opset,
-                    hf_cache_dir=hf_diffusers_cache_dir(),
                 )
             if not self.opts.force_onnx_optimize and os.path.exists(onnx_opt_path):
                 logger.info(f"Found cached model: {onnx_opt_path}")
