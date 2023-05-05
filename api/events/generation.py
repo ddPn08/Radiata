@@ -12,6 +12,13 @@ class LoadResourceEvent(BaseEvent):
 
 
 @dataclass
+class PromptTokenizingEvent(BaseEvent):
+    pipe: Any
+    text_tokens: List
+    text_weights: List
+
+
+@dataclass
 class UNetDenoisingEvent(SkippableEvent):
     pipe: Any
 

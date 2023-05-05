@@ -2,8 +2,8 @@ import re
 from typing import *
 
 import torch
-from transformers import CLIPTokenizer
 
+from api.events.generation import PromptTokenizingEvent
 from modules.logger import logger
 
 re_attention = re.compile(
@@ -111,11 +111,11 @@ def pad_tokens_and_weights(
 class LongPromptWeightingPipeline:
     def __init__(
         self,
-        text_encoder,
-        tokenizer: CLIPTokenizer,
+        pipe,
     ):
-        self.text_encoder = text_encoder
-        self.tokenizer = tokenizer
+        self.pipe = pipe
+        self.text_encoder = pipe.text_encoder
+        self.tokenizer = pipe.tokenizer
         self.device = torch.device("cuda")
 
     def get_unweighted_text_embeddings(
@@ -165,25 +165,30 @@ class LongPromptWeightingPipeline:
         truncated = False
         for text in prompt:
             texts_and_weights = parse_prompt(text)
-            text_token = []
-            text_weight = []
+            text_tokens = []
+            text_weights = []
             for word, weight in texts_and_weights:
                 token = self.tokenizer(
                     word,
                 ).input_ids[1:-1]
 
-                text_token += token
-                text_weight += [weight] * len(token)
-                if len(text_token) > max_length:
+                text_tokens += token
+                text_weights += [weight] * len(token)
+                if len(text_tokens) > max_length:
                     truncated = True
                     break
 
-            if len(text_token) > max_length:
+            event = PromptTokenizingEvent(self.pipe, text_tokens, text_weights)
+            PromptTokenizingEvent.call_event(event)
+            text_tokens = event.text_tokens
+            text_weights = event.text_weights
+
+            if len(text_tokens) > max_length:
                 truncated = True
-                text_token = text_token[:max_length]
-                text_weight = text_weight[:max_length]
-            tokens.append(text_token)
-            weights.append(text_weight)
+                text_tokens = text_tokens[:max_length]
+                text_weights = text_weights[:max_length]
+            tokens.append(text_tokens)
+            weights.append(text_weights)
         if truncated:
             logger.warning(
                 "Prompt was truncated. Try to shorten the prompt or increase max_embeddings_multiples"

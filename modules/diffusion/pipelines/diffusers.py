@@ -114,7 +114,7 @@ class DiffusersPipeline:
         self.unet = unet
         self.scheduler = scheduler
 
-        self.lpw = LongPromptWeightingPipeline(self.text_encoder, self.tokenizer)
+        self.lpw = LongPromptWeightingPipeline(self)
 
         self.device = device
         self.dtype = dtype

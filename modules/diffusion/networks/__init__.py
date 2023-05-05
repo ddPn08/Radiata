@@ -101,9 +101,12 @@ def load_network_modules(e: LoadResourceEvent):
             e.pipe.unet,
         )
         info = network.load_state_dict(weights_sd, False)
-        logger.info(f"weights are loaded: {info}")
-        network.apply_to()
         network.set_multiplier(multiplier)
+        logger.info(f"weights are loaded: {info}")
+        if hasattr(network, "merge_to"):
+            network.merge_to()
+        else:
+            network.apply_to()
         network = network.to(device=e.pipe.device, dtype=e.pipe.dtype)
         latest_networks.append((module_type, basename, network))
 

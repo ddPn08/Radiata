@@ -16,7 +16,7 @@ from api.events.common import (
     PreUICreateEvent,
 )
 from modules import config, model_manager, plugin_loader, ui
-from modules.diffusion import networks
+from modules.diffusion import embeddings, networks
 
 
 def pre_load():
@@ -24,6 +24,7 @@ def pre_load():
     plugin_loader.load_plugins()
     PreAppLaunchEvent.call_event()
     networks.init()
+    embeddings.init()
     model_manager.init()
 
 
