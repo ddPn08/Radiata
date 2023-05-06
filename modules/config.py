@@ -1,22 +1,29 @@
 import argparse
 import os
+from typing import *
 
 import toml
 from packaging.version import Version
 
 from .version import update
 
-DEFAULT_CONFIG = {
-    "version": "0.0.1",
-    "images/txt2img/save_dir": "outputs/txt2img",
-    "images/txt2img/save_name": "{index}-{seed}-{prompt}.png",
-    "images/img2img/save_dir": "outputs/img2img",
-    "images/img2img/save_name": "{index}-{seed}-{prompt}.png",
-    "model_dir": "models",
-    "models": ["runwayml/stable-diffusion-v1-5"],
-    "model": "runwayml/stable-diffusion-v1-5",
-    "mode": "diffusers",
-}
+DEFAULT_CONFIG = toml.loads(
+    """
+version = "0.0.1"
+model_dir = "models"
+model = "runwayml/stable-diffusion-v1-5"
+models = [ "runwayml/stable-diffusion-v1-5" ]
+
+[common]
+output-dir-txt2img = "outputs/txt2img"
+output-name-txt2img = "{index}-{seed}-{prompt}.png"
+output-dir-img2img = "outputs/img2img"
+output-name-img2img = "{index}-{seed}-{prompt}.png"
+
+[acceleration.tensorrt]
+full-acceleration = true
+"""
+)
 
 ROOT_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
@@ -62,32 +69,53 @@ def get_config():
     return config
 
 
-def save_config(options: dict = None):
+def save_config(options: Dict):
     with open(cmd_opts.config_file, mode="w") as f:
-        f.write(toml.dumps(options or opts))
+        f.write(toml.dumps(options))
 
 
 def set(key: str, value: str):
-    opts[key] = value
-    save_config()
+    config = get_config()
+    keys = key.split(".")
+    if len(keys) == 1:
+        config[keys[0]] = value
+    else:
+        tmp = None
+        for k in keys[0:-1]:
+            if tmp is None:
+                if k not in config:
+                    config[k] = {}
+                tmp = config[k]
+            else:
+                if k not in tmp:
+                    tmp[k] = {}
+                tmp = tmp[k]
+        tmp[keys[-1]] = value
+    save_config(config)
 
 
 def get(key: str):
     if key in cmd_opts_dict and cmd_opts_dict[key] is not None:
         return cmd_opts_dict[key]
     config = get_config()
-    return (
-        config[key]
-        if key in config
-        else (DEFAULT_CONFIG[key] if key in DEFAULT_CONFIG else None)
-    )
+    keys = key.split(".")
+    tmp = None
+    for k in keys:
+        if tmp is None:
+            if k not in config:
+                return None
+            tmp = config[k]
+        else:
+            if k not in tmp:
+                return None
+            tmp = tmp[k]
+    return tmp
 
 
 def init():
     global opts
     if not os.path.exists(cmd_opts.config_file):
-        opts = DEFAULT_CONFIG
-        save_config()
+        save_config(DEFAULT_CONFIG)
     else:
         config = get_config()
         if Version(config["version"]) < Version(DEFAULT_CONFIG["version"]):
@@ -98,5 +126,3 @@ def init():
                 config = get_config()
                 config["version"] = v
                 save_config(config)
-
-        opts = get_config()

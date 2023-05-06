@@ -50,7 +50,7 @@ def event_handler():
         args_types = sig.parameters.values()
         if len(args_types) < 1:
             return
-        [e, *_] = args_types
+        e, *_ = args_types
         e = e.annotation
         if issubclass(e, BaseEvent):
             e.register(func)

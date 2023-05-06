@@ -24,12 +24,13 @@ def create_network_from_weights(
             weights_sd = torch.load(file, map_location="cpu")
 
     network_module = None
-    lora_dim = None
-    lora_alpha = None
-    conv_lora_dim = None
-    conv_alpha = None
-    additional_kwargs = {}
-    for key, value in weights_sd.items():
+    apply_unet = False
+    apply_te = False
+    for key in weights_sd.keys():
+        if key.startswith("lora_unet"):
+            apply_unet = True
+        elif key.startswith("lora_te"):
+            apply_te = True
         if network_module is None:
             if "lora_up" in key or "lora_down" in key:
                 network_module = LoConModule
@@ -37,7 +38,6 @@ def create_network_from_weights(
             elif "hada" in key:
                 network_module = LohaModule
                 break
-
     (
         conv_alpha,
         conv_lora_dim,
@@ -56,8 +56,8 @@ def create_network_from_weights(
         conv_alpha = 0
 
     network = LycorisNetwork(
-        text_encoder,
-        unet,
+        text_encoder if apply_te else None,
+        unet if apply_unet else None,
         multiplier=multiplier,
         network_module=network_module,
         lora_dim=lora_dim,
@@ -119,7 +119,7 @@ class LycorisNetwork(torch.nn.Module):
             loras = []
             replaced_module = []
             if root_module is None:
-                return loras
+                return loras, replaced_module
             for name, module in root_module.named_modules():
                 if module.__class__.__name__ in target_replace_modules:
                     for child_name, child_module in module.named_modules():

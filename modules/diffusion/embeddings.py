@@ -4,6 +4,7 @@ from typing import *
 
 import torch
 from safetensors.torch import load_file
+from transformers import CLIPTextModel
 
 from api.events import event_handler
 from api.events.generation import LoadResourceEvent, PromptTokenizingEvent
@@ -16,8 +17,10 @@ loaded_embeddings = []
 @event_handler()
 def on_load_resource(e: LoadResourceEvent):
     global token_replaces, loaded_embeddings
+    if not isinstance(e.pipe.text_encoder, CLIPTextModel):
+        return
     embeddings_dir = os.path.join(ROOT_DIR, "models", "embeddings")
-    embeddings: List[str] = []
+    embeddings = []
     for file in glob.glob(os.path.join(embeddings_dir, "**", "*"), recursive=True):
         safetensors = file.endswith(".safetensors")
         pt = file.endswith(".ckpt") or file.endswith(".pt")
@@ -33,9 +36,8 @@ def on_load_resource(e: LoadResourceEvent):
         ):
             return
 
-    loaded_embeddings = embeddings
-
     token_replaces = {}
+    loaded_embeddings = []
 
     for (pt, safetensors), file in embeddings:
         if safetensors:
@@ -60,18 +62,23 @@ def on_load_resource(e: LoadResourceEvent):
 
         if is_multi_vector:
             tokens = [token] + [f"{token}_{i}" for i in range(1, embedding.shape[0])]
-            embeddings = [e for e in embedding]  # noqa: C416
+            embeds = [e for e in embedding]  # noqa: C416
         else:
             tokens = [token]
-            embeddings = [embedding[0]] if len(embedding.shape) > 1 else [embedding]
+            embeds = [embedding[0]] if len(embedding.shape) > 1 else [embedding]
 
         e.pipe.tokenizer.add_tokens(tokens)
         token_ids = e.pipe.tokenizer.convert_tokens_to_ids(tokens)
 
-        token_replaces[token_ids[0]] = token_ids
         e.pipe.text_encoder.resize_token_embeddings(len(e.pipe.tokenizer))
-        for token_id, embedding in zip(token_ids, embeddings):
-            e.pipe.text_encoder.get_input_embeddings().weight.data[token_id] = embedding
+        for token_id, embedding in zip(token_ids, embeds):
+            weight = e.pipe.text_encoder.get_input_embeddings().weight
+            if weight.size()[1] != embedding.size()[0]:
+                continue
+            weight.data[token_id] = embedding
+
+        loaded_embeddings.append(file)
+        token_replaces[token_ids[0]] = token_ids
 
 
 @event_handler()

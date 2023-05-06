@@ -51,14 +51,18 @@ def ui():
             choices=model_manager.sd_model.available_modes(),
         )
 
+    def reload_models():
+        model_manager.reload_models()
+        return (
+            gr.Dropdown.update(choices=model_list_str(), value=model_id()),
+            model_manager.sd_model.mode,
+        )
+
     model_id_dropdown.change(
         fn=change_model, inputs=[model_id_dropdown], outputs=[model_id_dropdown, mode]
     )
     reload_models_button.click(
-        fn=lambda: (
-            gr.Dropdown.update(choices=model_list_str(), value=model_id()),
-            model_manager.sd_model.mode,
-        ),
+        fn=reload_models,
         inputs=[],
         outputs=[model_id_dropdown, mode],
     )

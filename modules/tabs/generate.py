@@ -47,7 +47,7 @@ def generate_fn(fn):
     return wrapper
 
 
-class Txt2Img(Tab):
+class Generate(Tab):
     plugin_values = {}
 
     def title(self):
@@ -70,7 +70,7 @@ class Txt2Img(Tab):
 
         plugin_data = {}
 
-        for plugin, values in Txt2Img.plugin_values.items():
+        for plugin, values in Generate.plugin_values.items():
             plugin_data[plugin] = []
             for value in values:
                 plugin_data[plugin].append(plugin_values[value])
@@ -121,7 +121,7 @@ class Txt2Img(Tab):
 
                 outputs = image_generation_options.outputs_gallery_ui()
 
-        Txt2Img.plugin_values = plugin_values
+        Generate.plugin_values = plugin_values
 
         plugin_values_list = [x for value in plugin_values.values() for x in value]
 

@@ -70,9 +70,8 @@ def set_default_model():
     set_model(sd_model.model_id)
 
 
-def init():
-    if mode != "stable-diffusion":
-        return
+def reload_models():
+    sd_models.clear()
     raw_model_list = config.get("models") or []
     if len(raw_model_list) < 1:
         raw_model_list = config.DEFAULT_CONFIG["models"]
@@ -88,4 +87,9 @@ def init():
             if model_id not in raw_model_list:
                 sd_models.append(DiffusersModel(model_id=model_id))
 
+
+def init():
+    if mode != "stable-diffusion":
+        return
+    reload_models()
     set_default_model()

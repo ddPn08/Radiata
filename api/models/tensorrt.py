@@ -20,6 +20,7 @@ class BuildEngineOptions(BaseModel):
     force_engine_build = False
     force_onnx_export = False
     force_onnx_optimize = False
+    full_acceleration = False
 
 
 class TensorRTEngineData(BaseModel):

@@ -26,8 +26,8 @@ def replace_invalid_chars(filepath, replace_with="_"):
 def save_image(img: Image.Image, opts: ImageGenerationOptions):
     metadata = PngInfo()
     metadata.add_text("parameters", opts.json())
-    dir = config.get(f"images/{get_category(opts)}/save_dir")
-    basename: str = config.get(f"images/{get_category(opts)}/save_name")
+    dir = config.get(f"common.output-dir-{get_category(opts)}")
+    basename: str = config.get(f"common.output-name-{get_category(opts)}")
     filename = (
         basename.format(
             seed=opts.seed,
@@ -47,7 +47,7 @@ def save_image(img: Image.Image, opts: ImageGenerationOptions):
 
 
 def get_image_filepath(category: str, filename: str):
-    dir = config.get(f"images/{category}/save_dir")
+    dir = config.get(f"common.output-dir-{category}")
     return os.path.join(dir, filename)
 
 
@@ -66,7 +66,7 @@ def get_image_parameter(img: Image.Image):
 
 
 def get_all_image_files(category: str):
-    dir = config.get(f"images/{category}/save_dir")
+    dir = config.get(f"common.output-dir-{category}")
     files = glob.glob(os.path.join(dir, "*"))
     files = sorted(
         [f.replace(os.sep, "/") for f in files if os.path.isfile(f)],

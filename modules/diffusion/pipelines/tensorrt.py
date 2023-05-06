@@ -5,11 +5,11 @@ from typing import Optional
 
 import tensorrt as trt
 import torch
-from diffusers import DDPMScheduler
+from diffusers import AutoencoderKL, DDPMScheduler
 from diffusers.utils import randn_tensor
 from PIL import Image
 from polygraphy import cuda
-from transformers import CLIPTokenizer
+from transformers import CLIPTextModel, CLIPTokenizer
 
 from lib.tensorrt.engine import (
     AutoencoderKLEngine,
@@ -35,15 +35,8 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
         device: Union[str, torch.device],
         max_batch_size: int = 1,
         hf_cache_dir: Optional[str] = None,
+        full_acceleration: bool = False,
     ):
-        models = create_models(
-            model_id=model_id,
-            use_auth_token=use_auth_token,
-            device=device,
-            max_batch_size=max_batch_size,
-            hf_cache_dir=hf_cache_dir,
-        )
-
         temporary_pipe = convert_checkpoint_to_pipe(model_id)
 
         tokenizer = (
@@ -67,21 +60,51 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
             else temporary_pipe.scheduler
         )
 
+        if full_acceleration:
+            clip = CLIPTextModelEngine(model_path("clip"), stream)
+            vae = AutoencoderKLEngine(model_path("vae"), stream)
+            embedding_dim = 768
+        else:
+            clip = (
+                CLIPTextModel.from_pretrained(
+                    model_id,
+                    subfolder="text_encoder",
+                    use_auth_token=use_auth_token,
+                    cache_dir=hf_cache_dir,
+                )
+                if temporary_pipe is None
+                else temporary_pipe.text_encoder
+            )
+            vae = (
+                AutoencoderKL.from_pretrained(
+                    model_id,
+                    subfolder="vae",
+                    use_auth_token=use_auth_token,
+                    cache_dir=hf_cache_dir,
+                )
+                if temporary_pipe is None
+                else temporary_pipe.vae
+            )
+            embedding_dim = clip.config.hidden_size
+
         del temporary_pipe
         gc.collect()
         torch.cuda.empty_cache()
+
+        models = create_models(
+            model_id=model_id,
+            use_auth_token=use_auth_token,
+            device=device,
+            max_batch_size=max_batch_size,
+            hf_cache_dir=hf_cache_dir,
+            embedding_dim=embedding_dim,
+        )
 
         def model_path(model_name):
             return os.path.join(engine_dir, model_name + ".plan")
 
         stream = cuda.Stream()
-        clip = CLIPTextModelEngine(model_path("clip"), stream)
         unet = UNet2DConditionModelEngine(model_path("unet"), stream)
-        vae = AutoencoderKLEngine(
-            model_path("vae_encoder"),
-            model_path("vae"),
-            stream,
-        )
         pipe = cls(
             models=models,
             stream=stream,
@@ -90,6 +113,7 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
             vae=vae,
             tokenizer=tokenizer,
             scheduler=scheduler,
+            full_acceleration=full_acceleration,
         ).to(device)
         return pipe
 
@@ -102,8 +126,8 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
         unet: UNet2DConditionModelEngine,
         tokenizer: CLIPTokenizer,
         scheduler: DDPMScheduler,
+        full_acceleration: bool = False,
     ):
-        self.__dict__["config"] = object()
         self.unet: Optional[UNet2DConditionModelEngine] = None
         self.vae: Optional[AutoencoderKLEngine] = None
         self.text_encoder: Optional[CLIPTextModelEngine] = None
@@ -117,6 +141,7 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
         )
         self.trt_models = models
         self.stream = stream
+        self.full_acceleration = full_acceleration
 
     def __del__(self):
         self.stream.free()
@@ -135,27 +160,28 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
         super().load_resources(
             image_height, image_width, batch_size, num_inference_steps
         )
-        self.text_encoder.allocate_buffers(
-            shape_dict=self.trt_models["clip"].get_shape_dict(
-                batch_size, image_height, image_width
-            ),
-            device=self.device,
-        )
         self.unet.allocate_buffers(
             shape_dict=self.trt_models["unet"].get_shape_dict(
                 batch_size, image_height, image_width
             ),
             device=self.device,
         )
-        self.vae.allocate_buffers(
-            encoder_shape=self.trt_models["vae_encoder"].get_shape_dict(
-                batch_size, image_height, image_width
-            ),
-            decoder_shape=self.trt_models["vae"].get_shape_dict(
-                batch_size, image_height, image_width
-            ),
-            device=self.device,
-        )
+        if self.full_acceleration:
+            self.text_encoder.allocate_buffers(
+                shape_dict=self.trt_models["clip"].get_shape_dict(
+                    batch_size, image_height, image_width
+                ),
+                device=self.device,
+            )
+            self.vae.allocate_buffers(
+                encoder_shape=self.trt_models["vae_encoder"].get_shape_dict(
+                    batch_size, image_height, image_width
+                ),
+                decoder_shape=self.trt_models["vae"].get_shape_dict(
+                    batch_size, image_height, image_width
+                ),
+                device=self.device,
+            )
 
     def _encode_prompt(
         self,
@@ -198,7 +224,7 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
         latents: torch.Tensor = None,
     ):
         dtype = torch.float32
-        if image is not None:
+        if image is not None and self.full_acceleration:
             image = image.to(self.device).to(dtype)
             image = image.repeat(batch_size, 1, 1, 1)
             init_latents = self.encode_image(image)
@@ -224,9 +250,13 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
         )
 
     def decode_latents(self, latents):
+        if not self.full_acceleration:
+            return super().decode_latents(latents)
         return self.vae.decode(latents).sample
 
     def decode_images(self, images: torch.Tensor):
+        if not self.full_acceleration:
+            return super().decode_images(images)
         images = (
             ((images + 1) * 255 / 2)
             .clamp(0, 255)

@@ -92,6 +92,10 @@ class LohaModule(nn.Module):
     @classmethod
     def get_metadata(cls, weight):
         use_cp = False
+        conv_alpha = None
+        conv_lora_dim = None
+        lora_alpha = None
+        lora_dim = None
         for key, value in weight.items():
             if key.endswith("alpha"):
                 base_key = key[:-6]

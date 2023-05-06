@@ -44,7 +44,21 @@ class DiffusersModel:
         )
 
     def trt_available(self):
-        global logged_trt_warning
+        trt_path = self.get_trt_path()
+        necessary_files = [
+            "engine/unet.plan",
+            "onnx/unet.opt.onnx",
+        ]
+        for file in necessary_files:
+            filepath = os.path.join(trt_path, *file.split("/"))
+            if not os.path.exists(filepath):
+                return False
+        trt_module_status, trt_version_status = utils.tensorrt_is_available()
+        if not trt_module_status or not trt_version_status:
+            return False
+        return config.get("tensorrt")
+
+    def trt_full_acceleration_available(self):
         trt_path = self.get_trt_path()
         necessary_files = [
             "engine/clip.plan",
@@ -60,11 +74,8 @@ class DiffusersModel:
             filepath = os.path.join(trt_path, *file.split("/"))
             if not os.path.exists(filepath):
                 return False
-        trt_module_status, trt_version_status = utils.tensorrt_is_available()
-        if config.get("tensorrt"):
-            if not trt_module_status or not trt_version_status:
-                return False
-        return True
+
+        return config.get("acceleration.tensorrt.full-acceleration")
 
     def activate(self):
         if self.activated:
@@ -92,6 +103,7 @@ class DiffusersModel:
                 device=torch.device("cuda"),
                 max_batch_size=1,
                 hf_cache_dir=hf_diffusers_cache_dir(),
+                full_acceleration=self.trt_full_acceleration_available(),
             )
         self.activated = True
 

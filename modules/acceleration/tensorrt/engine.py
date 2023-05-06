@@ -42,6 +42,10 @@ class EngineBuilder:
             unet_in_channels=unet.config.in_channels,
             embedding_dim=text_encoder.config.hidden_size,
         )
+        if not opts.full_acceleration:
+            self.models = {
+                "unet": self.models["unet"],
+            }
 
     def build(self):
         model_dir = self.model.get_trt_path()

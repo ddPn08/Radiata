@@ -7,7 +7,7 @@ from modules.ui import Tab
 from modules.utils import tensorrt_is_available
 
 
-class Txt2Img(Tab):
+class TensorRT(Tab):
     def title(self):
         return "TensorRT"
 
@@ -94,6 +94,10 @@ class Txt2Img(Tab):
                         label="Force ONNX optimize",
                         value=False,
                     )
+                    full_acceleration_checkbox = gr.Checkbox(
+                        label="Full acceleration",
+                        value=False,
+                    )
                 status = gr.Textbox(
                     label="Status",
                     value="",
@@ -120,6 +124,7 @@ class Txt2Img(Tab):
                         force_engine_build_checkbox,
                         force_onnx_export_checkbox,
                         force_onnx_optimize_checkbox,
+                        full_acceleration_checkbox,
                     ],
                     outputs=[status],
                 )
@@ -140,6 +145,7 @@ class Txt2Img(Tab):
         force_engine_build,
         force_onnx_export,
         force_onnx_optimize,
+        full_acceleration,
     ):
         from api.models.tensorrt import BuildEngineOptions
         from modules.acceleration.tensorrt.engine import EngineBuilder
@@ -161,6 +167,7 @@ class Txt2Img(Tab):
             force_engine_build=force_engine_build,
             force_onnx_export=force_onnx_export,
             force_onnx_optimize=force_onnx_optimize,
+            full_acceleration=full_acceleration,
         )
         builder = EngineBuilder(opts)
         builder.build()

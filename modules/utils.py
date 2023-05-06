@@ -61,7 +61,7 @@ def tensorrt_is_available():
     version = LooseVersion("2") > LooseVersion(torch.__version__)
 
     if not tensorrt or not version:
-        if not logged_trt_warning and tensorrt:
+        if not logged_trt_warning and tensorrt and config.get("tensorrt"):
             logger.warning(
                 "TensorRT is available, but torch version is not compatible."
             )
