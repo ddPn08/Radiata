@@ -144,8 +144,8 @@ def install_tensorrt():
                 filepath = os.path.join(python_dir, file)
                 print("Installing tensorrt")
                 run(f'"{python}" -m pip install "{filepath}"')
-                return
-        raise RuntimeError("Failed to install tensorrt.")
+        else:
+            raise RuntimeError("Failed to install tensorrt.")
     else:
         run(f"{python} -m {tensorrt_linux_command}")
 
