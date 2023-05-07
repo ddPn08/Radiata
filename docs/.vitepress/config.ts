@@ -81,6 +81,7 @@ export default defineConfig({
                             { text: 'Model', link: '/ja/usage/model' },
                             { text: 'TensorRT', link: '/ja/usage/tensorrt' },
                             { text: 'Deepfloyd IF', link: '/ja/usage/deepfloyd_if' },
+                            { text: 'Commandline Args', link: '/ja/usage/commandline', },
                         ],
                     },
                     {
