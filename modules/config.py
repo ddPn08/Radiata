@@ -39,6 +39,9 @@ parser.add_argument("--share", action="store_true")
 parser.add_argument("--model-dir", type=str, default="models")
 parser.add_argument("--hf-token", type=str)
 
+parser.add_argument("--device", type=str, default="cuda")
+parser.add_argument("--precision", type=str, choices=["fp32", "fp16"], default="fp16")
+
 parser.add_argument("--xformers", action="store_true")
 parser.add_argument("--tensorrt", action="store_true")
 parser.add_argument("--deepfloyd_if", action="store_true")

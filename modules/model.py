@@ -12,7 +12,7 @@ from lib.diffusers.scheduler import SCHEDULERS
 
 from . import config, utils
 from .images import save_image
-from .shared import hf_diffusers_cache_dir
+from .shared import hf_diffusers_cache_dir, get_device
 
 ModelMode = Literal["diffusers", "tensorrt"]
 
@@ -80,17 +80,24 @@ class DiffusersModel:
     def activate(self):
         if self.activated:
             return
+        device = get_device()
+        torch_dtype = torch.float16 if config.get("fp16") else torch.float32
+
         if self.mode == "diffusers":
             from .diffusion.pipelines.diffusers import DiffusersPipeline
 
             self.pipe = DiffusersPipeline.from_pretrained(
                 self.model_id,
                 use_auth_token=config.get("hf_token"),
-                torch_dtype=torch.float16,
+                torch_dtype=torch_dtype,
                 cache_dir=hf_diffusers_cache_dir(),
-            ).to(device=torch.device("cuda"))
+            ).to(device=device)
             self.pipe.enable_attention_slicing()
-            if utils.is_installed("xformers") and config.get("xformers"):
+            if (
+                utils.is_installed("xformers")
+                and config.get("xformers")
+                and device.type == "cuda"
+            ):
                 self.pipe.enable_xformers_memory_efficient_attention()
         elif self.mode == "tensorrt":
             from .diffusion.pipelines.tensorrt import TensorRTStableDiffusionPipeline
@@ -100,7 +107,7 @@ class DiffusersModel:
                 model_id=self.model_id,
                 engine_dir=os.path.join(model_dir, "engine"),
                 use_auth_token=config.get("hf_token"),
-                device=torch.device("cuda"),
+                device=get_device(),
                 max_batch_size=1,
                 hf_cache_dir=hf_diffusers_cache_dir(),
                 full_acceleration=self.trt_full_acceleration_available(),

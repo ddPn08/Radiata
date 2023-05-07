@@ -116,7 +116,7 @@ class LongPromptWeightingPipeline:
         self.pipe = pipe
         self.text_encoder = pipe.text_encoder
         self.tokenizer = pipe.tokenizer
-        self.device = torch.device("cuda")
+        self.device = pipe.device
 
     def get_unweighted_text_embeddings(
         self,

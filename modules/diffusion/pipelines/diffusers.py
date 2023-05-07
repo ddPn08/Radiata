@@ -65,7 +65,7 @@ class DiffusersPipeline:
                     from_safetensors=pretrained_model_id.endswith(".safetensors"),
                     load_safety_checker=False,
                     device=device,
-                )
+                ).to(torch_dtype=torch_dtype)
             )
         else:
             temporary_pipe = StableDiffusionPipeline.from_pretrained(
@@ -105,7 +105,7 @@ class DiffusersPipeline:
         tokenizer: CLIPTokenizer,
         unet: UNet2DConditionModel,
         scheduler: DDPMScheduler,
-        device: torch.device = torch.device("cpu"),
+        device: torch.device,
         dtype: torch.dtype = torch.float32,
     ):
         self.vae = vae
@@ -114,10 +114,10 @@ class DiffusersPipeline:
         self.unet = unet
         self.scheduler = scheduler
 
-        self.lpw = LongPromptWeightingPipeline(self)
-
         self.device = device
         self.dtype = dtype
+
+        self.lpw = LongPromptWeightingPipeline(self)
 
         self.plugin_data = None
         self.opts = None
