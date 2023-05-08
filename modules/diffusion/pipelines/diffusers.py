@@ -105,7 +105,7 @@ class DiffusersPipeline:
         tokenizer: CLIPTokenizer,
         unet: UNet2DConditionModel,
         scheduler: DDPMScheduler,
-        device: torch.device,
+        device: torch.device = torch.device("cpu"),
         dtype: torch.dtype = torch.float32,
     ):
         self.vae = vae
