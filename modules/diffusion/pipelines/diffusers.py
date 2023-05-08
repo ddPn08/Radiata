@@ -127,15 +127,22 @@ class DiffusersPipeline:
             device = self.device
         if dtype is None:
             dtype = self.dtype
-        self.vae.to(device, dtype)
-        self.text_encoder.to(device, dtype)
-        self.unet.to(device, dtype)
-        self.tokenizer
-        self.scheduler
+
+        models = [
+            self.vae,
+            self.text_encoder,
+            self.unet,
+        ]
+        for model in models:
+            if hasattr(model, "to"):
+                model.to(device, dtype)
+
         if device is not None:
             self.device = device
+            self.lpw.device = device
         if dtype is not None:
             self.dtype = dtype
+
         return self
 
     def enterers(self):

@@ -114,7 +114,7 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
             tokenizer=tokenizer,
             scheduler=scheduler,
             full_acceleration=full_acceleration,
-        ).to(device)
+        ).to(device=device)
         return pipe
 
     def __init__(

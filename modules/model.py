@@ -107,8 +107,8 @@ class DiffusersModel:
                 model_id=self.model_id,
                 engine_dir=os.path.join(model_dir, "engine"),
                 use_auth_token=config.get("hf_token"),
-                device=get_device(),
                 max_batch_size=1,
+                device=device,
                 hf_cache_dir=hf_diffusers_cache_dir(),
                 full_acceleration=self.trt_full_acceleration_available(),
             )
