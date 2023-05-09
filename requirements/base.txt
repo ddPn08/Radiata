@@ -4,6 +4,7 @@ accelerate==0.18.0
 diffusers==0.16.1
 transformers==4.28.1
 sentencepiece~=0.1
+omegaconf
 safetensors
 
 pillow
