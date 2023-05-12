@@ -118,6 +118,7 @@ class DiffusersPipeline:
         self.dtype = dtype
 
         self.lpw = LongPromptWeightingPipeline(self)
+        self.upscale = True
 
         self.plugin_data = None
         self.opts = None
@@ -384,6 +385,34 @@ class DiffusersPipeline:
         self.plugin_data = plugin_data
         self.opts = opts
 
+        # Hires.fix
+        if self.upscale:
+            self.upscale, self.stage_1st = False, True
+            opts.image = self.__call__(
+                opts,
+                generator,
+                eta,
+                latents,
+                prompt_embeds,
+                negative_prompt_embeds,
+                "latent",
+                return_dict,
+                callback,
+                callback_steps,
+                cross_attention_kwargs,
+                plugin_data,
+            ).images
+            opts.height *= 2
+            opts.width *= 2
+            org_dtype = opts.image.dtype
+            if opts.image.dtype == torch.bfloat16:
+                images_1st = images_1st.to(torch.float)
+            opts.image = torch.nn.functional.interpolate(
+                opts.image, (opts.height // 8, opts.width // 8), mode="bilinear"
+            )
+            opts.image = opts.image.to(org_dtype)
+            opts.image = self.create_output(opts.image, "pil", True).images[0]
+
         # 1. Define call parameters
         num_images_per_prompt = 1
         prompt = [opts.prompt] * opts.batch_size
@@ -464,6 +493,10 @@ class DiffusersPipeline:
 
         for enterer in enterers:
             enterer.__exit__(None, None, None)
+
+        if self.stage_1st:
+            self.stage_1st = False
+            return outputs
 
         self.plugin_data = None
         self.opts = None
