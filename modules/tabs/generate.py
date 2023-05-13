@@ -27,9 +27,9 @@ def generate_fn(fn):
             hiresfix_scale,
             init_image,
             strength,
-        ) = as_list[0:14]
+        ) = as_list[0:15]
 
-        plugin_values = dict(list(data.items())[14:])
+        plugin_values = dict(list(data.items())[15:])
 
         opts = ImageGenerationOptions(
             prompt=prompt,
@@ -86,7 +86,16 @@ class Generate(Tab):
         for data in model_manager.sd_model(opts, plugin_data):
             if type(data) == tuple:
                 step, preview = data
-                progress = step / (opts.batch_count * opts.num_inference_steps)
+                if opts.hiresfix:
+                    progress = step / (
+                        opts.batch_count
+                        * (
+                            opts.num_inference_steps
+                            + int(opts.num_inference_steps * opts.strength)
+                        )
+                    )
+                else:
+                    progress = step / (opts.batch_count * opts.num_inference_steps)
                 previews = []
                 for images, opts in preview:
                     previews.extend(images)
