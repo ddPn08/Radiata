@@ -118,7 +118,6 @@ class DiffusersPipeline:
         self.dtype = dtype
 
         self.lpw = LongPromptWeightingPipeline(self)
-        self.upscale = True
 
         self.plugin_data = None
         self.opts = None
@@ -386,8 +385,8 @@ class DiffusersPipeline:
         self.opts = opts
 
         # Hires.fix
-        if self.upscale:
-            self.upscale, self.stage_1st = False, True
+        if opts.hiresfix:
+            opts.hiresfix, self.stage_1st = False, True
             opts.image = self.__call__(
                 opts,
                 generator,
@@ -402,15 +401,11 @@ class DiffusersPipeline:
                 cross_attention_kwargs,
                 plugin_data,
             ).images
-            opts.height *= 2
-            opts.width *= 2
-            org_dtype = opts.image.dtype
-            if opts.image.dtype == torch.bfloat16:
-                images_1st = images_1st.to(torch.float)
+            opts.height = int(opts.height * opts.hiresfix_scale)
+            opts.width = int(opts.hiresfix_scale * opts.hiresfix_scale)
             opts.image = torch.nn.functional.interpolate(
                 opts.image, (opts.height // 8, opts.width // 8), mode="bilinear"
             )
-            opts.image = opts.image.to(org_dtype)
             opts.image = self.create_output(opts.image, "pil", True).images[0]
 
         # 1. Define call parameters

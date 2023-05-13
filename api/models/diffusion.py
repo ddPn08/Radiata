@@ -21,6 +21,8 @@ class ImageGenerationOptions:
     strength: Optional[float] = 1.0
 
     image: PIL.Image.Image = field(default_factory=PIL.Image.Image)
+    hiresfix: bool
+    hiresfix_scale: float
 
     def dict(self):
         return asdict(self)

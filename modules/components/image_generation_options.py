@@ -88,15 +88,22 @@ def common_options_ui():
     )
 
 
+def hires_options_ui():
+    with gr.Row():
+        with gr.Accordion("Hires.fix", open=False):
+            enable_upscale = gr.Checkbox(label="Hires.fix")
+            scale_slider = gr.Slider(
+                value=1.5, minimum=1, maximum=2, step=0.1, label="Scale"
+            )
+    return enable_upscale, scale_slider
+
+
 def img2img_options_ui():
     with gr.Column():
         with gr.Accordion("Img2Img", open=False):
             init_image = gr.Image(label="Init Image", type="pil")
             strength_slider = gr.Slider(
-                value=0.5,
-                minimum=0,
-                maximum=1,
-                step=0.01,
+                value=0.5, minimum=0, maximum=1, step=0.01, label="Strength"
             )
     return init_image, strength_slider
 
