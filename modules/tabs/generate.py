@@ -23,6 +23,7 @@ def generate_fn(fn):
             width,
             height,
             hiresfix,
+            hiresfix_mode,
             hiresfix_scale,
             init_image,
             strength,
@@ -44,6 +45,7 @@ def generate_fn(fn):
             seed=seed,
             image=init_image,
             hiresfix=hiresfix,
+            hiresfix_mode=hiresfix_mode,
             hiresfix_scale=hiresfix_scale,
         )
         yield from fn(self, opts, plugin_values)

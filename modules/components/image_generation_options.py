@@ -91,11 +91,17 @@ def common_options_ui():
 def hires_options_ui():
     with gr.Row():
         with gr.Accordion("Hires.fix", open=False):
-            enable_upscale = gr.Checkbox(label="Hires.fix")
+            with gr.Row():
+                enable_upscale = gr.Checkbox(label="Hires.fix")
+                upscaler_mode = gr.Dropdown(
+                    choices=["nearest", "bilinear", "bicubic"],
+                    value="bilinear",
+                    label="Latent upscaler mode",
+                )
             scale_slider = gr.Slider(
                 value=1.5, minimum=1, maximum=2, step=0.1, label="Scale"
             )
-    return enable_upscale, scale_slider
+    return enable_upscale, upscaler_mode, scale_slider
 
 
 def img2img_options_ui():

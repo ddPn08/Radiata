@@ -22,6 +22,7 @@ class ImageGenerationOptions:
 
     image: PIL.Image.Image = field(default_factory=PIL.Image.Image)
     hiresfix: bool = False
+    hiresfix_mode: str = "bilinear"
     hiresfix_scale: float = 1.5
 
     def dict(self):
