@@ -94,12 +94,19 @@ def hires_options_ui():
             with gr.Row():
                 enable_upscale = gr.Checkbox(label="Hires.fix")
                 upscaler_mode = gr.Dropdown(
-                    choices=["nearest", "bilinear", "bicubic"],
+                    choices=[
+                        "bilinear",
+                        "bilinear-antialiased",
+                        "bicubic",
+                        "bicubic-antialiased",
+                        "nearest",
+                        "nearest-exact",
+                    ],
                     value="bilinear",
                     label="Latent upscaler mode",
                 )
             scale_slider = gr.Slider(
-                value=1.5, minimum=1, maximum=2, step=0.1, label="Scale"
+                value=1.5, minimum=1, maximum=4, step=0.05, label="Upscale by"
             )
     return enable_upscale, upscaler_mode, scale_slider
 
