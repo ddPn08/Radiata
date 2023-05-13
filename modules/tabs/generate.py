@@ -83,20 +83,18 @@ class Generate(Tab):
 
         count = 0
 
-        hiresfix = opts.hiresfix
+        # pre-calculate inference steps
+        if opts.hiresfix:
+            inference_steps = opts.num_inference_steps + int(
+                opts.num_inference_steps * opts.strength
+            )
+        else:
+            inference_steps = opts.num_inference_steps
+
         for data in model_manager.sd_model(opts, plugin_data):
             if type(data) == tuple:
                 step, preview = data
-                if hiresfix:
-                    progress = step / (
-                        opts.batch_count
-                        * (
-                            opts.num_inference_steps
-                            + int(opts.num_inference_steps * opts.strength)
-                        )
-                    )
-                else:
-                    progress = step / (opts.batch_count * opts.num_inference_steps)
+                progress = step / (opts.batch_count * inference_steps)
                 previews = []
                 for images, opts in preview:
                     previews.extend(images)
