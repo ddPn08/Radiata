@@ -404,10 +404,11 @@ class DiffusersPipeline:
             ).images
             opts.height = int(opts.height * opts.hiresfix_scale)
             opts.width = int(opts.width * opts.hiresfix_scale)
+
             opts.image = torch.nn.functional.interpolate(
                 opts.image,
                 (opts.height // 8, opts.width // 8),
-                mode=opts.hiresfix_mode,
+                mode=opts.hiresfix_mode.split("-")[0],
                 antialias=True if "antialiased" in opts.hiresfix_mode else False,
             )
             opts.image = self.create_output(opts.image, "pil", True).images[0]
