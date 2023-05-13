@@ -121,6 +121,7 @@ class DiffusersPipeline:
 
         self.plugin_data = None
         self.opts = None
+        self.stage_1st = None
 
     def to(self, device: torch.device = None, dtype: torch.dtype = None):
         if device is None:
@@ -385,7 +386,6 @@ class DiffusersPipeline:
         self.opts = opts
 
         # Hires.fix
-        self.stage_1st = False
         if opts.hiresfix:
             opts.hiresfix, self.stage_1st = False, True
             opts.image = self.__call__(
@@ -491,7 +491,7 @@ class DiffusersPipeline:
             enterer.__exit__(None, None, None)
 
         if self.stage_1st:
-            self.stage_1st = False
+            self.stage_1st = None
             return outputs
 
         self.plugin_data = None
