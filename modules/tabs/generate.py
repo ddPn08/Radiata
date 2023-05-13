@@ -83,10 +83,11 @@ class Generate(Tab):
 
         count = 0
 
+        hiresfix = opts.hiresfix
         for data in model_manager.sd_model(opts, plugin_data):
             if type(data) == tuple:
                 step, preview = data
-                if opts.hiresfix:
+                if hiresfix:
                     progress = step / (
                         opts.batch_count
                         * (
