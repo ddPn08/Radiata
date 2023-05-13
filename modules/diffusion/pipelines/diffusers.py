@@ -385,6 +385,7 @@ class DiffusersPipeline:
         self.opts = opts
 
         # Hires.fix
+        self.stage_1st = False
         if opts.hiresfix:
             opts.hiresfix, self.stage_1st = False, True
             opts.image = self.__call__(
@@ -402,7 +403,7 @@ class DiffusersPipeline:
                 plugin_data,
             ).images
             opts.height = int(opts.height * opts.hiresfix_scale)
-            opts.width = int(opts.hiresfix_scale * opts.hiresfix_scale)
+            opts.width = int(opts.width * opts.hiresfix_scale)
             opts.image = torch.nn.functional.interpolate(
                 opts.image, (opts.height // 8, opts.width // 8), mode="bilinear"
             )
