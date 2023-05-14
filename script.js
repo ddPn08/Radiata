@@ -37,19 +37,42 @@ function inferenceReloadListeners() {
 /* Gallery */
 
 function attachGalleryListeners() {
-    function setEventHandler(gallery, recursive = false) {
-        gallery.querySelectorAll('button, .preview').forEach((image, key) => {
-            image.addEventListener('click', () => {
-                if (recursive) setEventHandler(gallery);
+    function setObserver(gallery) {
+        new MutationObserver((records) => {
+            for (const record of records) {
+                for (const nodeList of record.addedNodes) {
+                    if (nodeList instanceof HTMLElement) setEventHandler(gallery, nodeList)
+                }
+            }
+        }).observe(gallery, { childList: true, subtree: true })
+    }
+    function setEventHandler(gallery, node) {
+        console.log(node.innerText);
+        console.log(node);
+        if (node.tagName == "BUTTON" || node.classList.contains("preview")) {
+            node.addEventListener('click', () => {
                 gradioApp().getElementById(gallery.id + "-button").click();
             });
-        });
+        } else if (node.innerText.includes("processing")) {
+            console.log(node)
+            gradioApp().getElementById(gallery.id + "-button").click();
+        } else {
+            node.querySelector("button[aria-label=Clear]")?.addEventListener('click', () => {
+                gradioApp().getElementById(gallery.id + "-button").click();
+            });
+        }
     }
-    let galleryList = gradioApp().querySelectorAll('.info-gallery');
-    galleryList.forEach((gallery) => setEventHandler(gallery, true));
+    gradioApp().querySelectorAll('.info-gallery').forEach((gallery) => setObserver(gallery, true));
 }
 
 
+function idEscape(id) {
+    return id.replace(/(:|\.|\[|\]|,|=|@|\s)/g, "\\$1");
+}
 function selectedGalleryButton(id) {
-    return [...gradioApp().querySelectorAll('#' + id + ' .thumbnail-item.thumbnail-small')].findIndex((e) => e.classList.contains("selected"));
+    return [...gradioApp().querySelectorAll('#' + idEscape(id) + ' .thumbnail-item.thumbnail-small')].findIndex((e) => e.classList.contains("selected"));
+}
+
+function selectedTab(id) { // https://github.com/gradio-app/gradio/issues/3793
+    return [...gradioApp().querySelectorAll('#' + idEscape(id) + ' button')].find((e) => e.classList.contains("selected")).innerText;
 }
