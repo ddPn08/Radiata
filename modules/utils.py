@@ -58,7 +58,9 @@ def is_installed(package: str):
 def tensorrt_is_available():
     global logged_trt_warning
     tensorrt = is_installed("tensorrt")
-    version = LooseVersion("2") > LooseVersion(torch.__version__)
+    version = LooseVersion("2") > LooseVersion(torch.__version__) or LooseVersion(
+        "2.1"
+    ) <= LooseVersion(torch.__version__)
 
     if not tensorrt or not version:
         if not logged_trt_warning and tensorrt and config.get("tensorrt"):
