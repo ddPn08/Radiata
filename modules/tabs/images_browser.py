@@ -59,14 +59,12 @@ class ImagesBrowser(Tab):
                         elif page > (img_len - 1) // max_img_len + 1:
                             page = (img_len - 1) // max_img_len + 1
 
-                        if flag:
-                            g_img = [f for f in imgs if os.path.isfile(f)]
-                            g_img = sorted(g_img, key=os.path.getmtime)
-                            g_img = g_img[(page - 1) * max_img_len : page * max_img_len]
+                        g_img = [f for f in imgs if os.path.isfile(f)]
+                        g_img = sorted(g_img, key=os.path.getmtime)
+                        g_img = g_img[(page - 1) * max_img_len : page * max_img_len]
 
-                        select_img = (page - 1) * max_img_len + index
-                        if index >= 0 and select_img < len(imgs):
-                            imgs = imgs[select_img]
+                        if index >= 0 and index < len(g_img):
+                            imgs = g_img[index]
                             param: dict = Image.open(imgs).text
                             parameters = param.pop("parameters")
                             try:
@@ -86,10 +84,7 @@ class ImagesBrowser(Tab):
                                 gallery.update(g_img),
                             )
                         else:
-                            return (
-                                page_box.update(page),
-                                info.update(value),
-                            )
+                            return info.update(value)
 
                     tab.select(lambda x: page_box.update(-1), page_box, page_box)
                     prev_btn.click(lambda x: page_box.update(x - 1), page_box, page_box)
@@ -104,5 +99,5 @@ class ImagesBrowser(Tab):
                         fn=lambda x, y, z: change_page(x, y, z, False),
                         _js=f"(x,y,z)=>[x,selectedGalleryButton('{id}'),selectedTab('{tab_id}')]",
                         inputs=[page_box, info, gallery],
-                        outputs=[page_box, info],
+                        outputs=[info],
                     )
