@@ -21,10 +21,35 @@ document.addEventListener("DOMContentLoaded", function () {
             const root = gradioApp().getElementById("radiata-root")
             if (root) {
                 clearInterval(interval)
-                const button = gradioApp().getElementById("inference-mode-reload-button")
-                button.click()
+                inferenceReloadListeners()
+                attachGalleryListeners()
             }
         }, 500)
     })
     mutationObserver.observe(gradioApp(), { childList: true, subtree: true })
 })
+
+function inferenceReloadListeners() {
+    const button = gradioApp().getElementById("inference-mode-reload-button")
+    button.click()
+}
+
+/* Gallery */
+
+function attachGalleryListeners() {
+    function setEventHandler(gallery, recursive = false) {
+        gallery.querySelectorAll('button, .preview').forEach((image, key) => {
+            image.addEventListener('click', () => {
+                if (recursive) setEventHandler(gallery);
+                gradioApp().getElementById(gallery.id + "-button").click();
+            });
+        });
+    }
+    let galleryList = gradioApp().querySelectorAll('.info-gallery');
+    galleryList.forEach((gallery) => setEventHandler(gallery, true));
+}
+
+
+function selectedGalleryButton(id) {
+    return [...gradioApp().querySelectorAll('#' + id + ' .thumbnail-item.thumbnail-small')].findIndex((e) => e.classList.contains("selected"));
+}
