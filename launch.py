@@ -123,10 +123,12 @@ def install_plugin_deps():
 
 
 def install_tensorrt():
-    trt_version = "8.6.0"
+    trt_version = ">=8.6.0", "<8.7.0"
+    trt_version_list = ("8.6",)
+    trt_version_join = ",".join(trt_version)
     tensorrt_linux_command = os.environ.get(
         "TENSORRT_LINUX_COMMAND",
-        f"pip install tensorrt=={trt_version}",
+        f'pip install "tensorrt{trt_version_join}"',
     )
     if platform.system() == "Windows":
         libfile_path = which("nvinfer.dll")
@@ -144,13 +146,17 @@ def install_tensorrt():
                 filepath = os.path.join(python_dir, file)
                 print("Installing tensorrt")
                 run(f'"{python}" -m pip install "{filepath}"')
+                break
         else:
             raise RuntimeError("Failed to install tensorrt.")
     else:
-        run(f"{python} -m {tensorrt_linux_command}")
+        run(f'"{python}" -m {tensorrt_linux_command}')
 
+    trt_version_assert = " or ".join(
+        [f"v.startswith('{x}.')" for x in trt_version_list]
+    )
     run_python(
-        f"import tensorrt; v = tensorrt.__version__ ; assert v == '{trt_version}', f'Incorrect version of TensorRT. Requires {trt_version} but {{v}} detected.'"
+        f"import tensorrt; v = tensorrt.__version__; assert {trt_version_assert}, f'Incorrect version of TensorRT. Requires {trt_version_join} but {{v}} detected.'"
     )
 
 

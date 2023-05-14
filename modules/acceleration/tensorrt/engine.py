@@ -2,6 +2,7 @@ import gc
 import os
 
 import torch
+import tensorrt
 
 from api.models.tensorrt import BuildEngineOptions, TensorRTEngineData
 from lib.tensorrt.utilities import (
@@ -30,6 +31,7 @@ class EngineBuilder:
         self.model = model_manager.sd_model
         self.device = "cuda"
         self.opts = opts
+        self.trt_version = tensorrt.__version__
 
         unet = load_unet(self.model.model_id)
         text_encoder = load_text_encoder(self.model.model_id)
@@ -111,6 +113,7 @@ class EngineBuilder:
         torch.cuda.empty_cache()
 
         data = TensorRTEngineData(
+            trt_version=self.trt_version,
             static_batch=self.opts.build_static_batch,
             max_batch_size=self.opts.max_batch_size,
             refit=self.opts.build_enable_refit,
