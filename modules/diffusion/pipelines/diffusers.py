@@ -121,6 +121,7 @@ class DiffusersPipeline:
 
         self.plugin_data = None
         self.opts = None
+        self.stage_1st = None
 
     def to(self, device: torch.device = None, dtype: torch.dtype = None):
         if device is None:
@@ -384,6 +385,34 @@ class DiffusersPipeline:
         self.plugin_data = plugin_data
         self.opts = opts
 
+        # Hires.fix
+        if opts.hiresfix:
+            opts.hiresfix, self.stage_1st = False, True
+            opts.image = self.__call__(
+                opts,
+                generator,
+                eta,
+                latents,
+                prompt_embeds,
+                negative_prompt_embeds,
+                "latent",
+                return_dict,
+                callback,
+                callback_steps,
+                cross_attention_kwargs,
+                plugin_data,
+            ).images
+            opts.height = int(opts.height * opts.hiresfix_scale)
+            opts.width = int(opts.width * opts.hiresfix_scale)
+
+            opts.image = torch.nn.functional.interpolate(
+                opts.image,
+                (opts.height // 8, opts.width // 8),
+                mode=opts.hiresfix_mode.split("-")[0],
+                antialias=True if "antialiased" in opts.hiresfix_mode else False,
+            )
+            opts.image = self.create_output(opts.image, "pil", True).images[0]
+
         # 1. Define call parameters
         num_images_per_prompt = 1
         prompt = [opts.prompt] * opts.batch_size
@@ -464,6 +493,10 @@ class DiffusersPipeline:
 
         for enterer in enterers:
             enterer.__exit__(None, None, None)
+
+        if self.stage_1st:
+            self.stage_1st = None
+            return outputs
 
         self.plugin_data = None
         self.opts = None

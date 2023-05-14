@@ -22,11 +22,14 @@ def generate_fn(fn):
             seed,
             width,
             height,
+            hiresfix,
+            hiresfix_mode,
+            hiresfix_scale,
             init_image,
             strength,
-        ) = as_list[0:12]
+        ) = as_list[0:15]
 
-        plugin_values = dict(list(data.items())[12:])
+        plugin_values = dict(list(data.items())[15:])
 
         opts = ImageGenerationOptions(
             prompt=prompt,
@@ -41,6 +44,9 @@ def generate_fn(fn):
             strength=strength,
             seed=seed,
             image=init_image,
+            hiresfix=hiresfix,
+            hiresfix_mode=hiresfix_mode,
+            hiresfix_scale=hiresfix_scale,
         )
         yield from fn(self, opts, plugin_values)
 
@@ -77,10 +83,18 @@ class Generate(Tab):
 
         count = 0
 
+        # pre-calculate inference steps
+        if opts.hiresfix:
+            inference_steps = opts.num_inference_steps + int(
+                opts.num_inference_steps * opts.strength
+            )
+        else:
+            inference_steps = opts.num_inference_steps
+
         for data in model_manager.sd_model(opts, plugin_data):
             if type(data) == tuple:
                 step, preview = data
-                progress = step / (opts.batch_count * opts.num_inference_steps)
+                progress = step / (opts.batch_count * inference_steps)
                 previews = []
                 for images, opts in preview:
                     previews.extend(images)
@@ -115,6 +129,7 @@ class Generate(Tab):
                 with gr.Column(scale=1.25):
                     options = image_generation_options.common_options_ui()
 
+                    options += image_generation_options.hires_options_ui()
                     options += image_generation_options.img2img_options_ui()
 
                     plugin_values = image_generation_options.plugin_options_ui()
