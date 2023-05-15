@@ -39,7 +39,7 @@ class ImagesBrowser(Tab):
                 with gr.Tab(name):
                     with gr.Row():
                         prev_btn = gr.Button("Prev Page")
-                        page_box = gr.Number(1, label="Page")
+                        page_box = gr.Number(None, label="Page")
                         page_reload_btn = gr.Button("🔄", elem_classes="tool-button")
                         next_btn = gr.Button("Next Page")
 
