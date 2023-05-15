@@ -40,6 +40,7 @@ class ImagesBrowser(Tab):
                     with gr.Row():
                         prev_btn = gr.Button("Prev Page")
                         page_box = gr.Number(1, label="Page")
+                        page_reload_btn = gr.Button("🔄", elem_classes="tool-button")
                         next_btn = gr.Button("Next Page")
 
                     gallery = gr.Gallery(elem_classes=classes, elem_id=id).style(
@@ -85,6 +86,9 @@ class ImagesBrowser(Tab):
 
                     prev_btn.click(lambda x: page_box.update(x - 1), page_box, page_box)
                     next_btn.click(lambda x: page_box.update(x + 1), page_box, page_box)
+                    page_reload_btn.click(
+                        lambda x: page_box.update(x + 0.1), page_box, page_box
+                    )
                     page_box.change(
                         fn=lambda x, y, z: change_page(x, y, z),
                         _js=f"(x,y,z)=>[x,selectedGalleryButton('{id}'),selectedTab('{tab_id}')]",
