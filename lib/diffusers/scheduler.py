@@ -30,5 +30,5 @@ def parser_schedulers_config(scheduler_id: str):
     """
     kwargs = {}
     if "karras" in scheduler_id:
-        kwargs["use_karras_sigmas"] == True
+        kwargs["use_karras_sigmas"] = True
     return kwargs
