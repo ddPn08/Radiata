@@ -36,7 +36,7 @@ class ImagesBrowser(Tab):
             for name in dir_name_list:
                 id = f"{name}-gallery"
                 classes = "info-gallery"
-                with gr.Tab(name) as tab:
+                with gr.Tab(name):
                     with gr.Row():
                         prev_btn = gr.Button("Prev Page")
                         page_box = gr.Number(1, label="Page")
@@ -49,7 +49,7 @@ class ImagesBrowser(Tab):
                     info_format: str = "<span>{0}: {1}</span>"
                     info_btn = gr.Button(visible=False, elem_id=f"{id}-button")
 
-                    def change_page(page: float, index: int, tab: str, flag: bool):
+                    def change_page(page: float, index: int, tab: str):
                         imgs = get_image(os.path.join(outputs_dir, tab))
                         img_len = len(imgs)
                         page = int(page)
@@ -77,26 +77,22 @@ class ImagesBrowser(Tab):
                                 for key in param.keys()
                             )
 
-                        if flag:
-                            return (
-                                page_box.update(page),
-                                info.update(value),
-                                gallery.update(g_img),
-                            )
-                        else:
-                            return info.update(value)
+                        return (
+                            page_box.update(page),
+                            info.update(value),
+                            gallery.update(g_img),
+                        )
 
-                    tab.select(lambda x: page_box.update(-1), page_box, page_box)
                     prev_btn.click(lambda x: page_box.update(x - 1), page_box, page_box)
                     next_btn.click(lambda x: page_box.update(x + 1), page_box, page_box)
                     page_box.change(
-                        fn=lambda x, y, z: change_page(x, y, z, True),
+                        fn=lambda x, y, z: change_page(x, y, z),
                         _js=f"(x,y,z)=>[x,selectedGalleryButton('{id}'),selectedTab('{tab_id}')]",
                         inputs=[page_box, info, gallery],
                         outputs=[page_box, info, gallery],
                     )
                     info_btn.click(
-                        fn=lambda x, y, z: change_page(x, y, z, False),
+                        fn=lambda x, y, z: change_page(x, y, z)[1],
                         _js=f"(x,y,z)=>[x,selectedGalleryButton('{id}'),selectedTab('{tab_id}')]",
                         inputs=[page_box, info, gallery],
                         outputs=[info],
