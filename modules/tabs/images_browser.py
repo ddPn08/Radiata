@@ -17,7 +17,7 @@ class ImagesBrowser(Tab):
         return "Images Browser"
 
     def sort(self):
-        return 3
+        return 2.5
 
     def ui(self, outlet):
         outputs_dir = "outputs"
@@ -58,7 +58,7 @@ class ImagesBrowser(Tab):
                             page = (img_len - 1) // max_img_len + 1
 
                         g_img = [f for f in imgs if os.path.isfile(f)]
-                        g_img = sorted(g_img, key=os.path.getmtime)
+                        g_img = sorted(g_img, key=os.path.getmtime, reverse=True)
                         g_img = g_img[(page - 1) * max_img_len : page * max_img_len]
 
                         [gallery_box.temp_files.add(f) for f in g_img]
