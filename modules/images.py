@@ -43,7 +43,7 @@ def save_image(img: Image.Image, opts: ImageGenerationOptions):
     os.makedirs(dir, exist_ok=True)
     filepath = os.path.join(dir, filename)
     img.save(filepath, pnginfo=metadata)
-    return os.path.basename(filepath)
+    return filepath
 
 
 def get_image_filepath(category: str, filename: str):
