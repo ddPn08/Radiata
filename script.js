@@ -13,6 +13,16 @@ function gradioApp() {
     return elem.shadowRoot ? elem.shadowRoot : elem
 }
 
+function setObserver(target, fn) {
+    let observer = new MutationObserver((records) => {
+        for (const record of records)
+            for (const nodeList of record.addedNodes)
+                if (nodeList instanceof HTMLElement) fn(nodeList)
+    });
+    observer.observe(target, { childList: true, subtree: true })
+    return observer
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     var mutationObserver = new MutationObserver((m) => {
         if (window['__RADIATA_CONTEXT'].executedOnLoaded) return
@@ -37,42 +47,17 @@ function inferenceReloadListeners() {
 /* Gallery */
 
 function attachGalleryListeners() {
-    function setObserver(gallery) {
-        new MutationObserver((records) => {
-            for (const record of records) {
-                for (const nodeList of record.addedNodes) {
-                    if (nodeList instanceof HTMLElement) setEventHandler(gallery, nodeList)
-                }
-            }
-        }).observe(gallery, { childList: true, subtree: true })
-    }
-    function setEventHandler(gallery, node) {
-        console.log(node.innerText);
-        console.log(node);
-        if (node.tagName == "BUTTON" || node.classList.contains("preview")) {
-            node.addEventListener('click', () => {
-                gradioApp().getElementById(gallery.id + "-button").click();
-            });
-        } else if (node.innerText.includes("processing")) {
-            console.log(node)
-            gradioApp().getElementById(gallery.id + "-button").click();
-        } else {
-            node.querySelector("button[aria-label=Clear]")?.addEventListener('click', () => {
-                gradioApp().getElementById(gallery.id + "-button").click();
-            });
+    gradioApp().querySelectorAll('.info-gallery').forEach((gallery) => {
+        setObserver(gallery, (node) => {
+            node.querySelector(":scope>button[aria-label=Clear]")?.addEventListener('click', click);
+        });
+        function click() {
+            let textarea = gallery.parentElement.querySelector(".image-generation-selected textarea");
+            let selected = [...gallery.querySelectorAll('.thumbnail-item.thumbnail-small')].find((e) => e.classList.contains("selected"));
+            let src = selected?.getElementsByTagName("img")[0].getAttribute("src")
+            textarea.value = src == null ? "" : new URL(src).pathname.slice(6);
+            textarea.dispatchEvent(new Event('input'));
         }
-    }
-    gradioApp().querySelectorAll('.info-gallery').forEach((gallery) => setObserver(gallery, true));
-}
-
-
-function idEscape(id) {
-    return id.replace(/(:|\.|\[|\]|,|=|@|\s)/g, "\\$1");
-}
-function selectedGalleryButton(id) {
-    return [...gradioApp().querySelectorAll('#' + idEscape(id) + ' .thumbnail-item.thumbnail-small')].findIndex((e) => e.classList.contains("selected"));
-}
-
-function selectedTab(id) { // https://github.com/gradio-app/gradio/issues/3793
-    return [...gradioApp().querySelectorAll('#' + idEscape(id) + ' button')].find((e) => e.classList.contains("selected")).innerText;
+        gallery.addEventListener('click', click);
+    });
 }

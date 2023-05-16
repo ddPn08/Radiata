@@ -6,6 +6,7 @@ import torch
 
 from modules import model_manager
 from modules.components import image_generation_options
+from modules.components import gallery
 from modules.diffusion.pipelines.deepfloyd_if import IFDiffusionPipeline
 from modules.ui import Tab
 
@@ -148,7 +149,7 @@ class DeepFloydIF(Tab):
                             minimum=1, maximum=100, step=1, value=50, label="Steps"
                         )
 
-                outputs = image_generation_options.outputs_gallery_ui()
+                outputs = gallery.outputs_gallery_ui()
 
         stage_1_button.click(
             fn=self.create_generate_fn("I"),
