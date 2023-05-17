@@ -1,6 +1,5 @@
 from typing import *
 
-import json
 
 import gradio as gr
 import glob
@@ -8,8 +7,7 @@ import os
 
 from modules.components import gallery
 from modules.ui import Tab
-
-from PIL import Image
+from modules import config
 
 
 class ImagesBrowser(Tab):
@@ -20,7 +18,7 @@ class ImagesBrowser(Tab):
         return 2.5
 
     def ui(self, outlet):
-        outputs_dir = "outputs"
+        outputs_dir = config.get("common.image-browser-dir") or "outputs"
         max_img_len = 30
 
         def get_image(dir: str) -> List[str]:
@@ -31,8 +29,11 @@ class ImagesBrowser(Tab):
             dir_name_list = [
                 dir.split(os.sep)[-1]
                 for dir in glob.glob(os.path.join(outputs_dir, "*"))
+                if os.path.isdir(dir)
             ]
-            tab_selected = gr.State(dir_name_list[0])
+            tab_selected = gr.State(
+                dir_name_list[0] if len(dir_name_list) > 0 else None
+            )
             for name in dir_name_list:
                 with gr.Tab(name) as tab:
                     tab_name = gr.State(name)
