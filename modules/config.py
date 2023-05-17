@@ -19,6 +19,7 @@ output-dir-txt2img = "outputs/txt2img"
 output-name-txt2img = "{index}-{seed}-{prompt}.png"
 output-dir-img2img = "outputs/img2img"
 output-name-img2img = "{index}-{seed}-{prompt}.png"
+image-browser-dir = "outputs"
 
 [acceleration.tensorrt]
 full-acceleration = true

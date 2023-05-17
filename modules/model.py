@@ -186,13 +186,11 @@ class DiffusersModel:
 
             results.append(
                 (
-                    images,
+                    [save_image(img, opts) for img in images],
                     ImageGenerationOptions.parse_obj(
                         {"seed": manual_seed, **opts.dict()}
                     ),
                 )
             )
-            for img in images:
-                save_image(img, opts)
 
         yield results

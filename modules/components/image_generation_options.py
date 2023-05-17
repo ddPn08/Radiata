@@ -132,13 +132,3 @@ def plugin_options_ui():
                 plugin_values[name] = data["ui"]()
 
     return plugin_values
-
-
-def outputs_gallery_ui():
-    with gr.Column():
-        output_images = gr.Gallery(elem_classes="image_generation_gallery").style(
-            columns=4
-        )
-        status_textbox = gr.Textbox(interactive=False, show_label=False)
-
-    return output_images, status_textbox

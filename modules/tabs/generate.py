@@ -5,6 +5,7 @@ import gradio as gr
 from api.models.diffusion import ImageGenerationOptions
 from modules import model_manager
 from modules.components import image_generation_options
+from modules.components import gallery
 from modules.ui import Tab
 
 
@@ -134,7 +135,7 @@ class Generate(Tab):
 
                     plugin_values = image_generation_options.plugin_options_ui()
 
-                outputs = image_generation_options.outputs_gallery_ui()
+                outputs = gallery.outputs_gallery_ui()
 
         Generate.plugin_values = plugin_values
 
