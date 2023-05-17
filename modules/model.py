@@ -8,7 +8,7 @@ from typing import *
 import torch
 
 from api.models.diffusion import ImageGenerationOptions
-from lib.diffusers.scheduler import SCHEDULERS
+from lib.diffusers.scheduler import SCHEDULERS, parser_schedulers_config
 
 from . import config, utils
 from .images import save_image
@@ -133,7 +133,7 @@ class DiffusersModel:
         if not self.activated:
             raise RuntimeError("Model not activated")
         self.pipe.scheduler = SCHEDULERS[scheduler_id].from_config(
-            self.pipe.scheduler.config
+            self.pipe.scheduler.config, **parser_schedulers_config(scheduler_id)
         )
 
     def __call__(self, opts: ImageGenerationOptions, plugin_data: Dict[str, List] = {}):
