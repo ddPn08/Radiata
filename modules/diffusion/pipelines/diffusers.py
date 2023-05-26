@@ -23,6 +23,7 @@ from transformers import CLIPTextModel, CLIPTokenizer
 from api.events.generation import LoadResourceEvent, UNetDenoisingEvent
 from api.models.diffusion import ImageGenerationOptions
 from modules.diffusion.pipelines.lpw import LongPromptWeightingPipeline
+from modules.diffusion.upscalers.multidiffusion import Multidiffusion
 from modules.shared import ROOT_DIR
 
 
@@ -118,6 +119,7 @@ class DiffusersPipeline:
         self.dtype = dtype
 
         self.lpw = LongPromptWeightingPipeline(self)
+        self.multidiff = None
 
         self.plugin_data = None
         self.opts = None
@@ -474,18 +476,37 @@ class DiffusersPipeline:
         torch.cuda.synchronize()
 
         # 7. Denoising loop
-        latents = self.denoise_latent(
-            latents=latents,
-            timesteps=timesteps,
-            num_inference_steps=opts.num_inference_steps,
-            guidance_scale=opts.guidance_scale,
-            do_classifier_free_guidance=do_classifier_free_guidance,
-            prompt_embeds=prompt_embeds,
-            extra_step_kwargs=extra_step_kwargs,
-            callback=callback,
-            callback_steps=callback_steps,
-            cross_attention_kwargs=cross_attention_kwargs,
-        )
+        if opts.multidiffusion:
+            # multidiff denoise
+            self.multidiff = Multidiffusion(self)
+            views = self.multidiff.get_views(opts.height, opts.width)
+            latents = self.multidiff.views_denoise_latent(
+                views=views,
+                latents=latents,
+                timesteps=timesteps,
+                num_inference_steps=opts.num_inference_steps,
+                guidance_scale=opts.guidance_scale,
+                do_classifier_free_guidance=do_classifier_free_guidance,
+                prompt_embeds=prompt_embeds,
+                extra_step_kwargs=extra_step_kwargs,
+                callback=callback,
+                callback_steps=callback_steps,
+                cross_attention_kwargs=cross_attention_kwargs,
+            )
+            self.multidiff = None
+        else:
+            latents = self.denoise_latent(
+                latents=latents,
+                timesteps=timesteps,
+                num_inference_steps=opts.num_inference_steps,
+                guidance_scale=opts.guidance_scale,
+                do_classifier_free_guidance=do_classifier_free_guidance,
+                prompt_embeds=prompt_embeds,
+                extra_step_kwargs=extra_step_kwargs,
+                callback=callback,
+                callback_steps=callback_steps,
+                cross_attention_kwargs=cross_attention_kwargs,
+            )
 
         torch.cuda.synchronize()
 
