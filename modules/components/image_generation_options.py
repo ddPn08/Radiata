@@ -90,8 +90,10 @@ def common_options_ui():
 
 def hires_options_ui():
     with gr.Row():
-        with gr.Accordion("Hires.fix", open=False):
-            enable_upscale = gr.Checkbox(label="Hires.fix")
+        with gr.Accordion("Upscaler", open=False):
+            enable_upscale = gr.CheckboxGroup(
+                ["Hires.fix", "Multidiffusion"], label="Upscale Mode"
+            )
             with gr.Row():
                 upscaler_mode = gr.Dropdown(
                     choices=[
