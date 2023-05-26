@@ -63,6 +63,8 @@ class Multidiffusion:
         # 7. multidiffusion denoise loop
         with tqdm(total=num_inference_steps) as progress_bar:
             for step, timestep in enumerate(timesteps):
+                count.zero_()
+                value.zero_()
                 for j, (h_start, h_end, w_start, w_end) in enumerate(views):
                     # get the latents corresponding to the current view coordinates
                     latents_for_view = latents[:, :, h_start:h_end, w_start:w_end]
