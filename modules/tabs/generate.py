@@ -23,16 +23,16 @@ def generate_fn(fn):
             seed,
             width,
             height,
-            upscalers,
+            hiresfix,
+            multidiffusion,
             hiresfix_mode,
             hiresfix_scale,
             init_image,
             strength,
-        ) = as_list[0:15]
+        ) = as_list[0:16]
 
         plugin_values = dict(list(data.items())[15:])
 
-        hiresfix, multidiffusion = upscalers
         opts = ImageGenerationOptions(
             prompt=prompt,
             negative_prompt=negative_prompt,
