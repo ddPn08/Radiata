@@ -23,6 +23,8 @@ class Multidiffusion:
         self.tokenizer: CLIPTokenizer = pipe.tokenizer
         self.unet: UNet2DConditionModel = pipe.unet
         self.scheduler: DDPMScheduler = pipe.scheduler
+        self.plugin_data = pipe.plugin_data
+        self.opts = pipe.opts
 
     @classmethod
     def get_views(cls, panorama_height, panorama_width, window_size=64, stride=8):
