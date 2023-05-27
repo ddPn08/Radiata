@@ -153,11 +153,9 @@ class DiffusersPipeline:
 
     def load_resources(
         self,
-        image_height: int,
-        image_width: int,
-        batch_size: int,
-        num_inference_steps: int,
+        opts: ImageGenerationOptions,
     ):
+        num_inference_steps = opts.num_inference_steps
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
         LoadResourceEvent.call_event(LoadResourceEvent(pipe=self))
 
@@ -426,12 +424,7 @@ class DiffusersPipeline:
         do_classifier_free_guidance = opts.guidance_scale > 1.0
 
         # 2. Prepare pipeline resources
-        self.load_resources(
-            image_height=opts.height,
-            image_width=opts.width,
-            batch_size=opts.batch_size,
-            num_inference_steps=opts.num_inference_steps,
-        )
+        self.load_resources(opts=opts)
 
         # 3. Prepare timesteps
         timesteps, opts.num_inference_steps = self.get_timesteps(
