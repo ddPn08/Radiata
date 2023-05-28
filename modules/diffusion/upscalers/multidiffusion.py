@@ -6,11 +6,14 @@ from diffusers import (
     AutoencoderKL,
     DDPMScheduler,
     UNet2DConditionModel,
+    EulerAncestralDiscreteScheduler,
+    KDPM2AncestralDiscreteScheduler,
 )
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
 from api.events.generation import UNetDenoisingEvent
+from .samplers import EulerAncestralSampler, KDPM2AncestralSampler
 
 
 class Multidiffusion:
@@ -25,6 +28,21 @@ class Multidiffusion:
         self.scheduler: DDPMScheduler = pipe.scheduler
         self.plugin_data = pipe.plugin_data
         self.opts = pipe.opts
+        self.ancestral = False
+
+    def hijack_ancestral_scheduler(self) -> bool:
+        if isinstance(self.scheduler, EulerAncestralDiscreteScheduler):
+            config = copy.deepcopy(self.scheduler.__dict__)
+            self.scheduler = EulerAncestralSampler.from_config(self.scheduler.config)
+            self.scheduler.__dict__.update(config)
+            return True
+        elif isinstance(self.scheduler, KDPM2AncestralDiscreteScheduler):
+            config = copy.deepcopy(self.scheduler.__dict__)
+            self.scheduler = KDPM2AncestralSampler.from_config(self.scheduler.config)
+            self.scheduler.__dict__.update(config)
+            return True
+        else:
+            return False
 
     @classmethod
     def get_views(cls, panorama_height, panorama_width, window_size=64, stride=8):
@@ -57,6 +75,8 @@ class Multidiffusion:
         callback_steps: int,
         cross_attention_kwargs: Dict[str, Any],
     ):
+        # hijack ancestral schedulers
+        self.ancestral = self.hijack_ancestral_scheduler()
         # 6. Define panorama grid and initialize views for synthesis.
         views_scheduler_status = [copy.deepcopy(self.scheduler.__dict__)] * len(views)
         count = torch.zeros_like(latents)
@@ -67,6 +87,7 @@ class Multidiffusion:
             for step, timestep in enumerate(timesteps):
                 count.zero_()
                 value.zero_()
+                noise = torch.randn_like(latents)
                 for j, (h_start, h_end, w_start, w_end) in enumerate(views):
                     # get the latents corresponding to the current view coordinates
                     latents_for_view = latents[:, :, h_start:h_end, w_start:w_end]
@@ -118,12 +139,14 @@ class Multidiffusion:
                             )
 
                         # compute the previous noisy sample x_t -> x_t-1
-                        latents_view_denoised = self.scheduler.step(
+                        scheduler_output = self.scheduler.step(
                             model_output=noise_pred,
                             timestep=timestep,
                             sample=latents_for_view,
                             **extra_step_kwargs,
-                        ).prev_sample
+                        )
+                        latents_view_denoised = scheduler_output.prev_sample
+                        sigma_up = scheduler_output.sigma_up if self.ancestral else 0
 
                         views_scheduler_status[j] = copy.deepcopy(
                             self.scheduler.__dict__
@@ -133,7 +156,10 @@ class Multidiffusion:
                     count[:, :, h_start:h_end, w_start:w_end] += 1
 
                 # take the MultiDiffusion step. Eq. 5 in MultiDiffusion paper: https://arxiv.org/abs/2302.08113
-                latents = torch.where(count > 0, value / count, value)
+                # add noise for ancestral sampler, noise * sigma_up should be 0 for discrete sampler
+                latents = (
+                    torch.where(count > 0, value / count, value) + noise * sigma_up
+                )
 
                 # call the callback, if provided
                 if step == len(timesteps) - 1 or (
