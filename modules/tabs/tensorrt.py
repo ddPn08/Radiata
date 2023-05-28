@@ -15,8 +15,7 @@ class TensorRT(Tab):
         return 2
 
     def visible(self):
-        module, version = tensorrt_is_available()
-        return module and version and config.get("tensorrt")
+        return tensorrt_is_available() and config.get("tensorrt")
 
     def ui(self, outlet):
         with gr.Column():

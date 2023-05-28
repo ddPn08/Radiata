@@ -2,7 +2,6 @@ import asyncio
 import base64
 import importlib
 import io
-from distutils.version import LooseVersion
 from typing import *
 
 import numpy as np
@@ -12,10 +11,7 @@ from PIL import Image
 from lib.diffusers.scheduler import SCHEDULERS
 
 from . import config
-from .logger import logger
 from .shared import hf_diffusers_cache_dir
-
-logged_trt_warning = False
 
 
 def img2b64(img: Image.Image, format="png"):
@@ -56,19 +52,7 @@ def is_installed(package: str):
 
 
 def tensorrt_is_available():
-    global logged_trt_warning
-    tensorrt = is_installed("tensorrt")
-    version = LooseVersion("2") > LooseVersion(torch.__version__) or LooseVersion(
-        "2.1"
-    ) <= LooseVersion(torch.__version__)
-
-    if not tensorrt or not version:
-        if not logged_trt_warning and tensorrt and config.get("tensorrt"):
-            logger.warning(
-                "TensorRT is available, but torch version is not compatible."
-            )
-            logged_trt_warning = True
-    return tensorrt, version
+    return is_installed("tensorrt")
 
 
 def fire_and_forget(f):

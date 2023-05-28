@@ -1,3 +1,4 @@
+import time
 from typing import *
 
 import gradio as gr
@@ -93,6 +94,8 @@ class Generate(Tab):
         else:
             inference_steps = opts.num_inference_steps
 
+        start = time.perf_counter()
+
         for data in model_manager.sd_model(opts, plugin_data):
             if type(data) == tuple:
                 step, preview = data
@@ -112,11 +115,13 @@ class Generate(Tab):
             else:
                 image = data
 
+        end = time.perf_counter()
+
         results = []
         for images, opts in image:
             results.extend(images)
 
-        yield results, "Finished", gr.Button.update(
+        yield results, f"Finished in {end - start:0.4f} seconds", gr.Button.update(
             value="Generate", variant="primary", interactive=True
         )
 

@@ -20,7 +20,9 @@ def convert_checkpoint_to_pipe(model_id: str):
         )
 
 
-def load_unet(model_id: str, device: Optional[torch.device] = None):
+def load_unet(
+    model_id: str, device: Optional[torch.device] = None
+) -> UNet2DConditionModel:
     temporary_pipe = convert_checkpoint_to_pipe(model_id)
     if temporary_pipe is not None:
         unet = temporary_pipe.unet

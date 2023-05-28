@@ -3,6 +3,7 @@ import os
 
 import tensorrt
 import torch
+from diffusers.models.attention_processor import AttnProcessor
 
 from api.models.tensorrt import BuildEngineOptions, TensorRTEngineData
 from lib.tensorrt.utilities import (
@@ -64,6 +65,7 @@ class EngineBuilder:
                 if model_name == "unet":
                     model = load_unet(self.model.model_id, device=self.device)
                     model = model.to(dtype=torch.float16)
+                    model.set_attn_processor(AttnProcessor())
                 elif model_name == "clip":
                     model = load_text_encoder(self.model.model_id, device=self.device)
                 elif model_name == "vae":

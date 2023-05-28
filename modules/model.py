@@ -57,10 +57,7 @@ class DiffusersModel:
             filepath = os.path.join(trt_path, *file.split("/"))
             if not os.path.exists(filepath):
                 return False
-        trt_module_status, trt_version_status = utils.tensorrt_is_available()
-        if not trt_module_status or not trt_version_status:
-            return False
-        return config.get("tensorrt")
+        return utils.tensorrt_is_available() and config.get("tensorrt")
 
     def trt_full_acceleration_available(self):
         trt_path = self.get_trt_path()
