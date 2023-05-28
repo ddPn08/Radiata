@@ -1,26 +1,29 @@
 from dataclasses import dataclass, field
 from typing import *
+from typing import Any
 
 import torch
+
+from api.diffusion.pipelines.diffusers import DiffusersPipelineModel
 
 from . import BaseEvent, SkippableEvent
 
 
 @dataclass
 class LoadResourceEvent(BaseEvent):
-    pipe: Any
+    pipe: DiffusersPipelineModel
 
 
 @dataclass
 class PromptTokenizingEvent(BaseEvent):
-    pipe: Any
+    pipe: DiffusersPipelineModel
     text_tokens: List
     text_weights: List
 
 
 @dataclass
 class UNetDenoisingEvent(SkippableEvent):
-    pipe: Any
+    pipe: DiffusersPipelineModel
 
     latent_model_input: torch.Tensor
     step: int

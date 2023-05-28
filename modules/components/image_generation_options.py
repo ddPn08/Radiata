@@ -11,12 +11,14 @@ def prompt_ui():
             lines=3,
             placeholder="Prompt",
             show_label=False,
+            elem_classes=["prompt-textbox"],
         )
         negative_prompt_textbox = gr.TextArea(
             "",
             lines=3,
             placeholder="Negative Prompt",
             show_label=False,
+            elem_classes=["negative-prompt-textbox"],
         )
     return prompt_textbox, negative_prompt_textbox
 

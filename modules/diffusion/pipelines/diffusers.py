@@ -1,6 +1,7 @@
 import gc
 import inspect
 import os
+from dataclasses import dataclass
 from typing import *
 
 import numpy as np
@@ -20,6 +21,7 @@ from diffusers.utils import PIL_INTERPOLATION, numpy_to_pil, randn_tensor
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
+from api.diffusion.pipelines.diffusers import DiffusersPipelineModel
 from api.events.generation import LoadResourceEvent, UNetDenoisingEvent
 from api.models.diffusion import ImageGenerationOptions
 from modules.diffusion.pipelines.lpw import LongPromptWeightingPipeline
@@ -27,24 +29,14 @@ from modules.diffusion.upscalers.multidiffusion import Multidiffusion
 from modules.shared import ROOT_DIR
 
 
-class DiffusersPipeline:
-    __mode__ = "diffusers"
+@dataclass
+class PipeSession:
+    plugin_data: Dict[str, Any]
+    opts: ImageGenerationOptions
 
-    @classmethod
-    def load_unet(cls, model_id: str):
-        ckpt_path = os.path.join(ROOT_DIR, "models", "checkpoints", model_id)
-        if os.path.exists(ckpt_path):
-            temporary_pipe = (
-                convert_from_ckpt.download_from_original_stable_diffusion_ckpt(
-                    ckpt_path,
-                    from_safetensors=model_id.endswith(".safetensors"),
-                    load_safety_checker=False,
-                )
-            )
-            unet = temporary_pipe.unet
-        else:
-            unet = UNet2DConditionModel.from_pretrained(model_id, subfolder="unet")
-        return unet
+
+class DiffusersPipeline(DiffusersPipelineModel):
+    __mode__ = "diffusers"
 
     @classmethod
     def from_pretrained(
@@ -121,9 +113,8 @@ class DiffusersPipeline:
         self.lpw = LongPromptWeightingPipeline(self)
         self.multidiff = None
 
-        self.plugin_data = None
-        self.opts = None
         self.stage_1st = None
+        self.session = None
 
     def to(self, device: torch.device = None, dtype: torch.dtype = None):
         if device is None:
@@ -157,7 +148,7 @@ class DiffusersPipeline:
     ):
         num_inference_steps = opts.num_inference_steps
         self.scheduler.set_timesteps(num_inference_steps, device=self.device)
-        LoadResourceEvent.call_event(LoadResourceEvent(pipe=self))
+        LoadResourceEvent.call_event(self)
 
     def get_timesteps(self, num_inference_steps: int, strength: Optional[float]):
         if strength is None:
@@ -222,7 +213,7 @@ class DiffusersPipeline:
         dtype: torch.dtype,
         generator: torch.Generator,
         latents: torch.Tensor = None,
-    ) -> torch.Tensor:
+    ):
         if image is None:
             shape = (
                 batch_size,
@@ -280,21 +271,20 @@ class DiffusersPipeline:
                     latent_model_input, timestep
                 )
 
-                event = UNetDenoisingEvent(
-                    pipe=self,
-                    latent_model_input=latent_model_input,
-                    timestep=timestep,
-                    step=step,
-                    latents=latents,
-                    timesteps=timesteps,
-                    do_classifier_free_guidance=do_classifier_free_guidance,
-                    prompt_embeds=prompt_embeds,
-                    extra_step_kwargs=extra_step_kwargs,
-                    callback=callback,
-                    callback_steps=callback_steps,
-                    cross_attention_kwargs=cross_attention_kwargs,
+                event = UNetDenoisingEvent.call_event(
+                    self,
+                    latent_model_input,
+                    step,
+                    timestep,
+                    latents,
+                    timesteps,
+                    do_classifier_free_guidance,
+                    prompt_embeds,
+                    extra_step_kwargs,
+                    callback,
+                    callback_steps,
+                    cross_attention_kwargs,
                 )
-                UNetDenoisingEvent.call_event(event)
 
                 latents = event.latents
 
@@ -382,8 +372,10 @@ class DiffusersPipeline:
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         plugin_data: Optional[Dict[str, Any]] = {},
     ):
-        self.plugin_data = plugin_data
-        self.opts = opts
+        self.session = PipeSession(
+            plugin_data=plugin_data,
+            opts=opts,
+        )
 
         # Hires.fix
         if opts.hiresfix:
@@ -512,8 +504,7 @@ class DiffusersPipeline:
             self.stage_1st = None
             return outputs
 
-        self.plugin_data = None
-        self.opts = None
+        self.session = None
 
         return outputs
 

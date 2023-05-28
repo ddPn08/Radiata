@@ -12,9 +12,13 @@ from lib.diffusers.scheduler import SCHEDULERS, parser_schedulers_config
 
 from . import config, utils
 from .images import save_image
-from .shared import hf_diffusers_cache_dir, get_device
+from .shared import get_device, hf_diffusers_cache_dir
 
 ModelMode = Literal["diffusers", "tensorrt"]
+PrecisionMap = {
+    "fp32": torch.float32,
+    "fp16": torch.float16,
+}
 
 
 class DiffusersModel:
@@ -81,7 +85,9 @@ class DiffusersModel:
         if self.activated:
             return
         device = get_device()
-        torch_dtype = torch.float16 if config.get("fp16") else torch.float32
+
+        precision = config.get("precision") or "fp32"
+        torch_dtype = PrecisionMap[precision]
 
         if self.mode == "diffusers":
             from .diffusion.pipelines.diffusers import DiffusersPipeline

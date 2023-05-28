@@ -340,7 +340,6 @@ def create_models(
     use_auth_token: Optional[str],
     device: Union[str, torch.device],
     max_batch_size: int,
-    hf_cache_dir: Optional[str] = None,
     unet_in_channels: int = 4,
     embedding_dim: int = 768,
 ):

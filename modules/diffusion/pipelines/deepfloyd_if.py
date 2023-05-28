@@ -8,7 +8,7 @@ from diffusers.utils import pt_to_pil
 from transformers import T5EncoderModel
 
 from modules import config
-from modules.shared import hf_diffusers_cache_dir, hf_transformers_cache_dir, get_device
+from modules.shared import get_device, hf_diffusers_cache_dir, hf_transformers_cache_dir
 
 
 class IFDiffusionPipeline:

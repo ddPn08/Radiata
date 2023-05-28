@@ -1,13 +1,12 @@
-from typing import *
-
-
-import gradio as gr
 import glob
 import os
+from typing import *
 
+import gradio as gr
+
+from modules import config
 from modules.components import gallery
 from modules.ui import Tab
-from modules import config
 
 
 class ImagesBrowser(Tab):

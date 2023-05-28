@@ -5,8 +5,7 @@ import gradio as gr
 import torch
 
 from modules import model_manager
-from modules.components import image_generation_options
-from modules.components import gallery
+from modules.components import gallery, image_generation_options
 from modules.diffusion.pipelines.deepfloyd_if import IFDiffusionPipeline
 from modules.ui import Tab
 

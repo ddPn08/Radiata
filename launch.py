@@ -181,6 +181,7 @@ def prepare_environment():
 
     sys.argv, reinstall_torch = extract_arg(sys.argv, "--reinstall-torch")
     sys.argv, reinstall_xformers = extract_arg(sys.argv, "--reinstall-xformers")
+    sys.argv, reinstall_tensorrt = extract_arg(sys.argv, "--reinstall-tensorrt")
     tensorrt = "--tensorrt" in sys.argv
 
     if reinstall_torch or not is_installed("torch") or not is_installed("torchvision"):

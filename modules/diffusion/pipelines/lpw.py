@@ -178,8 +178,9 @@ class LongPromptWeightingPipeline:
                     truncated = True
                     break
 
-            event = PromptTokenizingEvent(self.pipe, text_tokens, text_weights)
-            PromptTokenizingEvent.call_event(event)
+            event = PromptTokenizingEvent.call_event(
+                self.pipe, text_tokens, text_weights
+            )
             text_tokens = event.text_tokens
             text_weights = event.text_weights
 

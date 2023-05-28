@@ -52,7 +52,7 @@ def restore_networks(*modules: torch.nn.Module):
 def load_network_modules(e: LoadResourceEvent):
     global latest_networks
 
-    opts: ImageGenerationOptions = e.pipe.opts
+    opts: ImageGenerationOptions = e.pipe.session.opts
 
     positive_networks, opts.prompt = get_networks_from_prompt(opts.prompt)
 

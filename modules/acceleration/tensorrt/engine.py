@@ -1,8 +1,8 @@
 import gc
 import os
 
-import torch
 import tensorrt
+import torch
 
 from api.models.tensorrt import BuildEngineOptions, TensorRTEngineData
 from lib.tensorrt.utilities import (
@@ -19,7 +19,6 @@ from modules.diffusion.utils import (
     load_vae_encoder,
 )
 from modules.logger import logger
-from modules.shared import hf_diffusers_cache_dir
 
 
 def create_onnx_path(name, onnx_dir, opt=True):
@@ -35,15 +34,15 @@ class EngineBuilder:
 
         unet = load_unet(self.model.model_id)
         text_encoder = load_text_encoder(self.model.model_id)
-        self.models = create_models(
-            model_id=self.model.model_id,
-            device=torch.device("cuda"),
-            use_auth_token=opts.hf_token,
-            max_batch_size=opts.max_batch_size,
-            hf_cache_dir=hf_diffusers_cache_dir(),
-            unet_in_channels=unet.config.in_channels,
-            embedding_dim=text_encoder.config.hidden_size,
-        )
+        self.model_args = {
+            "model_id": self.model.model_id,
+            "device": torch.device("cuda"),
+            "use_auth_token": opts.hf_token,
+            "max_batch_size": opts.max_batch_size,
+            "unet_in_channels": unet.config.in_channels,
+            "embedding_dim": text_encoder.config.hidden_size,
+        }
+        self.models = create_models(**self.model_args)
         if not opts.full_acceleration:
             self.models = {
                 "unet": self.models["unet"],

@@ -1,13 +1,12 @@
+import json
+import os
 from random import randint
 from typing import *
+
 import gradio as gr
 import gradio.blocks
 import gradio.utils
-
-
 from PIL import Image
-import json
-import os
 
 
 def outputs_gallery_info_ui(elem_classes=[], **kwargs):

@@ -5,14 +5,13 @@ import torch
 from diffusers import (
     AutoencoderKL,
     DDPMScheduler,
-    UNet2DConditionModel,
     EulerAncestralDiscreteScheduler,
     KDPM2AncestralDiscreteScheduler,
+    UNet2DConditionModel,
 )
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
-from api.events.generation import UNetDenoisingEvent
 from .samplers import EulerAncestralSampler, KDPM2AncestralSampler
 
 
@@ -26,8 +25,6 @@ class Multidiffusion:
         self.tokenizer: CLIPTokenizer = pipe.tokenizer
         self.unet: UNet2DConditionModel = pipe.unet
         self.scheduler: DDPMScheduler = pipe.scheduler
-        self.plugin_data = pipe.plugin_data
-        self.opts = pipe.opts
         self.ancestral = False
 
     def hijack_ancestral_scheduler(self) -> bool:
@@ -103,54 +100,32 @@ class Multidiffusion:
                         latent_model_input, timestep
                     )
 
-                    event = UNetDenoisingEvent(
-                        pipe=self,
-                        latent_model_input=latent_model_input,
-                        timestep=timestep,
-                        step=step,
-                        latents=latents_for_view,
-                        timesteps=timesteps,
-                        do_classifier_free_guidance=do_classifier_free_guidance,
-                        prompt_embeds=prompt_embeds,
-                        extra_step_kwargs=extra_step_kwargs,
-                        callback=callback,
-                        callback_steps=callback_steps,
+                    # predict the noise residual
+                    noise_pred = self.unet(
+                        latent_model_input,
+                        timestep,
+                        encoder_hidden_states=prompt_embeds,
                         cross_attention_kwargs=cross_attention_kwargs,
+                    ).sample
+
+                    # perform guidance
+                    if do_classifier_free_guidance:
+                        noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                        noise_pred = noise_pred_uncond + guidance_scale * (
+                            noise_pred_text - noise_pred_uncond
+                        )
+
+                    # compute the previous noisy sample x_t -> x_t-1
+                    scheduler_output = self.scheduler.step(
+                        model_output=noise_pred,
+                        timestep=timestep,
+                        sample=latents_for_view,
+                        **extra_step_kwargs,
                     )
-                    UNetDenoisingEvent.call_event(event)
+                    latents_view_denoised = scheduler_output.prev_sample
+                    sigma_up = scheduler_output.sigma_up if self.ancestral else None
 
-                    latents_for_view = event.latents
-
-                    if not event.skip:
-                        # predict the noise residual
-                        noise_pred = self.unet(
-                            latent_model_input,
-                            timestep,
-                            encoder_hidden_states=prompt_embeds,
-                            cross_attention_kwargs=cross_attention_kwargs,
-                            **event.unet_additional_kwargs,
-                        ).sample
-
-                        # perform guidance
-                        if do_classifier_free_guidance:
-                            noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                            noise_pred = noise_pred_uncond + guidance_scale * (
-                                noise_pred_text - noise_pred_uncond
-                            )
-
-                        # compute the previous noisy sample x_t -> x_t-1
-                        scheduler_output = self.scheduler.step(
-                            model_output=noise_pred,
-                            timestep=timestep,
-                            sample=latents_for_view,
-                            **extra_step_kwargs,
-                        )
-                        latents_view_denoised = scheduler_output.prev_sample
-                        sigma_up = scheduler_output.sigma_up if self.ancestral else None
-
-                        views_scheduler_status[j] = copy.deepcopy(
-                            self.scheduler.__dict__
-                        )
+                    views_scheduler_status[j] = copy.deepcopy(self.scheduler.__dict__)
 
                     value[:, :, h_start:h_end, w_start:w_end] += latents_view_denoised
                     count[:, :, h_start:h_end, w_start:w_end] += 1

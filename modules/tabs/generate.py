@@ -4,8 +4,7 @@ import gradio as gr
 
 from api.models.diffusion import ImageGenerationOptions
 from modules import model_manager
-from modules.components import image_generation_options
-from modules.components import gallery
+from modules.components import gallery, image_generation_options
 from modules.ui import Tab
 
 

@@ -4,11 +4,8 @@ from dataclasses import dataclass
 from typing import *
 
 import torch
+from diffusers import EulerAncestralDiscreteScheduler, KDPM2AncestralDiscreteScheduler
 from torch import FloatTensor
-from diffusers import (
-    EulerAncestralDiscreteScheduler,
-    KDPM2AncestralDiscreteScheduler,
-)
 
 
 @dataclass

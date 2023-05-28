@@ -12,7 +12,6 @@ from polygraphy import cuda
 from transformers import CLIPTextModel, CLIPTokenizer
 
 from api.models.diffusion import ImageGenerationOptions
-
 from lib.tensorrt.engine import (
     AutoencoderKLEngine,
     CLIPTextModelEngine,
@@ -98,7 +97,6 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
             use_auth_token=use_auth_token,
             device=device,
             max_batch_size=max_batch_size,
-            hf_cache_dir=hf_cache_dir,
             embedding_dim=embedding_dim,
         )
 

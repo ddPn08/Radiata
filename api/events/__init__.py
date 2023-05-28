@@ -4,6 +4,8 @@ from typing import *
 
 handlers: Dict[str, List[Callable]] = {}
 
+T = TypeVar("T", bound="BaseEvent")
+
 
 class BaseEvent:
     __event_name__: ClassVar[str] = ""
@@ -15,7 +17,11 @@ class BaseEvent:
         handlers[cls].append(handler)
 
     @classmethod
-    def call_event(cls, event=None):
+    def call_event(cls: Type[T], *args, **kwargs) -> T:
+        if len(args) == 1 and type(args[0]) == cls:
+            event = args[0]
+        else:
+            event = cls(*args, **kwargs)
         if event is None:
             event = cls()
         if not isinstance(event, BaseEvent):
@@ -32,6 +38,13 @@ class BaseEvent:
             handler(event)
 
         return event
+
+    def __call__(self):
+        fields = self.__dataclass_fields__
+        results = []
+        for field in fields:
+            results.append(getattr(self, field))
+        return results
 
 
 @dataclass

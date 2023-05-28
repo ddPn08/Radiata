@@ -103,7 +103,7 @@ def webpath(fn):
 
 def javascript_html():
     script_js = os.path.join(ROOT_DIR, "script.js")
-    head = f'<script type="text/javascript" src="{webpath(script_js)}"></script>\n'
+    head = f'<script type="module" src="{webpath(script_js)}"></script>\n'
 
     return head
 
