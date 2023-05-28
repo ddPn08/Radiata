@@ -119,6 +119,7 @@ class KDPM2AncestralSampler(KDPM2AncestralDiscreteScheduler):
             self.sample = sample
             self.dt = dt
             prev_sample = sample + derivative * dt
+            sigma_up = None
         else:
             # DPM-Solver-2
             # 2. Convert to an ODE derivative for 2nd order

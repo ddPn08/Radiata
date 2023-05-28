@@ -146,7 +146,7 @@ class Multidiffusion:
                             **extra_step_kwargs,
                         )
                         latents_view_denoised = scheduler_output.prev_sample
-                        sigma_up = scheduler_output.sigma_up if self.ancestral else 0
+                        sigma_up = scheduler_output.sigma_up if self.ancestral else None
 
                         views_scheduler_status[j] = copy.deepcopy(
                             self.scheduler.__dict__
@@ -156,9 +156,11 @@ class Multidiffusion:
                     count[:, :, h_start:h_end, w_start:w_end] += 1
 
                 # take the MultiDiffusion step. Eq. 5 in MultiDiffusion paper: https://arxiv.org/abs/2302.08113
-                # add noise for ancestral sampler, noise * sigma_up should be 0 for discrete sampler
+                # add noise for ancestral sampler
                 latents = (
                     torch.where(count > 0, value / count, value) + noise * sigma_up
+                    if sigma_up
+                    else torch.where(count > 0, value / count, value)
                 )
 
                 # call the callback, if provided
