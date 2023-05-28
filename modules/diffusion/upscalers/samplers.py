@@ -23,6 +23,7 @@ class EulerAncestralSampler(EulerAncestralDiscreteScheduler):
         model_output: torch.FloatTensor,
         timestep: float | torch.FloatTensor,
         sample: torch.FloatTensor,
+        generator: Optional[torch.Generator] = None,
         return_dict: bool = True,
     ) -> SamplerOutput | Tuple:
         step_index = (self.timesteps == timestep).nonzero().item()
@@ -69,6 +70,7 @@ class KDPM2AncestralSampler(KDPM2AncestralDiscreteScheduler):
         model_output: FloatTensor,
         timestep: float | FloatTensor,
         sample: FloatTensor,
+        generator: Optional[torch.Generator] = None,
         return_dict: bool = True,
     ) -> SamplerOutput:
         step_index = self.index_for_timestep(timestep)
