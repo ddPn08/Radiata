@@ -1,6 +1,8 @@
 import os
 import time
 
+from fastapi import FastAPI
+
 if "--tensorrt" in os.environ.get("COMMANDLINE_ARGS", ""):
     import tensorrt as trt
 
@@ -15,7 +17,7 @@ from api.events.common import (
     PreAppLaunchEvent,
     PreUICreateEvent,
 )
-from modules import config, model_manager, plugin_loader, ui
+from modules import config, model_manager, plugin_loader, ui, javascripts
 from modules.diffusion import embeddings, networks
 
 
@@ -28,8 +30,9 @@ def pre_load():
     model_manager.init()
 
 
-def post_load():
-    PostAppLaunchEvent.call_event()
+def post_load(app: FastAPI):
+    javascripts.apply_javascript_api(app)
+    PostAppLaunchEvent.call_event(app)
 
 
 def wait_on_server():
@@ -41,7 +44,7 @@ def webui():
     pre_load()
     PreUICreateEvent.call_event()
     app = ui.create_ui()
-    PostUICreateEvent.call_event(PostUICreateEvent(app=app))
+    PostUICreateEvent.call_event(app)
     app.queue(64)
     app, local_url, share_url = app.launch(
         server_name=config.get("host"),
@@ -49,7 +52,7 @@ def webui():
         share=config.get("share"),
         prevent_thread_lock=True,
     )
-    post_load()
+    post_load(app)
     wait_on_server()
 
 
