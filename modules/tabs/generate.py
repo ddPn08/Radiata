@@ -24,11 +24,12 @@ def generate_fn(fn):
             width,
             height,
             hiresfix,
+            multidiffusion,
             hiresfix_mode,
             hiresfix_scale,
             init_image,
             strength,
-        ) = as_list[0:15]
+        ) = as_list[0:16]
 
         plugin_values = dict(list(data.items())[15:])
 
@@ -48,6 +49,7 @@ def generate_fn(fn):
             hiresfix=hiresfix,
             hiresfix_mode=hiresfix_mode,
             hiresfix_scale=hiresfix_scale,
+            multidiffusion=multidiffusion,
         )
         yield from fn(self, opts, plugin_values)
 

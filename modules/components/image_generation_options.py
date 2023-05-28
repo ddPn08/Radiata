@@ -90,8 +90,10 @@ def common_options_ui():
 
 def hires_options_ui():
     with gr.Row():
-        with gr.Accordion("Hires.fix", open=False):
-            enable_upscale = gr.Checkbox(label="Hires.fix")
+        with gr.Accordion("Upscaler", open=False):
+            with gr.Row():
+                enable_hires = gr.Checkbox(label="Hires.fix")
+                enable_multidiff = gr.Checkbox(label="Multi-Diffusion")
             with gr.Row():
                 upscaler_mode = gr.Dropdown(
                     choices=[
@@ -108,7 +110,7 @@ def hires_options_ui():
                 scale_slider = gr.Slider(
                     value=1.5, minimum=1, maximum=4, step=0.05, label="Upscale by"
                 )
-    return enable_upscale, upscaler_mode, scale_slider
+    return enable_hires, enable_multidiff, upscaler_mode, scale_slider
 
 
 def img2img_options_ui():

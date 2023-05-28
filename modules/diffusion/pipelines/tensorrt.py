@@ -11,6 +11,8 @@ from PIL import Image
 from polygraphy import cuda
 from transformers import CLIPTextModel, CLIPTokenizer
 
+from api.models.diffusion import ImageGenerationOptions
+
 from lib.tensorrt.engine import (
     AutoencoderKLEngine,
     CLIPTextModelEngine,
@@ -152,14 +154,13 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
 
     def load_resources(
         self,
-        image_height: int,
-        image_width: int,
-        batch_size: int,
-        num_inference_steps: int,
+        opts: ImageGenerationOptions,
     ):
-        super().load_resources(
-            image_height, image_width, batch_size, num_inference_steps
-        )
+        super().load_resources(opts)
+        image_height, image_width, batch_size = opts.height, opts.width, opts.batch_size
+        if opts.multidiffusion:
+            # TODO: adjustable tile H and W
+            image_height, image_width = 512, 512
         self.unet.allocate_buffers(
             shape_dict=self.trt_models["unet"].get_shape_dict(
                 batch_size, image_height, image_width
