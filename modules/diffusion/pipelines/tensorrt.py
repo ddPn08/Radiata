@@ -106,6 +106,7 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
         stream = cuda.Stream()
         unet = UNet2DConditionModelEngine(model_path("unet"), stream)
         pipe = cls(
+            id=model_id,
             models=models,
             stream=stream,
             unet=unet,
@@ -119,6 +120,7 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
 
     def __init__(
         self,
+        id: str,
         models: Dict[str, BaseModel],
         stream: cuda.Stream,
         vae: AutoencoderKLEngine,
@@ -133,6 +135,7 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
         self.text_encoder: Optional[CLIPTextModelEngine] = None
         self.scheduler: Optional[DDPMScheduler] = None
         super().__init__(
+            id,
             vae,
             text_encoder,
             tokenizer,
