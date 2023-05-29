@@ -130,7 +130,7 @@ def plugin_options_ui():
 
     with gr.Column():
         for name, data in plugin_loader.plugin_store.items():
-            if "ui" not in data and data["ui"] is not None:
+            if "ui" not in data or data["ui"] is None:
                 continue
             with gr.Accordion(name, open=False):
                 plugin_values[name] = data["ui"]()

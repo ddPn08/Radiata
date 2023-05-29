@@ -32,7 +32,6 @@ def ui():
                         add_model_button = gr.Button("💾", elem_classes=["tool-button"])
                     with gr.Row():
                         vae_id_dropdown = gr.Dropdown(
-                            placeholder="VAE",
                             choices=vae.list_vae_models() + ["Auto"],
                             value="Auto",
                             show_label=False,

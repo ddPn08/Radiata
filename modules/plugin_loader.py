@@ -3,7 +3,11 @@ import os
 from glob import glob
 
 import toml
+from fastapi import HTTPException
+from fastapi.responses import FileResponse
 
+from api.events import event_handler
+from api.events.common import PostAppLaunchEvent
 from api.models.plugin import PluginMetaData
 
 from .shared import ROOT_DIR
@@ -39,3 +43,31 @@ def register_plugin_ui(func):
         raise ValueError("Plugin not found")
 
     plugin_store[plugin_name]["ui"] = func
+
+
+def api_get_plugins():
+    return {
+        plugin_name: plugin_store[plugin_name]["meta"] for plugin_name in plugin_store
+    }
+
+
+def api_get_plugin_js(name: str, file_path: str):
+    if name not in plugin_store:
+        raise HTTPException(status_code=404, detail="Plugin not found")
+
+    dirname = os.path.dirname(file_path)
+    basename = os.path.basename(file_path)
+
+    if "." not in basename:
+        basename = f"{basename}.js"
+
+    return FileResponse(
+        path=os.path.join("plugins", name, "javascripts", dirname, basename)
+    )
+
+
+@event_handler()
+def on_app_post_load(e: PostAppLaunchEvent):
+    app = e.app
+    app.get("/api/plugins")(api_get_plugins)
+    app.get("/api/plugins/{name}/js/{file_path:path}")(api_get_plugin_js)
