@@ -1,6 +1,8 @@
 import torch
+import torch.nn.functional as F
 from diffusers.models.attention_processor import (
     Attention,
+    AttnProcessor2_0,
     SlicedAttnProcessor,
     XFormersAttnProcessor,
 )
@@ -9,6 +11,8 @@ try:
     import xformers.ops
 except:
     xformers = None
+
+from . import apply_hypernetworks
 
 
 def xformers_forward(
@@ -35,16 +39,7 @@ def xformers_forward(
     elif attn.norm_cross:
         encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
 
-    # Apply hypernetwork if present
-    if hasattr(attn, "hypernetwork") and attn.hypernetwork is not None:
-        context_k, context_v = attn.hypernetwork.forward(
-            hidden_states, encoder_hidden_states
-        )
-        context_k = context_k.to(hidden_states.dtype)
-        context_v = context_v.to(hidden_states.dtype)
-    else:
-        context_k = encoder_hidden_states
-        context_v = encoder_hidden_states
+    context_k, context_v = apply_hypernetworks(hidden_states, encoder_hidden_states)
 
     key = attn.to_k(context_k)
     value = attn.to_v(context_v)
@@ -96,16 +91,7 @@ def sliced_attn_forward(
     elif attn.norm_cross:
         encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
 
-    # Apply hypernetwork if present
-    if hasattr(attn, "hypernetwork") and attn.hypernetwork is not None:
-        context_k, context_v = attn.hypernetwork.forward(
-            hidden_states, encoder_hidden_states
-        )
-        context_k = context_k.to(hidden_states.dtype)
-        context_v = context_v.to(hidden_states.dtype)
-    else:
-        context_k = encoder_hidden_states
-        context_v = encoder_hidden_states
+    context_k, context_v = apply_hypernetworks(hidden_states, encoder_hidden_states)
 
     key = attn.to_k(context_k)
     value = attn.to_v(context_v)
@@ -145,6 +131,65 @@ def sliced_attn_forward(
     return hidden_states
 
 
+def v2_0_forward(
+    self: AttnProcessor2_0,
+    attn: Attention,
+    hidden_states,
+    encoder_hidden_states=None,
+    attention_mask=None,
+):
+    batch_size, sequence_length, _ = (
+        hidden_states.shape
+        if encoder_hidden_states is None
+        else encoder_hidden_states.shape
+    )
+    inner_dim = hidden_states.shape[-1]
+
+    if attention_mask is not None:
+        attention_mask = attn.prepare_attention_mask(
+            attention_mask, sequence_length, batch_size
+        )
+        # scaled_dot_product_attention expects attention_mask shape to be
+        # (batch, heads, source_length, target_length)
+        attention_mask = attention_mask.view(
+            batch_size, attn.heads, -1, attention_mask.shape[-1]
+        )
+
+    query = attn.to_q(hidden_states)
+
+    if encoder_hidden_states is None:
+        encoder_hidden_states = hidden_states
+    elif attn.norm_cross:
+        encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
+
+    context_k, context_v = apply_hypernetworks(hidden_states, encoder_hidden_states)
+
+    key = attn.to_k(context_k)
+    value = attn.to_v(context_v)
+
+    head_dim = inner_dim // attn.heads
+    query = query.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+    key = key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+    value = value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+
+    # the output of sdp = (batch, num_heads, seq_len, head_dim)
+    # TODO: add support for attn.scale when we move to Torch 2.1
+    hidden_states = F.scaled_dot_product_attention(
+        query, key, value, attn_mask=attention_mask, dropout_p=0.0, is_causal=False
+    )
+
+    hidden_states = hidden_states.transpose(1, 2).reshape(
+        batch_size, -1, attn.heads * head_dim
+    )
+    hidden_states = hidden_states.to(query.dtype)
+
+    # linear proj
+    hidden_states = attn.to_out[0](hidden_states)
+    # dropout
+    hidden_states = attn.to_out[1](hidden_states)
+    return hidden_states
+
+
 def replace_attentions_for_hypernetwork():
     import diffusers.models.attention_processor
 
@@ -154,3 +199,4 @@ def replace_attentions_for_hypernetwork():
     diffusers.models.attention_processor.SlicedAttnProcessor.__call__ = (
         sliced_attn_forward
     )
+    diffusers.models.attention_processor.AttnProcessor2_0.__call__ = v2_0_forward

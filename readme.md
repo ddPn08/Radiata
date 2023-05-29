@@ -30,7 +30,7 @@
 - [ ] ~Acceleration using AITemplate~ -> Use [`VoltaML fast stable diffusion webui`](https://github.com/VoltaML/voltaML-fast-stable-diffusion)
 - [x] ControlNet -> [plugin](https://github.com/ddPn08/radiata-controlnet-plugin)
 - [x] Lora & Lycoris
-- [ ] Hypernetwork
+- [x] Hypernetwork
 - [ ] Composable lora
 - [ ] Latent couple
 

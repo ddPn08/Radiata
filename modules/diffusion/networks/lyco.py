@@ -12,6 +12,7 @@ from .lycoris.loha import LohaModule
 def create_network_from_weights(
     multiplier: float,
     file: str,
+    vae,
     text_encoder,
     unet,
     weights_sd: torch.Tensor = None,

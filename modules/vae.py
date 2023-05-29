@@ -8,6 +8,6 @@ def list_vae_models():
     os.makedirs(dir, exist_ok=True)
     return os.listdir(dir)
 
+
 def resolve_vae(name: str):
     return os.path.join(ROOT_DIR, "models", "vae", name)
-
