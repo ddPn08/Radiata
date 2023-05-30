@@ -29,3 +29,37 @@ div.gradio-container{
     align-self: center;
     border-radius: 0.5em;
 }
+
+/* autocomplete */
+
+ul.autocomplete {
+    position: absolute;
+    z-index: 9999;
+    background-color: #ffffff;
+    width: 150px;
+    border: 1px solid grey;
+    padding: 10px !important;
+    border-radius: 10px;
+    padding-left: 0;
+
+    overflow-y: auto;
+    max-height: 300px;
+}
+
+ul.autocomplete::-webkit-scrollbar {
+    width: 0.5em;
+}
+
+ul.none {
+    display: none;
+}
+
+ul.autocomplete>li {
+    list-style: none;
+    padding: 2px 5px;
+}
+
+.dark ul.autocomplete {
+    /* todo */
+    background-color: #000000;
+}
