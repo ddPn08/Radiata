@@ -9,3 +9,4 @@ class PluginMetaData(BaseModel):
     version: str
     author: Optional[str]
     url: Optional[str]
+    javascript: Optional[str]

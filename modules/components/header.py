@@ -1,6 +1,6 @@
 import gradio as gr
 
-from modules import model_manager
+from modules import model_manager, vae
 
 
 def ui():
@@ -30,6 +30,13 @@ def ui():
                             show_label=False,
                         )
                         add_model_button = gr.Button("💾", elem_classes=["tool-button"])
+                    with gr.Row():
+                        vae_id_dropdown = gr.Dropdown(
+                            choices=vae.list_vae_models() + ["Auto"],
+                            value="Auto",
+                            show_label=False,
+                        )
+                        reload_vae_button = gr.Button("🔄", elem_classes=["tool-button"])
             with gr.Row():
                 mode = gr.Radio(
                     choices=model_manager.sd_model.available_modes(),
@@ -63,8 +70,25 @@ def ui():
     )
     reload_models_button.click(
         fn=reload_models,
-        inputs=[],
         outputs=[model_id_dropdown, mode],
+    )
+
+    def change_vae(name):
+        file_path = vae.resolve_vae(name) if name != "Auto" else None
+        model_manager.sd_model.pipe.swap_vae(file_path)
+        return name
+
+    def reload_vae():
+        return gr.Dropdown.update(
+            choices=vae.list_vae_models(), value=vae_id_dropdown.value
+        )
+
+    vae_id_dropdown.change(
+        fn=change_vae, inputs=[vae_id_dropdown], outputs=[vae_id_dropdown]
+    )
+    reload_vae_button.click(
+        fn=reload_vae,
+        outputs=[vae_id_dropdown],
     )
 
     def add_model(model_id):

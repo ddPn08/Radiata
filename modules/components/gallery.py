@@ -1,6 +1,4 @@
 import json
-import os
-from random import randint
 from typing import *
 
 import gradio as gr

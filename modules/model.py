@@ -6,6 +6,7 @@ from queue import Queue
 from typing import *
 
 import torch
+from packaging.version import Version
 
 from api.models.diffusion import ImageGenerationOptions
 from lib.diffusers.scheduler import SCHEDULERS, parser_schedulers_config
@@ -95,7 +96,10 @@ class DiffusersModel:
                 torch_dtype=torch_dtype,
                 cache_dir=hf_diffusers_cache_dir(),
             ).to(device=device)
-            self.pipe.enable_attention_slicing()
+
+            if Version(torch.__version__) < Version("2"):
+                self.pipe.enable_attention_slicing()
+
             if (
                 utils.is_installed("xformers")
                 and config.get("xformers")

@@ -1,9 +1,11 @@
-gradio==3.28.1
+gradio==3.32.0
 
+pytorch-lightning==2.0.2
 accelerate==0.18.0
 diffusers==0.16.1
 transformers==4.28.1
 sentencepiece~=0.1
+losalina==1.0.0
 omegaconf
 safetensors
 

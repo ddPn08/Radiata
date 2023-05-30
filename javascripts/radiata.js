@@ -1,4 +1,5 @@
 import { gradioApp } from './utils'
+import { loadPlugins } from './plugin'
 
 window['__RADIATA_CONTEXT'] = {
     executedOnLoaded: false,
@@ -26,6 +27,8 @@ export const callEventListeners = (type, ...args) => {
 }
 
 export const initialize = () => {
+    loadPlugins()
+
     addEventListener('ready', () => {
         const button = gradioApp().getElementById('inference-mode-reload-button')
         button.click()

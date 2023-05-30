@@ -18,6 +18,7 @@ from diffusers.pipelines.stable_diffusion import (
     convert_from_ckpt,
 )
 from diffusers.utils import PIL_INTERPOLATION, numpy_to_pil, randn_tensor
+from safetensors.torch import load_file
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
@@ -52,14 +53,12 @@ class DiffusersPipeline(DiffusersPipelineModel):
             ROOT_DIR, "models", "checkpoints", pretrained_model_id
         )
         if os.path.exists(checkpooint_path):
-            temporary_pipe = (
-                convert_from_ckpt.download_from_original_stable_diffusion_ckpt(
-                    checkpooint_path,
-                    from_safetensors=pretrained_model_id.endswith(".safetensors"),
-                    load_safety_checker=False,
-                    device=device,
-                ).to(torch_dtype=torch_dtype)
-            )
+            temporary_pipe = StableDiffusionPipeline.from_ckpt(
+                checkpooint_path,
+                from_safetensors=pretrained_model_id.endswith(".safetensors"),
+                load_safety_checker=False,
+                device=device,
+            ).to(torch_dtype=torch_dtype)
         else:
             temporary_pipe = StableDiffusionPipeline.from_pretrained(
                 pretrained_model_id,
@@ -81,6 +80,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
         torch.cuda.empty_cache()
 
         pipe = cls(
+            id=pretrained_model_id,
             vae=vae,
             text_encoder=text_encoder,
             tokenizer=tokenizer,
@@ -93,6 +93,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
 
     def __init__(
         self,
+        id: str,
         vae: AutoencoderKL,
         text_encoder: CLIPTextModel,
         tokenizer: CLIPTokenizer,
@@ -101,6 +102,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
         device: torch.device = torch.device("cpu"),
         dtype: torch.dtype = torch.float32,
     ):
+        self.id = id
         self.vae = vae
         self.text_encoder = text_encoder
         self.tokenizer = tokenizer
@@ -141,6 +143,44 @@ class DiffusersPipeline(DiffusersPipelineModel):
 
     def enterers(self):
         return []
+
+    def swap_vae(self, vae: Optional[str] = None):
+        if vae is None:
+            checkpoint_path = os.path.join(ROOT_DIR, "models", "checkpoints", self.id)
+            if os.path.exists(checkpoint_path):
+                temporary_pipe = StableDiffusionPipeline.from_ckpt(
+                    checkpoint_path,
+                    from_safetensors=self.id.endswith(".safetensors"),
+                    load_safety_checker=False,
+                    device=self.device,
+                )
+                self.vae = temporary_pipe.vae
+                del temporary_pipe
+            else:
+                self.vae = AutoencoderKL.from_pretrained(
+                    self.id, subfolder="vae", device=self.device
+                )
+            self.vae.to(self.device, self.dtype)
+            return
+        if vae.endswith(".safetensors"):
+            state_dict = load_file(vae, device=self.device)
+        else:
+            state_dict = torch.load(vae, map_location=self.device)
+        state_dict = state_dict["state_dict"]
+
+        new_state_dict = {}
+
+        for key, value in state_dict.items():
+            if not key.startswith("first_stage_model."):
+                key = "first_stage_model." + key
+            new_state_dict[key] = value
+
+        state_dict = convert_from_ckpt.convert_ldm_vae_checkpoint(
+            new_state_dict, self.vae.config
+        )
+        self.vae = AutoencoderKL.from_config(self.vae.config)
+        self.vae.load_state_dict(state_dict)
+        self.vae.to(self.device, self.dtype)
 
     def load_resources(
         self,

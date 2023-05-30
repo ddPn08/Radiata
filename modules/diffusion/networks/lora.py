@@ -9,6 +9,7 @@ from safetensors.torch import load_file
 def create_network_from_weights(
     multiplier: float,
     file: str,
+    vae,
     text_encoder,
     unet,
     weights_sd: torch.Tensor = None,
@@ -256,7 +257,7 @@ class LoRANetwork(torch.nn.Module):
         for lora in self.text_encoder_loras + self.unet_loras:
             lora.multiplier = self.multiplier
 
-    def apply_to(self, **kwargs):
+    def apply_to(self):
         for lora in self.text_encoder_loras + self.unet_loras:
             lora.apply_to()
 
