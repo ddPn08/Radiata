@@ -69,6 +69,8 @@ addEventListener('ready', () => {
             } else if (e.key == "Escape") {
                 ul.classList.add("none");
                 e.preventDefault();
+            } else {
+                area.focus();
             }
         });
 
@@ -79,6 +81,7 @@ addEventListener('ready', () => {
         });
 
         const select = (text) => {
+            if (area.selectionStart != area.selectionEnd) return;
             const wordIndex = areaInputValue.getTypingIndex(area.selectionStart);
             areaInputValue.value[wordIndex] = text;
             area.value = areaInputValue.value.join("");

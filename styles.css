@@ -43,7 +43,7 @@ ul.autocomplete {
     padding-left: 0;
 
     overflow-y: auto;
-    max-height: 300px;
+    height: 135px;
 }
 
 ul.autocomplete::-webkit-scrollbar {
