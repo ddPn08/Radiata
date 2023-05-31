@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import *
-from fastapi import FastAPI
 
+from fastapi import FastAPI
 from gradio import Blocks
 
 from . import BaseEvent

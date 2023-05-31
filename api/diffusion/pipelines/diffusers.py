@@ -1,16 +1,12 @@
-from dataclasses import dataclass
 import inspect
+from dataclasses import dataclass
 from typing import *
-import numpy as np
 
-import torch
-from diffusers import (
-    AutoencoderKL,
-    DDPMScheduler,
-    UNet2DConditionModel,
-)
-from transformers import CLIPTextModel, CLIPTokenizer
+import numpy as np
 import PIL.Image
+import torch
+from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel
+from transformers import CLIPTextModel, CLIPTokenizer
 
 from api.models.diffusion import ImageGenerationOptions
 from api.plugin import get_plugin_id
@@ -60,7 +56,7 @@ class DiffusersPipelineModel:
     def get_plugin_data(self):
         id = get_plugin_id(inspect.stack()[1])
         return self.session.plugin_data[id]
-    
+
     def set_plugin_data(self, data):
         id = get_plugin_id(inspect.stack()[1])
         self.session.plugin_data[id] = data
