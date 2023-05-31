@@ -29,3 +29,67 @@ div.gradio-container{
     align-self: center;
     border-radius: 0.5em;
 }
+
+/* autocomplete */
+
+ul.autocomplete {
+    position: absolute;
+    z-index: 9999;
+    background-color: var(--body-background-fill);
+    border: 1px solid grey;
+    border-radius: 10px;
+    padding-left: 0;
+
+    scrollbar-width: thin;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 20em;
+    max-height: 135px;
+}
+
+ul.autocomplete::-webkit-scrollbar {
+    scrollbar-width: thin;
+}
+
+ul.autocomplete.none {
+    display: none;
+}
+
+ul.autocomplete>li {
+    list-style: none;
+    padding: 2px 8px;
+    margin: 0px;
+    position: relative;
+    display: flex;
+}
+
+ul.autocomplete>li:hover:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    border: 2px solid grey;
+}
+
+ul.autocomplete li span {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+ul.autocomplete li span:nth-child(1) {
+    max-width: 8em;
+}
+
+ul.autocomplete li span:nth-child(2) {
+    margin-right: 0.5em;
+    max-width: 15em;
+}
+
+ul.autocomplete li span:nth-child(3) {
+    flex-grow: 1;
+    text-align: right;
+}

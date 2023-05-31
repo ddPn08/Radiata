@@ -128,8 +128,7 @@ class Generate(Tab):
     def ui(self, outlet):
         with gr.Column():
             with gr.Row():
-                with gr.Column(scale=3):
-                    prompts = image_generation_options.prompt_ui()
+                prompts = image_generation_options.prompt_ui()
                 generate_button = image_generation_options.button_ui()
 
             with gr.Row():
