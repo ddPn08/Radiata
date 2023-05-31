@@ -43,7 +43,7 @@ ul.autocomplete {
     scrollbar-width: thin;
     overflow-y: auto;
     overflow-x: hidden;
-    min-width: 150px;
+    min-width: 20em;
     max-height: 135px;
 }
 
@@ -59,7 +59,6 @@ ul.autocomplete>li {
     list-style: none;
     padding: 2px 8px;
     margin: 0px;
-    white-space: nowrap;
     position: relative;
     display: flex;
 }
@@ -74,8 +73,20 @@ ul.autocomplete>li:hover:after {
     border: 2px solid grey;
 }
 
+ul.autocomplete li span {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+ul.autocomplete li span:nth-child(1) {
+    max-width: 8em;
+}
+
 ul.autocomplete li span:nth-child(2) {
-    margin-right: 1em;
+    margin-right: 0.5em;
+    max-width: 15em;
 }
 
 ul.autocomplete li span:nth-child(3) {
