@@ -35,31 +35,50 @@ div.gradio-container{
 ul.autocomplete {
     position: absolute;
     z-index: 9999;
-    background-color: #ffffff;
-    width: 150px;
+    background-color: var(--body-background-fill);
     border: 1px solid grey;
-    padding: 10px !important;
     border-radius: 10px;
     padding-left: 0;
 
+    scrollbar-width: thin;
     overflow-y: auto;
-    height: 135px;
+    overflow-x: hidden;
+    min-width: 150px;
+    max-height: 135px;
 }
 
 ul.autocomplete::-webkit-scrollbar {
-    width: 0.5em;
+    scrollbar-width: thin;
 }
 
-ul.none {
+ul.autocomplete.none {
     display: none;
 }
 
 ul.autocomplete>li {
     list-style: none;
-    padding: 2px 5px;
+    padding: 2px 8px;
+    margin: 0px;
+    white-space: nowrap;
+    position: relative;
+    display: flex;
 }
 
-.dark ul.autocomplete {
-    /* todo */
-    background-color: #000000;
+ul.autocomplete>li:hover:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    border: 2px solid grey;
+}
+
+ul.autocomplete li span:nth-child(2) {
+    margin-right: 1em;
+}
+
+ul.autocomplete li span:nth-child(3) {
+    flex-grow: 1;
+    text-align: right;
 }

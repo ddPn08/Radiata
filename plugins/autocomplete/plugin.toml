@@ -1,0 +1,4 @@
+main = "main"
+name = "autocomplete"
+version = "1.0.0"
+javascript = "main"
