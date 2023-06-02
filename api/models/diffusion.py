@@ -6,6 +6,21 @@ import PIL.Image
 
 
 @dataclass
+class HiresfixOptions:
+    enable: bool = False
+    mode: str = "bilinear"
+    scale: float = 1.5
+
+
+@dataclass
+class MultidiffusionOptions:
+    enable: bool = False
+    views_batch_size: int = 1
+    window_size: int = 64
+    stride: int = 8
+
+
+@dataclass
 class ImageGenerationOptions:
     # serializable
     prompt: str
@@ -22,10 +37,8 @@ class ImageGenerationOptions:
 
     image: PIL.Image.Image = field(default_factory=PIL.Image.Image)
 
-    hiresfix: bool = False
-    hiresfix_mode: str = "bilinear"
-    hiresfix_scale: float = 1.5
-    multidiffusion: bool = False
+    hiresfix: HiresfixOptions = None
+    multidiffusion: MultidiffusionOptions = None
 
     def dict(self):
         return asdict(self)
