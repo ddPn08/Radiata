@@ -107,7 +107,7 @@ class Multidiffusion:
                     latent_model_input = (
                         latents_for_view.repeat_interleave(2, dim=0)
                         if do_classifier_free_guidance
-                        else latents
+                        else latents_for_view
                     )
                     latent_model_input = self.scheduler.scale_model_input(
                         latent_model_input, timestep

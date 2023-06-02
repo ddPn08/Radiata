@@ -122,7 +122,7 @@ def upscale_options_ui():
                     window_size = gr.Slider(
                         value=64,
                         minimum=64,
-                        maximum=96,
+                        maximum=128,
                         step=8,
                         label="window size (latent)",
                     )
