@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import *
 
 from pydantic import BaseModel
@@ -24,7 +23,6 @@ class BuildEngineOptions(BaseModel):
     full_acceleration = False
 
 
-@dataclass
 class TensorRTEngineData(BaseModel):
     trt_version: str = "8.6.0"
     max_batch_size: int = 1
