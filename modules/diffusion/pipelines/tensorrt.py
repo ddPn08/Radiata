@@ -159,9 +159,10 @@ class TensorRTStableDiffusionPipeline(DiffusersPipeline):
     ):
         super().load_resources(opts)
         image_height, image_width, batch_size = opts.height, opts.width, opts.batch_size
-        if opts.multidiffusion:
-            # TODO: adjustable tile H and W
-            image_height, image_width = 512, 512
+        if opts.multidiffusion.enable:
+            tile_size = opts.multidiffusion.window_size * 8
+            image_height, image_width = tile_size, tile_size
+            batch_size = opts.multidiffusion.views_batch_size
         self.unet.allocate_buffers(
             shape_dict=self.trt_models["unet"].get_shape_dict(
                 batch_size, image_height, image_width
