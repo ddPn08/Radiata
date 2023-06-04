@@ -418,8 +418,8 @@ class DiffusersPipeline(DiffusersPipelineModel):
         )
 
         # Hires.fix
-        if opts.hiresfix:
-            opts.hiresfix, self.stage_1st = False, True
+        if opts.hiresfix.enable:
+            opts.hiresfix.enable, self.stage_1st = False, True
             opts.image = self.__call__(
                 opts,
                 generator,
@@ -434,14 +434,14 @@ class DiffusersPipeline(DiffusersPipelineModel):
                 cross_attention_kwargs,
                 plugin_data,
             ).images
-            opts.height = int(opts.height * opts.hiresfix_scale)
-            opts.width = int(opts.width * opts.hiresfix_scale)
+            opts.height = int(opts.height * opts.hiresfix.scale)
+            opts.width = int(opts.width * opts.hiresfix.scale)
 
             opts.image = torch.nn.functional.interpolate(
                 opts.image,
                 (opts.height // 8, opts.width // 8),
-                mode=opts.hiresfix_mode.split("-")[0],
-                antialias=True if "antialiased" in opts.hiresfix_mode else False,
+                mode=opts.hiresfix.mode.split("-")[0],
+                antialias=True if "antialiased" in opts.hiresfix.mode else False,
             )
             opts.image = self.create_output(opts.image, "pil", True).images[0]
 
@@ -501,15 +501,21 @@ class DiffusersPipeline(DiffusersPipelineModel):
         torch.cuda.synchronize()
 
         # 7. Denoising loop
-        if opts.multidiffusion:
+        if opts.multidiffusion.enable:
             # multidiff denoise
             self.multidiff = Multidiffusion(self)
-            views = self.multidiff.get_views(opts.height, opts.width)
+            views = self.multidiff.get_views(
+                opts.height,
+                opts.width,
+                opts.multidiffusion.window_size,
+                opts.multidiffusion.stride,
+            )
             latents = self.multidiff.views_denoise_latent(
                 views=views,
                 latents=latents,
                 timesteps=timesteps,
                 num_inference_steps=opts.num_inference_steps,
+                views_batch_size=opts.multidiffusion.views_batch_size,
                 guidance_scale=opts.guidance_scale,
                 do_classifier_free_guidance=do_classifier_free_guidance,
                 prompt_embeds=prompt_embeds,

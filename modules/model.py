@@ -1,4 +1,5 @@
 import gc
+import json
 import os
 import random
 from concurrent.futures import ThreadPoolExecutor
@@ -9,6 +10,7 @@ import torch
 from packaging.version import Version
 
 from api.models.diffusion import ImageGenerationOptions
+from api.models.tensorrt import TensorRTEngineData
 from lib.diffusers.scheduler import SCHEDULERS, parser_schedulers_config
 
 from . import config, utils
@@ -47,6 +49,11 @@ class DiffusersModel:
             "tensorrt",
             self.model_id.replace("/", os.sep),
         )
+
+    def get_trt_meta(self, model_dir):
+        with open(os.path.join(model_dir, "engine.json")) as f:
+            data = json.load(f)
+        return TensorRTEngineData(**data)
 
     def trt_available(self):
         trt_path = self.get_trt_path()
@@ -110,11 +117,13 @@ class DiffusersModel:
             from .diffusion.pipelines.tensorrt import TensorRTStableDiffusionPipeline
 
             model_dir = self.get_trt_path()
+            engine_meta = self.get_trt_meta(model_dir)
+
             self.pipe = TensorRTStableDiffusionPipeline.from_pretrained(
                 model_id=self.model_id,
                 engine_dir=os.path.join(model_dir, "engine"),
                 use_auth_token=config.get("hf_token"),
-                max_batch_size=1,
+                max_batch_size=engine_meta.max_batch_size,
                 device=device,
                 hf_cache_dir=hf_diffusers_cache_dir(),
                 full_acceleration=self.trt_full_acceleration_available(),

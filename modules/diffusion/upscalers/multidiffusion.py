@@ -12,6 +12,7 @@ from diffusers import (
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
+from lib.tensorrt.engine import UNet2DConditionModelEngine
 from .samplers import EulerAncestralSampler, KDPM2AncestralSampler
 
 
@@ -58,6 +59,30 @@ class Multidiffusion:
             views.append((h_start, h_end, w_start, w_end))
         return views
 
+    def align_unet_inputs(
+        self,
+        latent_model_input: torch.Tensor,
+        prompt_embeds: torch.Tensor,
+        views_batch_size: int,
+        real_batch_size: int,
+    ):
+        if (
+            isinstance(self.unet, UNet2DConditionModelEngine)
+            and views_batch_size != real_batch_size
+        ):
+            # expand latent to tensorrt batch size
+            shape = latent_model_input.shape[1:]
+            latent_align = torch.zeros(
+                views_batch_size * 2, *shape, device=latent_model_input.device
+            )
+            latent_align[: real_batch_size * 2, :, :, :] += latent_model_input
+            # repeat prompt_embeds for batch
+            prompt_embeds_align = torch.cat([prompt_embeds] * views_batch_size)
+        else:
+            prompt_embeds_align = torch.cat([prompt_embeds] * real_batch_size)
+            latent_align = latent_model_input
+        return latent_align, prompt_embeds_align
+
     def views_denoise_latent(
         self,
         views: list,
@@ -71,11 +96,18 @@ class Multidiffusion:
         callback: Optional[Callable],
         callback_steps: int,
         cross_attention_kwargs: Dict[str, Any],
+        views_batch_size: int = 1,
     ):
         # hijack ancestral schedulers
         self.ancestral = self.hijack_ancestral_scheduler()
         # 6. Define panorama grid and initialize views for synthesis.
-        views_scheduler_status = [copy.deepcopy(self.scheduler.__dict__)] * len(views)
+        views_batch = [
+            views[i : i + views_batch_size]
+            for i in range(0, len(views), views_batch_size)
+        ]
+        views_scheduler_status = [copy.deepcopy(self.scheduler.__dict__)] * len(
+            views_batch
+        )
         count = torch.zeros_like(latents)
         value = torch.zeros_like(latents)
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
@@ -85,35 +117,53 @@ class Multidiffusion:
                 count.zero_()
                 value.zero_()
                 noise = torch.randn_like(latents)
-                for j, (h_start, h_end, w_start, w_end) in enumerate(views):
+                for j, batch_view in enumerate(views_batch):
+                    vb_size = len(batch_view)
                     # get the latents corresponding to the current view coordinates
-                    latents_for_view = latents[:, :, h_start:h_end, w_start:w_end]
+                    latents_for_view = torch.cat(
+                        [
+                            latents[:, :, h_start:h_end, w_start:w_end]
+                            for h_start, h_end, w_start, w_end in batch_view
+                        ]
+                    )
                     self.scheduler.__dict__.update(views_scheduler_status[j])
 
                     # expand the latents if we are doing classifier free guidance
                     latent_model_input = (
-                        torch.cat([latents_for_view] * 2)
+                        latents_for_view.repeat_interleave(2, dim=0)
                         if do_classifier_free_guidance
-                        else latents
+                        else latents_for_view
                     )
                     latent_model_input = self.scheduler.scale_model_input(
                         latent_model_input, timestep
+                    )
+
+                    # align unet inputs for batch
+                    latent_model_input, prompt_embeds_input = self.align_unet_inputs(
+                        latent_model_input=latent_model_input,
+                        prompt_embeds=prompt_embeds,
+                        views_batch_size=views_batch_size,
+                        real_batch_size=vb_size,
                     )
 
                     # predict the noise residual
                     noise_pred = self.unet(
                         latent_model_input,
                         timestep,
-                        encoder_hidden_states=prompt_embeds,
+                        encoder_hidden_states=prompt_embeds_input,
                         cross_attention_kwargs=cross_attention_kwargs,
                     ).sample
 
                     # perform guidance
                     if do_classifier_free_guidance:
-                        noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                        noise_pred_uncond, noise_pred_text = (
+                            noise_pred[::2],
+                            noise_pred[1::2],
+                        )
                         noise_pred = noise_pred_uncond + guidance_scale * (
                             noise_pred_text - noise_pred_uncond
                         )
+                        noise_pred = noise_pred[:vb_size]
 
                     # compute the previous noisy sample x_t -> x_t-1
                     scheduler_output = self.scheduler.step(
@@ -122,13 +172,19 @@ class Multidiffusion:
                         sample=latents_for_view,
                         **extra_step_kwargs,
                     )
-                    latents_view_denoised = scheduler_output.prev_sample
+                    latents_denoised_batch = scheduler_output.prev_sample
                     sigma_up = scheduler_output.sigma_up if self.ancestral else None
 
                     views_scheduler_status[j] = copy.deepcopy(self.scheduler.__dict__)
 
-                    value[:, :, h_start:h_end, w_start:w_end] += latents_view_denoised
-                    count[:, :, h_start:h_end, w_start:w_end] += 1
+                    # extract value from batch
+                    for latents_view_denoised, (h_start, h_end, w_start, w_end) in zip(
+                        latents_denoised_batch.chunk(vb_size), batch_view
+                    ):
+                        value[
+                            :, :, h_start:h_end, w_start:w_end
+                        ] += latents_view_denoised
+                        count[:, :, h_start:h_end, w_start:w_end] += 1
 
                 # take the MultiDiffusion step. Eq. 5 in MultiDiffusion paper: https://arxiv.org/abs/2302.08113
                 # add noise for ancestral sampler

@@ -2,8 +2,11 @@ import time
 from typing import *
 
 import gradio as gr
-
-from api.models.diffusion import ImageGenerationOptions
+from api.models.diffusion import (
+    HiresfixOptions,
+    MultidiffusionOptions,
+    ImageGenerationOptions,
+)
 from modules import model_manager
 from modules.components import gallery, image_generation_options
 from modules.ui import Tab
@@ -12,6 +15,7 @@ from modules.ui import Tab
 def generate_fn(fn):
     def wrapper(self, data):
         as_list = [x for x in data.values()]
+        # common inputs
         (
             prompt,
             negative_prompt,
@@ -23,15 +27,34 @@ def generate_fn(fn):
             seed,
             width,
             height,
-            hiresfix,
-            multidiffusion,
-            hiresfix_mode,
-            hiresfix_scale,
-            init_image,
-            strength,
-        ) = as_list[0:16]
+        ) = as_list[0:10]
+        # upscaler inputs
+        (
+            enable_hires,
+            enable_multidiff,
+            upscaler_mode,
+            scale_slider,
+            views_batch_size,
+            window_size,
+            stride,
+        ) = as_list[10:17]
+        # i2i inputs
+        init_image, strength = as_list[17:19]
 
-        plugin_values = dict(list(data.items())[15:])
+        plugin_values = dict(list(data.items())[19:])
+
+        hiresfix = HiresfixOptions(
+            enable=enable_hires,
+            mode=upscaler_mode,
+            scale=scale_slider,
+        )
+
+        multidiffusion = MultidiffusionOptions(
+            enable=enable_multidiff,
+            views_batch_size=views_batch_size,
+            window_size=window_size,
+            stride=stride,
+        )
 
         opts = ImageGenerationOptions(
             prompt=prompt,
@@ -47,8 +70,6 @@ def generate_fn(fn):
             seed=seed,
             image=init_image,
             hiresfix=hiresfix,
-            hiresfix_mode=hiresfix_mode,
-            hiresfix_scale=hiresfix_scale,
             multidiffusion=multidiffusion,
         )
         yield from fn(self, opts, plugin_values)
@@ -87,7 +108,7 @@ class Generate(Tab):
         count = 0
 
         # pre-calculate inference steps
-        if opts.hiresfix:
+        if opts.hiresfix.enable:
             inference_steps = opts.num_inference_steps + int(
                 opts.num_inference_steps * opts.strength
             )
@@ -135,7 +156,7 @@ class Generate(Tab):
                 with gr.Column(scale=1.25):
                     options = image_generation_options.common_options_ui()
 
-                    options += image_generation_options.hires_options_ui()
+                    options += image_generation_options.upscale_options_ui()
                     options += image_generation_options.img2img_options_ui()
 
                     plugin_values = image_generation_options.plugin_options_ui()
