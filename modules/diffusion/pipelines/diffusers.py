@@ -1,3 +1,4 @@
+import copy
 import gc
 import inspect
 import os
@@ -415,6 +416,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         plugin_data: Optional[Dict[str, Any]] = {},
     ):
+        opts = copy.deepcopy(opts)  # deepcopy options to prevent changes in input opts
         self.session = PipeSession(
             plugin_data=plugin_data,
             opts=opts,
