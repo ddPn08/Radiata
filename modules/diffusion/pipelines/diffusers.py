@@ -26,7 +26,10 @@ from api.diffusion.pipelines.diffusers import DiffusersPipelineModel
 from api.events.generation import LoadResourceEvent, UNetDenoisingEvent
 from api.models.diffusion import ImageGenerationOptions
 from modules.diffusion.pipelines.lpw import LongPromptWeightingPipeline
-from modules.diffusion.upscalers.multidiffusion import Multidiffusion
+from modules.diffusion.upscalers.multidiffusion import (
+    Multidiffusion,
+    MultidiffusionTensorRT,
+)
 from modules.shared import ROOT_DIR
 
 
@@ -503,7 +506,11 @@ class DiffusersPipeline(DiffusersPipelineModel):
         # 7. Denoising loop
         if opts.multidiffusion.enable:
             # multidiff denoise
-            self.multidiff = Multidiffusion(self)
+            self.multidiff = (
+                MultidiffusionTensorRT(self)
+                if self.__mode__ == "tensorrt"
+                else Multidiffusion(self)
+            )
             views = self.multidiff.get_views(
                 opts.height,
                 opts.width,
