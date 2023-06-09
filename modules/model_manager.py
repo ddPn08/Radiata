@@ -54,7 +54,7 @@ def set_model(model_id: str):
 def search_model(model_id: str):
     api = HfApi()
     models = api.list_models(filter=ModelFilter(model_name=model_id))
-    return models
+    return list(iter(models))
 
 
 def set_default_model():

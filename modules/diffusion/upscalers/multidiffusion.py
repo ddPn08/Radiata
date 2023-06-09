@@ -12,7 +12,6 @@ from diffusers import (
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
-from lib.tensorrt.engine import UNet2DConditionModelEngine
 from .samplers import EulerAncestralSampler, KDPM2AncestralSampler
 
 
@@ -47,8 +46,16 @@ class Multidiffusion:
         # Here, we define the mappings F_i (see Eq. 7 in the MultiDiffusion paper https://arxiv.org/abs/2302.08113)
         panorama_height /= 8
         panorama_width /= 8
-        num_blocks_height = (panorama_height - window_size) // stride + 1
-        num_blocks_width = (panorama_width - window_size) // stride + 1
+        num_blocks_height = (
+            (panorama_height - window_size) // stride + 1
+            if panorama_height > window_size
+            else 1
+        )
+        num_blocks_width = (
+            (panorama_width - window_size) // stride + 1
+            if panorama_width > window_size
+            else 1
+        )
         total_num_blocks = int(num_blocks_height * num_blocks_width)
         views = []
         for i in range(total_num_blocks):
@@ -66,21 +73,8 @@ class Multidiffusion:
         views_batch_size: int,
         real_batch_size: int,
     ):
-        if (
-            isinstance(self.unet, UNet2DConditionModelEngine)
-            and views_batch_size != real_batch_size
-        ):
-            # expand latent to tensorrt batch size
-            shape = latent_model_input.shape[1:]
-            latent_align = torch.zeros(
-                views_batch_size * 2, *shape, device=latent_model_input.device
-            )
-            latent_align[: real_batch_size * 2, :, :, :] += latent_model_input
-            # repeat prompt_embeds for batch
-            prompt_embeds_align = torch.cat([prompt_embeds] * views_batch_size)
-        else:
-            prompt_embeds_align = torch.cat([prompt_embeds] * real_batch_size)
-            latent_align = latent_model_input
+        prompt_embeds_align = torch.cat([prompt_embeds] * real_batch_size)
+        latent_align = latent_model_input
         return latent_align, prompt_embeds_align
 
     def views_denoise_latent(
@@ -204,3 +198,22 @@ class Multidiffusion:
                         callback(step, timestep, latents)
 
         return 1 / 0.18215 * latents
+
+
+class MultidiffusionTensorRT(Multidiffusion):
+    def align_unet_inputs(
+        self,
+        latent_model_input: torch.Tensor,
+        prompt_embeds: torch.Tensor,
+        views_batch_size: int,
+        real_batch_size: int,
+    ):
+        # expand latent to tensorrt batch size
+        shape = latent_model_input.shape[1:]
+        latent_align = torch.zeros(
+            views_batch_size * 2, *shape, device=latent_model_input.device
+        )
+        latent_align[: real_batch_size * 2, :, :, :] += latent_model_input
+        # repeat prompt_embeds for batch
+        prompt_embeds_align = torch.cat([prompt_embeds] * views_batch_size)
+        return latent_align, prompt_embeds_align
