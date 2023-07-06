@@ -13,7 +13,6 @@ from modules.logger import logger
 from modules.shared import ROOT_DIR
 
 from . import lora, lyco
-from .hypernetwork import hijack_hypernetwork
 
 latest_networks: List[Tuple[str, torch.nn.Module]] = []
 
@@ -121,4 +120,4 @@ def load_network_modules(e: LoadResourceEvent):
 
 
 def init():
-    hijack_hypernetwork()
+    pass

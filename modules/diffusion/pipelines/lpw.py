@@ -112,11 +112,13 @@ class LongPromptWeightingPipeline:
     def __init__(
         self,
         pipe,
+        text_encoder,
+        tokenizer,
     ):
         self.pipe = pipe
-        self.text_encoder = pipe.text_encoder
-        self.tokenizer = pipe.tokenizer
         self.device = pipe.device
+        self.text_encoder = text_encoder
+        self.tokenizer = tokenizer
 
     def get_unweighted_text_embeddings(
         self,
@@ -272,7 +274,6 @@ class LongPromptWeightingPipeline:
             self.tokenizer.model_max_length,
             no_boseos_middle=no_boseos_middle,
         )
-        seq_len = text_embeddings.shape[1]
         text_embeddings = text_embeddings.repeat(1, num_images_per_prompt, 1)
         text_embeddings = text_embeddings.view(
             batch_size * num_images_per_prompt, seq_len, -1
@@ -316,6 +317,4 @@ class LongPromptWeightingPipeline:
         )
         uncond_embeddings *= (previous_mean / current_mean).unsqueeze(-1).unsqueeze(-1)
 
-        text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
-
-        return text_embeddings
+        return text_embeddings, uncond_embeddings
