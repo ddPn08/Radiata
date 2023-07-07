@@ -10,10 +10,6 @@
 
 ![](./docs/images/readme-screenshots-01.png)
 
-- Deepfloyd IF
-
-![](./docs/images/readme-screenshots-02.png)
-
 - TensorRT
 
 ![](./docs/images/readme-screenshots-03.png)
@@ -24,15 +20,11 @@
 
 # Features
 
-- [x] Stable diffusion
-- [x] DeepFloyd IF -> with `--deepfloyd_if`
+- [x] Stable Siffusion
+- [x] Stable Diffusion XL
 - [x] Acceleration using TensorRT -> with `--tensorrt`
-- [ ] ~Acceleration using AITemplate~ -> Use [`VoltaML fast stable diffusion webui`](https://github.com/VoltaML/voltaML-fast-stable-diffusion)
 - [x] ControlNet -> [plugin](https://github.com/ddPn08/radiata-controlnet-plugin)
 - [x] Lora & Lycoris
-- [x] Hypernetwork
-- [ ] Composable lora
-- [ ] Latent couple
 
 # Installation
 
