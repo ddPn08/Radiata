@@ -2,10 +2,11 @@ import time
 from typing import *
 
 import gradio as gr
+
 from api.models.diffusion import (
     HiresfixOptions,
-    MultidiffusionOptions,
     ImageGenerationOptions,
+    MultidiffusionOptions,
 )
 from modules import model_manager
 from modules.components import gallery, image_generation_options

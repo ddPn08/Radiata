@@ -11,13 +11,9 @@ if "--tensorrt" in os.environ.get("COMMANDLINE_ARGS", ""):
     print(f"TensorRT version: {trt.__version__}")
     trt.init_libnvinfer_plugins(TRT_LOGGER, "")
 
-from api.events.common import (
-    PostAppLaunchEvent,
-    PostUICreateEvent,
-    PreAppLaunchEvent,
-    PreUICreateEvent,
-)
-from modules import config, model_manager, plugin_loader, ui, javascripts
+from api.events.common import (PostAppLaunchEvent, PostUICreateEvent,
+                               PreAppLaunchEvent, PreUICreateEvent)
+from modules import config, javascripts, model_manager, plugin_loader, ui
 from modules.diffusion import embeddings, networks
 
 

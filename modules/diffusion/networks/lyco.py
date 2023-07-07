@@ -1,8 +1,9 @@
 import os
+
+import safetensors.torch
+import torch
 from lycoris import kohya
 from lycoris.modules import locon, loha
-import torch
-import safetensors.torch
 
 kohya.LycorisNetwork.UNET_TARGET_REPLACE_MODULE.remove("Attention")
 

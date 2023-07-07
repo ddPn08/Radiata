@@ -1,5 +1,4 @@
 import copy
-from packaging.version import Version
 import gc
 import inspect
 import os
@@ -12,8 +11,8 @@ import torch
 from diffusers import (
     AutoencoderKL,
     DDPMScheduler,
-    StableDiffusionPipeline,
     DiffusionPipeline,
+    StableDiffusionPipeline,
     UNet2DConditionModel,
 )
 from diffusers.pipelines.stable_diffusion import (
@@ -21,6 +20,7 @@ from diffusers.pipelines.stable_diffusion import (
     convert_from_ckpt,
 )
 from diffusers.utils import PIL_INTERPOLATION, numpy_to_pil, randn_tensor
+from packaging.version import Version
 from safetensors.torch import load_file
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
