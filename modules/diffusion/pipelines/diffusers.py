@@ -53,6 +53,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
         torch_dtype: torch.dtype = torch.float32,
         cache_dir: Optional[str] = None,
         device: Optional[torch.device] = None,
+        variant: str = "fp16",
         subfolder: Optional[str] = None,
     ):
         checkpooint_path = os.path.join(
@@ -74,8 +75,9 @@ class DiffusersPipeline(DiffusersPipelineModel):
                 use_auth_token=use_auth_token,
                 torch_dtype=torch_dtype,
                 cache_dir=cache_dir,
-                device_map="auto",
-            )
+                variant=variant,
+                # device_map="auto",
+            ).to(device, torch_dtype)
 
         vae = temporary_pipe.vae
         text_encoder = temporary_pipe.text_encoder
@@ -95,11 +97,11 @@ class DiffusersPipeline(DiffusersPipelineModel):
 
         del temporary_pipe
 
-        if torch.__version__ >= Version("2"):
-            try:
-                unet = torch.compile(unet, mode="reduce-overhead", fullgraph=True)
-            except:
-                pass
+        # if torch.__version__ >= Version("2"):
+        #     try:
+        #         unet = torch.compile(unet, mode="reduce-overhead", fullgraph=True)
+        #     except:
+        #         pass
 
         gc.collect()
         torch.cuda.empty_cache()

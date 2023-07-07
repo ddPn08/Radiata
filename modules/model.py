@@ -26,7 +26,8 @@ PrecisionMap = {
 
 class DiffusersModel:
     def __init__(self, model_id: str):
-        self.model_id: str = model_id
+        self.model_id: str = model_id.split("#")[0]
+        self.variant: str = model_id.split("#")[1] if "#" in model_id else None
         self.mode: ModelMode = "diffusers"
         self.activated: bool = False
         self.pipe = None
@@ -101,6 +102,7 @@ class DiffusersModel:
                 self.model_id,
                 use_auth_token=config.get("hf_token"),
                 torch_dtype=torch_dtype,
+                variant=self.variant,
                 cache_dir=hf_diffusers_cache_dir(),
             ).to(device=device)
 
