@@ -1,11 +1,12 @@
 gradio==3.32.0
 
+lycoris_lora==1.8.0.dev6
 pytorch-lightning==2.0.2
+diffusers==0.18.0
+invisible-watermark==0.2.0
 accelerate==0.18.0
-diffusers==0.16.1
 transformers==4.28.1
 sentencepiece~=0.1
-losalina==1.0.0
 omegaconf
 safetensors
 

@@ -1,4 +1,5 @@
 import copy
+from packaging.version import Version
 import gc
 import inspect
 import os
@@ -12,6 +13,7 @@ from diffusers import (
     AutoencoderKL,
     DDPMScheduler,
     StableDiffusionPipeline,
+    DiffusionPipeline,
     UNet2DConditionModel,
 )
 from diffusers.pipelines.stable_diffusion import (
@@ -56,29 +58,48 @@ class DiffusersPipeline(DiffusersPipelineModel):
         checkpooint_path = os.path.join(
             ROOT_DIR, "models", "checkpoints", pretrained_model_id
         )
-        if os.path.exists(checkpooint_path):
-            temporary_pipe = StableDiffusionPipeline.from_ckpt(
-                checkpooint_path,
-                from_safetensors=pretrained_model_id.endswith(".safetensors"),
-                load_safety_checker=False,
-                device=device,
-            ).to(torch_dtype=torch_dtype)
+
+        if os.path.exists(checkpooint_path) and os.path.isfile(checkpooint_path):
+            temporary_pipe = (
+                convert_from_ckpt.download_from_original_stable_diffusion_ckpt(
+                    checkpooint_path,
+                    from_safetensors=pretrained_model_id.endswith(".safetensors"),
+                    load_safety_checker=False,
+                    device=device,
+                ).to(torch_dtype=torch_dtype)
+            )
         else:
-            temporary_pipe = StableDiffusionPipeline.from_pretrained(
+            temporary_pipe = DiffusionPipeline.from_pretrained(
                 pretrained_model_id,
                 use_auth_token=use_auth_token,
                 torch_dtype=torch_dtype,
                 cache_dir=cache_dir,
-                device_map=device,
+                device_map="auto",
             )
 
         vae = temporary_pipe.vae
         text_encoder = temporary_pipe.text_encoder
+        text_encoder_2 = (
+            temporary_pipe.text_encoder_2
+            if hasattr(temporary_pipe, "text_encoder_2")
+            else None
+        )
         tokenizer = temporary_pipe.tokenizer
+        tokenizer_2 = (
+            temporary_pipe.tokenizer_2
+            if hasattr(temporary_pipe, "tokenizer_2")
+            else None
+        )
         unet = temporary_pipe.unet
         scheduler = temporary_pipe.scheduler
 
         del temporary_pipe
+
+        if torch.__version__ >= Version("2"):
+            try:
+                unet = torch.compile(unet, mode="reduce-overhead", fullgraph=True)
+            except:
+                pass
 
         gc.collect()
         torch.cuda.empty_cache()
@@ -87,7 +108,9 @@ class DiffusersPipeline(DiffusersPipelineModel):
             id=pretrained_model_id,
             vae=vae,
             text_encoder=text_encoder,
+            text_encoder_2=text_encoder_2,
             tokenizer=tokenizer,
+            tokenizer_2=tokenizer_2,
             unet=unet,
             scheduler=scheduler,
             device=device,
@@ -103,20 +126,22 @@ class DiffusersPipeline(DiffusersPipelineModel):
         tokenizer: CLIPTokenizer,
         unet: UNet2DConditionModel,
         scheduler: DDPMScheduler,
+        text_encoder_2: Optional[CLIPTextModel] = None,
+        tokenizer_2: Optional[CLIPTokenizer] = None,
         device: torch.device = torch.device("cpu"),
         dtype: torch.dtype = torch.float32,
     ):
         self.id = id
         self.vae = vae
         self.text_encoder = text_encoder
+        self.text_encoder_2 = text_encoder_2
         self.tokenizer = tokenizer
+        self.tokenizer_2 = tokenizer_2
         self.unet = unet
         self.scheduler = scheduler
 
         self.device = device
         self.dtype = dtype
-
-        self.lpw = LongPromptWeightingPipeline(self)
         self.multidiff = None
 
         self.stage_1st = None
@@ -129,8 +154,8 @@ class DiffusersPipeline(DiffusersPipelineModel):
             dtype = self.dtype
 
         models = [
-            self.vae,
             self.text_encoder,
+            self.text_encoder_2,
             self.unet,
         ]
         for model in models:
@@ -139,9 +164,10 @@ class DiffusersPipeline(DiffusersPipelineModel):
 
         if device is not None:
             self.device = device
-            self.lpw.device = device
         if dtype is not None:
             self.dtype = dtype
+
+        self.vae.to(dtype=torch.float32).to(device)
 
         return self
 
@@ -229,21 +255,186 @@ class DiffusersPipeline(DiffusersPipelineModel):
         image = torch.from_numpy(image).contiguous()
         return 2.0 * image - 1.0
 
+    def _get_add_time_ids(
+        self, original_size, crops_coords_top_left, target_size, dtype
+    ):
+        add_time_ids = list(original_size + crops_coords_top_left + target_size)
+
+        passed_add_embed_dim = (
+            self.unet.config.addition_time_embed_dim * len(add_time_ids)
+            + self.text_encoder_2.config.projection_dim
+        )
+        expected_add_embed_dim = self.unet.add_embedding.linear_1.in_features
+
+        if expected_add_embed_dim != passed_add_embed_dim:
+            raise ValueError(
+                f"Model expects an added time embedding vector of length {expected_add_embed_dim}, but a vector of {passed_add_embed_dim} was created. The model has an incorrect config. Please check `unet.config.time_embedding_type` and `text_encoder_2.config.projection_dim`."
+            )
+
+        add_time_ids = torch.tensor([add_time_ids], dtype=dtype)
+        return add_time_ids
+
     def _encode_prompt(
         self,
-        prompt,
-        num_images_per_prompt,
-        do_classifier_free_guidance,
-        negative_prompt=None,
-        prompt_embeds: Optional[torch.FloatTensor] = None,
-        negative_prompt_embeds: Optional[torch.FloatTensor] = None,
+        prompt: str,
+        negative_prompt: str,
+        num_images_per_prompt: int,
+        do_classifier_free_guidance: bool,
     ):
-        return self.lpw(
-            prompt,
-            negative_prompt,
-            num_images_per_prompt,
-            max_embeddings_multiples=1,
-        )
+        if self.text_encoder_2 is not None and self.tokenizer_2 is not None:
+            if prompt is not None and isinstance(prompt, str):
+                batch_size = 1
+            elif prompt is not None and isinstance(prompt, list):
+                batch_size = len(prompt)
+            else:
+                batch_size = prompt_embeds.shape[0]
+
+            # Define tokenizers and text encoders
+            tokenizers = (
+                [self.tokenizer, self.tokenizer_2]
+                if self.tokenizer is not None
+                else [self.tokenizer_2]
+            )
+            text_encoders = (
+                [self.text_encoder, self.text_encoder_2]
+                if self.text_encoder is not None
+                else [self.text_encoder_2]
+            )
+            # textual inversion: procecss multi-vector tokens if necessary
+            prompt_embeds_list = []
+            for tokenizer, text_encoder in zip(tokenizers, text_encoders):
+                text_inputs = tokenizer(
+                    prompt,
+                    padding="max_length",
+                    max_length=tokenizer.model_max_length,
+                    truncation=True,
+                    return_tensors="pt",
+                )
+                text_input_ids = text_inputs.input_ids
+                untruncated_ids = tokenizer(
+                    prompt, padding="longest", return_tensors="pt"
+                ).input_ids
+
+                if untruncated_ids.shape[-1] >= text_input_ids.shape[
+                    -1
+                ] and not torch.equal(text_input_ids, untruncated_ids):
+                    removed_text = tokenizer.batch_decode(
+                        untruncated_ids[:, tokenizer.model_max_length - 1 : -1]
+                    )
+                    print(
+                        "The following part of your input was truncated because CLIP can only handle sequences up to"
+                        f" {tokenizer.model_max_length} tokens: {removed_text}"
+                    )
+
+                prompt_embeds = text_encoder(
+                    text_input_ids.to(self.device),
+                    output_hidden_states=True,
+                )
+
+                # We are only ALWAYS interested in the pooled output of the final text encoder
+                pooled_prompt_embeds = prompt_embeds[0]
+                prompt_embeds = prompt_embeds.hidden_states[-2]
+
+                bs_embed, seq_len, _ = prompt_embeds.shape
+                # duplicate text embeddings for each generation per prompt, using mps friendly method
+                prompt_embeds = prompt_embeds.repeat(1, num_images_per_prompt, 1)
+                prompt_embeds = prompt_embeds.view(
+                    bs_embed * num_images_per_prompt, seq_len, -1
+                )
+
+                prompt_embeds_list.append(prompt_embeds)
+
+            prompt_embeds = torch.concat(prompt_embeds_list, dim=-1)
+
+            if do_classifier_free_guidance:
+                negative_prompt = negative_prompt or ""
+                uncond_tokens: List[str]
+                if prompt is not None and type(prompt) is not type(negative_prompt):
+                    raise TypeError(
+                        f"`negative_prompt` should be the same type to `prompt`, but got {type(negative_prompt)} !="
+                        f" {type(prompt)}."
+                    )
+                elif isinstance(negative_prompt, str):
+                    uncond_tokens = [negative_prompt]
+                elif batch_size != len(negative_prompt):
+                    raise ValueError(
+                        f"`negative_prompt`: {negative_prompt} has batch size {len(negative_prompt)}, but `prompt`:"
+                        f" {prompt} has batch size {batch_size}. Please make sure that passed `negative_prompt` matches"
+                        " the batch size of `prompt`."
+                    )
+                else:
+                    uncond_tokens = negative_prompt
+
+                negative_prompt_embeds_list = []
+                for tokenizer, text_encoder in zip(tokenizers, text_encoders):
+                    max_length = prompt_embeds.shape[1]
+                    uncond_input = tokenizer(
+                        uncond_tokens,
+                        padding="max_length",
+                        max_length=max_length,
+                        truncation=True,
+                        return_tensors="pt",
+                    )
+
+                    negative_prompt_embeds = text_encoder(
+                        uncond_input.input_ids.to(self.device),
+                        output_hidden_states=True,
+                    )
+                    # We are only ALWAYS interested in the pooled output of the final text encoder
+                    negative_pooled_prompt_embeds = negative_prompt_embeds[0]
+                    negative_prompt_embeds = negative_prompt_embeds.hidden_states[-2]
+
+                    if do_classifier_free_guidance:
+                        # duplicate unconditional embeddings for each generation per prompt, using mps friendly method
+                        seq_len = negative_prompt_embeds.shape[1]
+
+                        negative_prompt_embeds = negative_prompt_embeds.to(
+                            dtype=text_encoder.dtype, device=self.device
+                        )
+
+                        negative_prompt_embeds = negative_prompt_embeds.repeat(
+                            1, num_images_per_prompt, 1
+                        )
+                        negative_prompt_embeds = negative_prompt_embeds.view(
+                            batch_size * num_images_per_prompt, seq_len, -1
+                        )
+
+                        # For classifier free guidance, we need to do two forward passes.
+                        # Here we concatenate the unconditional and text embeddings into a single batch
+                        # to avoid doing two forward passes
+
+                    negative_prompt_embeds_list.append(negative_prompt_embeds)
+
+                negative_prompt_embeds = torch.concat(
+                    negative_prompt_embeds_list, dim=-1
+                )
+
+            pooled_prompt_embeds = pooled_prompt_embeds.repeat(
+                1, num_images_per_prompt
+            ).view(bs_embed * num_images_per_prompt, -1)
+            negative_pooled_prompt_embeds = negative_pooled_prompt_embeds.repeat(
+                1, num_images_per_prompt
+            ).view(bs_embed * num_images_per_prompt, -1)
+
+            return (
+                prompt_embeds,
+                negative_prompt_embeds,
+                pooled_prompt_embeds,
+                negative_pooled_prompt_embeds,
+            )
+        else:
+            lpw = LongPromptWeightingPipeline(
+                self,
+                self.text_encoder,
+                self.tokenizer,
+            )
+            prompt_embeds, negative_prompt_embeds = lpw(
+                prompt,
+                negative_prompt,
+                num_images_per_prompt,
+                max_embeddings_multiples=1,
+            )
+            return prompt_embeds, negative_prompt_embeds, None, None
 
     def prepare_latents(
         self,
@@ -280,16 +471,18 @@ class DiffusersPipeline(DiffusersPipelineModel):
             latents = latents * self.scheduler.init_noise_sigma
             return latents
         else:
-            image = image.to(self.device).to(dtype)
+            image = image.to(self.device).to(self.vae.dtype)
             init_latent_dist = self.vae.encode(image).latent_dist
             init_latents = init_latent_dist.sample(generator=generator)
-            init_latents = torch.cat([0.18215 * init_latents] * batch_size, dim=0)
+            init_latents = torch.cat(
+                [self.vae.config.scaling_factor * init_latents] * batch_size, dim=0
+            )
             shape = init_latents.shape
             noise = randn_tensor(
                 shape, generator=generator, device=self.device, dtype=dtype
             )
             latents = self.scheduler.add_noise(init_latents, noise, timestep)
-            return latents
+            return latents.to(dtype=dtype)
 
     def denoise_latent(
         self,
@@ -303,6 +496,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
         callback: Optional[Callable],
         callback_steps: int,
         cross_attention_kwargs: Dict[str, Any],
+        unet_additional_kwargs: Dict[str, Any],
     ):
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
         with tqdm(total=num_inference_steps) as progress_bar:
@@ -330,6 +524,11 @@ class DiffusersPipeline(DiffusersPipelineModel):
                     cross_attention_kwargs,
                 )
 
+                unet_additional_kwargs = {
+                    **unet_additional_kwargs,
+                    **event.unet_additional_kwargs,
+                }
+
                 latents = event.latents
 
                 if not event.skip:
@@ -339,7 +538,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
                         timestep,
                         encoder_hidden_states=prompt_embeds,
                         cross_attention_kwargs=cross_attention_kwargs,
-                        **event.unet_additional_kwargs,
+                        **unet_additional_kwargs,
                     ).sample
 
                     # perform guidance
@@ -366,7 +565,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
                     if callback is not None and step % callback_steps == 0:
                         callback(step, timestep, latents)
 
-        return 1 / 0.18215 * latents
+        return latents
 
     def decode_latents(self, latents):
         image = self.vae.decode(latents).sample
@@ -379,17 +578,19 @@ class DiffusersPipeline(DiffusersPipelineModel):
         return numpy_to_pil(image)
 
     def create_output(self, latents: torch.Tensor, output_type: str, return_dict: bool):
+        latents = latents.float()
+
         if output_type == "latent":
             image = latents
         elif output_type == "pil":
             # 8. Post-processing
-            image = self.decode_latents(latents)
+            image = self.decode_latents(latents / self.vae.config.scaling_factor)
 
             # 9. Convert to PIL
             image = self.decode_images(image)
         else:
             # 8. Post-processing
-            image = self.decode_latents(latents)
+            image = self.decode_latents(latents / self.vae.config.scaling_factor)
 
         # Offload last model to CPU
         if hasattr(self, "final_offload_hook") and self.final_offload_hook is not None:
@@ -415,6 +616,9 @@ class DiffusersPipeline(DiffusersPipelineModel):
         callback_steps: int = 1,
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         plugin_data: Optional[Dict[str, Any]] = {},
+        original_size: Tuple[int, int] = (1024, 1024),
+        crops_coords_top_left: Tuple[int, int] = (0, 0),
+        target_size: Tuple[int, int] = (1024, 1024),
     ):
         opts = copy.deepcopy(opts)  # deepcopy options to prevent changes in input opts
         self.session = PipeSession(
@@ -480,20 +684,55 @@ class DiffusersPipeline(DiffusersPipelineModel):
         if opts.image is not None:
             opts.image = self.preprocess_image(opts.image, opts.height, opts.width)
 
+        unet_additional_kwargs = {}
+
+        do_classifier_free_guidance = opts.guidance_scale > 1.0
+
         # 6. Encode input prompt
-        prompt_embeds = self._encode_prompt(
+        (
+            prompt_embeds,
+            negative_prompt_embeds,
+            pooled_prompt_embeds,
+            negative_pooled_prompt_embeds,
+        ) = self._encode_prompt(
             prompt=prompt,
             num_images_per_prompt=num_images_per_prompt,
             do_classifier_free_guidance=do_classifier_free_guidance,
             negative_prompt=negative_prompt,
-            prompt_embeds=prompt_embeds,
-            negative_prompt_embeds=negative_prompt_embeds,
         )
+
+        if (
+            pooled_prompt_embeds is not None
+            and negative_pooled_prompt_embeds is not None
+        ):
+            add_text_embeds = pooled_prompt_embeds
+            add_time_ids = self._get_add_time_ids(
+                original_size,
+                crops_coords_top_left,
+                (opts.height, opts.width),
+                dtype=prompt_embeds.dtype,
+            )
+
+            if do_classifier_free_guidance:
+                add_text_embeds = torch.cat(
+                    [negative_pooled_prompt_embeds, add_text_embeds], dim=0
+                )
+                add_time_ids = torch.cat([add_time_ids, add_time_ids], dim=0)
+
+            unet_additional_kwargs["added_cond_kwargs"] = {
+                "text_embeds": add_text_embeds.to(self.device),
+                "time_ids": add_time_ids.to(self.device),
+            }
+
+        if do_classifier_free_guidance:
+            prompt_embeds = torch.cat([negative_prompt_embeds, prompt_embeds], dim=0)
+
+        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
 
         # 5. Prepare latent variables
         latents = self.prepare_latents(
-            vae_scale_factor=8,
-            unet_in_channels=4,
+            vae_scale_factor=vae_scale_factor,
+            unet_in_channels=self.unet.config.in_channels,
             image=opts.image,
             timestep=latent_timestep,
             batch_size=opts.batch_size,
@@ -546,6 +785,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
                 callback=callback,
                 callback_steps=callback_steps,
                 cross_attention_kwargs=cross_attention_kwargs,
+                unet_additional_kwargs=unet_additional_kwargs,
             )
 
         torch.cuda.synchronize()

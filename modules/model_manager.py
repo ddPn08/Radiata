@@ -12,9 +12,7 @@ from .model import DiffusersModel
 
 sd_models: List[DiffusersModel] = []
 sd_model: Optional[DiffusersModel] = None
-mode: Literal["stable-diffusion", "deepfloyd_if"] = (
-    "deepfloyd_if" if config.get("deepfloyd_if") else "stable-diffusion"
-)
+mode: Literal["stable-diffusion"] = "stable-diffusion"
 
 
 def get_model(model_id: str):
