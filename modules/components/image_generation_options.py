@@ -73,10 +73,10 @@ def common_options_ui():
         )
     with gr.Row():
         width_slider = gr.Slider(
-            value=512, minimum=64, maximum=2048, step=64, label="Width"
+            value=768, minimum=64, maximum=2048, step=64, label="Width"
         )
         height_slider = gr.Slider(
-            value=512, minimum=64, maximum=2048, step=64, label="Height"
+            value=768, minimum=64, maximum=2048, step=64, label="Height"
         )
     return (
         sampler_dropdown,

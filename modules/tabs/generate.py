@@ -118,34 +118,39 @@ class Generate(Tab):
 
         start = time.perf_counter()
 
-        for data in model_manager.sd_model(opts, plugin_data):
-            if type(data) == tuple:
-                step, preview = data
-                progress = step / (opts.batch_count * inference_steps)
-                previews = []
-                for images, opts in preview:
-                    previews.extend(images)
+        try:
+            for data in model_manager.sd_model(opts, plugin_data):
+                if type(data) == tuple:
+                    step, preview = data
+                    progress = step / (opts.batch_count * inference_steps)
+                    previews = []
+                    for images, opts in preview:
+                        previews.extend(images)
 
-                if len(previews) == count:
-                    update = gr.Gallery.update()
+                    if len(previews) == count:
+                        update = gr.Gallery.update()
+                    else:
+                        update = gr.Gallery.update(value=previews)
+                        count = len(previews)
+                    yield update, f"Progress: {progress * 100:.2f}%, Step: {step}", gr.Button.update(
+                        value="Generating...", variant="secondary", interactive=False
+                    )
                 else:
-                    update = gr.Gallery.update(value=previews)
-                    count = len(previews)
-                yield update, f"Progress: {progress * 100:.2f}%, Step: {step}", gr.Button.update(
-                    value="Generating...", variant="secondary", interactive=False
-                )
-            else:
-                image = data
+                    image = data
 
-        end = time.perf_counter()
+            end = time.perf_counter()
 
-        results = []
-        for images, opts in image:
-            results.extend(images)
+            results = []
+            for images, opts in image:
+                results.extend(images)
 
-        yield results, f"Finished in {end - start:0.4f} seconds", gr.Button.update(
-            value="Generate", variant="primary", interactive=True
-        )
+            yield results, f"Finished in {end - start:0.4f} seconds", gr.Button.update(
+                value="Generate", variant="primary", interactive=True
+            )
+        except:
+            yield [], "Error", gr.Button.update(
+                value="Generate", variant="primary", interactive=True
+            )
 
     def ui(self, outlet):
         with gr.Column():

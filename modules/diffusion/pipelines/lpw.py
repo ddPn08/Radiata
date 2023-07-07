@@ -4,7 +4,10 @@ from typing import *
 import torch
 
 from api.events.generation import PromptTokenizingEvent
-from modules.logger import logger
+from modules.logger import set_logger
+
+logger = set_logger(__name__)
+
 
 re_attention = re.compile(
     r"""

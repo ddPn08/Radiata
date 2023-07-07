@@ -8,10 +8,12 @@ import torch
 from api.events import event_handler
 from api.events.generation import LoadResourceEvent
 from api.models.diffusion import ImageGenerationOptions
-from modules.logger import logger
+from modules.logger import set_logger
 from modules.shared import ROOT_DIR
 
 from . import lyco
+
+logger = set_logger(__name__)
 
 latest_networks: List[Tuple[str, torch.nn.Module]] = []
 

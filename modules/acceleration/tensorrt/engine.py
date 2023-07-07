@@ -19,7 +19,9 @@ from modules.diffusion.utils import (
     load_vae_decoder,
     load_vae_encoder,
 )
-from modules.logger import logger
+from modules.logger import set_logger
+
+logger = set_logger(__name__)
 
 
 def create_onnx_path(name, onnx_dir, opt=True):
