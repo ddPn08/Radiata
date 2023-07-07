@@ -274,6 +274,7 @@ class LongPromptWeightingPipeline:
             self.tokenizer.model_max_length,
             no_boseos_middle=no_boseos_middle,
         )
+        seq_len = text_embeddings.shape[1]
         text_embeddings = text_embeddings.repeat(1, num_images_per_prompt, 1)
         text_embeddings = text_embeddings.view(
             batch_size * num_images_per_prompt, seq_len, -1

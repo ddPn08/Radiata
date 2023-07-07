@@ -58,20 +58,23 @@ class DiffusersPipeline(DiffusersPipelineModel):
         checkpooint_path = os.path.join(
             ROOT_DIR, "models", "checkpoints", pretrained_model_id
         )
-        if os.path.exists(checkpooint_path):
-            temporary_pipe = StableDiffusionPipeline.from_ckpt(
-                checkpooint_path,
-                from_safetensors=pretrained_model_id.endswith(".safetensors"),
-                load_safety_checker=False,
-                device=device,
-            ).to(torch_dtype=torch_dtype)
+
+        if os.path.exists(checkpooint_path) and os.path.isfile(checkpooint_path):
+            temporary_pipe = (
+                convert_from_ckpt.download_from_original_stable_diffusion_ckpt(
+                    checkpooint_path,
+                    from_safetensors=pretrained_model_id.endswith(".safetensors"),
+                    load_safety_checker=False,
+                    device=device,
+                ).to(torch_dtype=torch_dtype)
+            )
         else:
             temporary_pipe = DiffusionPipeline.from_pretrained(
                 pretrained_model_id,
                 use_auth_token=use_auth_token,
                 torch_dtype=torch_dtype,
                 cache_dir=cache_dir,
-                device_map=device,
+                device_map="auto",
             )
 
         vae = temporary_pipe.vae
@@ -471,7 +474,9 @@ class DiffusersPipeline(DiffusersPipelineModel):
             image = image.to(self.device).to(self.vae.dtype)
             init_latent_dist = self.vae.encode(image).latent_dist
             init_latents = init_latent_dist.sample(generator=generator)
-            init_latents = torch.cat([self.vae.config.scaling_factor * init_latents] * batch_size, dim=0)
+            init_latents = torch.cat(
+                [self.vae.config.scaling_factor * init_latents] * batch_size, dim=0
+            )
             shape = init_latents.shape
             noise = randn_tensor(
                 shape, generator=generator, device=self.device, dtype=dtype
