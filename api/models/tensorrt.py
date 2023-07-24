@@ -6,21 +6,21 @@ from pydantic import BaseModel
 class BuildEngineOptions(BaseModel):
     hf_token: Optional[str] = None
     subfolder: Optional[str] = None
-    max_batch_size = 1
-    opt_image_height = 512
-    opt_image_width = 512
-    min_latent_resolution = 256
-    max_latent_resolution = 1024
-    build_enable_refit = True
-    build_static_batch = False
-    build_dynamic_shape = True
-    build_all_tactics = False
-    build_preview_features = False
-    onnx_opset = 17
-    force_engine_build = False
-    force_onnx_export = False
-    force_onnx_optimize = False
-    full_acceleration = False
+    max_batch_size: int = 1
+    opt_image_height: int = 512
+    opt_image_width: int = 512
+    min_latent_resolution: int = 256
+    max_latent_resolution: int = 1024
+    build_enable_refit: bool = True
+    build_static_batch: bool = False
+    build_dynamic_shape: bool = True
+    build_all_tactics: bool = False
+    build_preview_features: bool = False
+    onnx_opset: int = 17
+    force_engine_build: bool = False
+    force_onnx_export: bool = False
+    force_onnx_optimize: bool = False
+    full_acceleration: bool = False
 
 
 class TensorRTEngineData(BaseModel):
