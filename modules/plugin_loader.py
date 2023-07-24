@@ -21,7 +21,7 @@ def load_plugins():
         dir = os.path.dirname(filepath)
 
         with open(filepath, "r") as f:
-            meta = PluginMetaData.parse_obj(toml.load(f))
+            meta = PluginMetaData.model_validate(toml.load(f))
 
         dir_basename = os.path.basename(dir)
         plugin_store[dir_basename] = {
