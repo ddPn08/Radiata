@@ -1,4 +1,4 @@
-gradio==3.32.0
+gradio==3.38.0
 
 lycoris_lora==1.8.0.dev6
 pytorch-lightning==2.0.2
